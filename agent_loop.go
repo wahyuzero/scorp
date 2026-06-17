@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"io"
 	"log"
 	"os"
@@ -319,6 +320,7 @@ func runAgentLoop(chatID int64, userMessage string, msgID int64) {
 	var toolCount int
 	var lastThinkingUpdate = time.Now()
 	noToolRetries := 0 // consecutive iterations where model returned 0 tool calls
+	recentToolSignatures := map[string]int{}
 
 	for iteration := 0; iteration < maxIterations(); iteration++ {
 		// Compact history if token budget exceeded
@@ -452,6 +454,18 @@ func runAgentLoop(chatID int64, userMessage string, msgID int64) {
 					confirmKeyboard())
 				return
 			}
+
+			// Check for repeated identical actions (browser loop detection)
+			tcSig := toolCallSignature(tc)
+			if tcSig != "" && recentToolSignatures[tcSig] >= 2 {
+				warnMsg := fmt.Sprintf("⚠️ STOP: You already executed '%s' %d times with the same arguments. The action is NOT working — trying again will not help. Try a DIFFERENT approach: check the page state, try a different selector, or report what's happening.", desc, recentToolSignatures[tcSig])
+				log.Printf("[agent] Repeated action detected: %s (count=%d), injecting warning", tcSig, recentToolSignatures[tcSig])
+				history = append(history, agentMessage{Role: "user", Content: warnMsg})
+				appendSessionHistory(chatIDStr, agentMessage{Role: "user", Content: warnMsg})
+				thinkingLines = append(thinkingLines, fmt.Sprintf("  ⚠️ Repeat #%d blocked", recentToolSignatures[tcSig]))
+				// Still execute but with warning so model sees fresh feedback
+			}
+			recentToolSignatures[tcSig]++
 
 			// Execute tool
 			result, _ := executeTool(tc, chatID)
@@ -605,6 +619,7 @@ func resumeAgentLoop(chatID int64, messages []agentMessage, msgID int64) {
 	var toolCount int
 	var lastThinkingUpdate = time.Now()
 	noToolRetries := 0
+	recentToolSignatures := map[string]int{}
 
 	// Mark session as "agent loop active" to prevent async summarization
 	setLoopActive(chatIDStr, true)
@@ -690,6 +705,16 @@ func resumeAgentLoop(chatID int64, messages []agentMessage, msgID int64) {
 					confirmKeyboard())
 				return
 			}
+
+			// Check for repeated identical actions (browser loop detection)
+			tcSig := toolCallSignature(tc)
+			if tcSig != "" && recentToolSignatures[tcSig] >= 2 {
+				warnMsg := fmt.Sprintf("⚠️ STOP: You already executed '%s' %d times with the same arguments. The action is NOT working — trying again will not help. Try a DIFFERENT approach.", desc, recentToolSignatures[tcSig])
+				log.Printf("[agent-continue] Repeated action detected: %s (count=%d)", tcSig, recentToolSignatures[tcSig])
+				messages = append(messages, agentMessage{Role: "user", Content: warnMsg})
+				thinkingLines = append(thinkingLines, fmt.Sprintf("  ⚠️ Repeat #%d", recentToolSignatures[tcSig]))
+			}
+			recentToolSignatures[tcSig]++
 
 			result, _ := executeTool(tc, chatID)
 			thinkingLines = append(thinkingLines, fmt.Sprintf("  → %s", truncateStr(result, 60)))
@@ -807,4 +832,23 @@ func screenshotWasTaken(history []agentMessage) bool {
 		}
 	}
 	return false
+}
+
+// toolCallSignature returns a string key identifying a tool call by name + args.
+// Used for detecting repeated identical actions. Returns "" for non-trackable calls.
+func toolCallSignature(tc ToolCall) string {
+	if tc.Name == "" {
+		return ""
+	}
+	// Build signature from name + sorted key args
+	sig := tc.Name
+	keys := make([]string, 0, len(tc.Args))
+	for k := range tc.Args {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		sig += "|" + k + "=" + fmt.Sprintf("%v", tc.Args[k])
+	}
+	return sig
 }

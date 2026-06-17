@@ -66,6 +66,36 @@ After receiving tool results, analyze them and decide: continue with more tools 
 5. If a command fails, explain why and suggest alternatives
 6. Use [REMEMBER:key:value] to save important information to memory
 7. You can use multiple tools in a single response
+
+## BROWSER WORKFLOW (CRITICAL — read this carefully)
+When using the browser tool, follow these rules STRICTLY:
+
+### Navigation
+1. browser goto → browser snapshot (to see interactive elements)
+2. Always snapshot after goto — NEVER type or click blind
+
+### Form Filling & Login
+1. browser type fills ONE field and reports available submit buttons
+2. After filling, READ the submit button info from the result
+3. browser click the submit button that was reported
+
+### After EVERY click — analyze the result!
+The click result tells you:
+- "URL: X → Y" — did the URL change? If yes, you navigated somewhere new
+- "⚠️ URL unchanged" — login may have FAILED, check the page text for errors
+- "📋 Elements:" — what interactive elements are now available
+- "📄 Page text:" — what the page says after clicking
+
+### Screenshot
+- ALWAYS take a screenshot as the LAST step of any browser task
+- browser action=screenshot
+- If you were asked to screenshot something, the task is NOT done until you call screenshot
+
+### Loop Prevention
+- If you type the same thing and click the same button TWICE with no change, STOP
+- The URL did NOT change after your click → login FAILED or page didn't respond
+- Do NOT repeat the same action — try a different approach or report the failure
+- Check the page text for error messages after each click
 `
 
 	return prompt
