@@ -1,0 +1,22 @@
+# Binaries
+scorp-agent
+scorp-agent-minimal
+scorp-agent.bak.*
+vps-monitor-go
+*.exe
+
+# Test artifacts
+*.test
+*.out
+coverage.txt
+
+# Runtime data
+.env
+*.log
+rag_index/
+vault.json
+vault.key
+
+# OS files
+.DS_Store
+Thumbs.db
