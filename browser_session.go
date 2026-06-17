@@ -191,6 +191,8 @@ func browserSessionScreenshot(url string, chatID int64) (string, bool) {
 }
 
 // browserSessionClick clicks a selector in the existing session.
+// After clicking, returns rich feedback: URL change detection, title,
+// interactive elements snapshot, and body text excerpt.
 func browserSessionClick(selector, url string, chatID int64) (string, bool) {
 	sess := getOrCreateBrowserSession(chatID)
 
@@ -198,22 +200,60 @@ func browserSessionClick(selector, url string, chatID int64) (string, bool) {
 		browserSessionNavigate(url, chatID)
 	}
 
-	var afterText string
+	// Capture URL before click
+	beforeURL := sess.CurrentURL
+
+	var afterText, afterTitle, afterURL string
+	var interactiveSnapshot string
 	err := chromedp.Run(sess.Ctx,
 		chromedp.Click(selector, chromedp.ByQuery),
 		chromedp.Sleep(2*time.Second),
+		chromedp.Title(&afterTitle),
+		chromedp.Location(&afterURL),
 		chromedp.Text("body", &afterText, chromedp.ByQuery),
 	)
 	if err != nil {
 		return fmt.Sprintf("Click error: %v", err), false
 	}
 
+	// Update session URL
+	sess.CurrentURL = afterURL
+
+	// Build URL change indicator
+	urlChange := "✅ Page changed!"
+	if beforeURL == afterURL {
+		urlChange = "⚠️ URL unchanged (still on same page)"
+	}
+
 	afterText = whitespaceRe.ReplaceAllString(afterText, " ")
 	afterText = strings.TrimSpace(afterText)
-	return truncOutput(fmt.Sprintf("👆 Clicked '%s'. Page after:\n\n%s", selector, afterText), maxToolOutput), true
+	if len(afterText) > 600 {
+		afterText = afterText[:600] + "..."
+	}
+
+	// Auto-capture interactive elements snapshot
+	snapScript := `
+		(function() {
+			var interactive = document.querySelectorAll('a, button, input, select, textarea, [role="button"], [onclick]');
+			var lines = [];
+			interactive.forEach(function(el, i) {
+				if (i >= 15) return; // limit
+				var tag = el.tagName.toLowerCase();
+				var type = el.type || '';
+				var text = (el.innerText || el.value || el.placeholder || el.getAttribute('aria-label') || '').trim();
+				if (text.length > 50) text = text.substring(0, 47) + '...';
+				lines.push('  [' + i + '] <' + tag + (type ? ' type=' + type : '') + '>: ' + text);
+			});
+			return lines.join('\n') || '  (no interactive elements)';
+		})()
+	`
+	chromedp.Run(sess.Ctx, chromedp.Evaluate(snapScript, &interactiveSnapshot))
+
+	return truncOutput(fmt.Sprintf("👆 Clicked '%s'\nURL: %s → %s\n%s\nTitle: %s\n\n📋 Elements:\n%s\n\n📄 Page text:\n%s",
+		selector, beforeURL, afterURL, urlChange, afterTitle, interactiveSnapshot, afterText), maxToolOutput), true
 }
 
-// browserSessionFill fills a form field in the existing session.
+// browserSessionFill fills a form field, returns context about what's next on the page.
 func browserSessionFill(selector, text, url string, chatID int64) (string, bool) {
 	sess := getOrCreateBrowserSession(chatID)
 
@@ -230,7 +270,24 @@ func browserSessionFill(selector, text, url string, chatID int64) (string, bool)
 		return fmt.Sprintf("Fill error: %v", err), false
 	}
 
-	return fmt.Sprintf("✏️ Filled '%s' with '%s'", selector, truncateStr(text, 50)), true
+	// Check what submit buttons are available after filling
+	var submitInfo string
+	checkScript := `
+		(function() {
+			var btns = document.querySelectorAll('button[type="submit"], input[type="submit"], button:not([type]), [role="button"]');
+			var lines = [];
+			btns.forEach(function(b, i) {
+				if (i >= 5) return;
+				var t = (b.innerText || b.value || '').trim();
+				var sel = b.id ? '#' + b.id : (b.className ? 'button.' + (typeof b.className === 'string' ? b.className.split(' ')[0] : '') : 'button');
+				lines.push(sel + ': "' + t + '"');
+			});
+			return lines.join(', ') || 'no submit found';
+		})()
+	`
+	chromedp.Run(sess.Ctx, chromedp.Evaluate(checkScript, &submitInfo))
+
+	return fmt.Sprintf("✏️ Filled '%s' with '%s'\n💡 Ready to submit: %s", selector, truncateStr(text, 50), submitInfo), true
 }
 
 // browserSessionEvaluate runs JS in the existing session.
