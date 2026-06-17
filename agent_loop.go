@@ -279,6 +279,10 @@ func runAgentLoop(chatID int64, userMessage string, msgID int64) {
 	})
 	appendSessionHistory(chatIDStr, agentMessage{Role: "user", Content: userMessage})
 
+	// Mark session as "agent loop active" to prevent async summarization (race condition fix)
+	setLoopActive(chatIDStr, true)
+	defer setLoopActive(chatIDStr, false)
+
 	// ── Auto-RAG: Search indexed context for user query ──
 	if vecIndex != nil && len(vecIndex.Chunks) > 0 {
 		queryFP := computeSimhash(userMessage)
@@ -314,6 +318,7 @@ func runAgentLoop(chatID int64, userMessage string, msgID int64) {
 	var thinkingLines []string
 	var toolCount int
 	var lastThinkingUpdate = time.Now()
+	noToolRetries := 0 // consecutive iterations where model returned 0 tool calls
 
 	for iteration := 0; iteration < maxIterations(); iteration++ {
 		// Compact history if token budget exceeded
@@ -350,37 +355,61 @@ func runAgentLoop(chatID int64, userMessage string, msgID int64) {
 		toolCalls, cleanResponse := parseAllToolCalls(reply, nativeToolCalls)
 		log.Printf("[agent] Model replied: %d tool calls (native=%d), response len=%d", len(toolCalls), len(nativeToolCalls), len(reply))
 
-		// Check if model is stopping mid-task (outputs text but no tools, and not at max iterations)
-		if len(toolCalls) == 0 && iteration < maxIterations()-1 && looksLikeContinuation(reply) {
-			// Model said "let me...", "I'll try...", etc. but didn't call tools — remind to continue
-			log.Printf("[agent] Detected continuation without tools at iteration %d, injecting reminder", iteration)
-			history = append(history, agentMessage{Role: "assistant", Content: reply})
-			appendSessionHistory(chatIDStr, agentMessage{Role: "assistant", Content: reply})
-			
-			reminder := "⚠️ You said you'd continue but didn't call any tools. If the task is not complete, CALL THE APPROPRIATE TOOL(S) NOW. Do not just describe what you would do — actually execute tools."
-			history = append(history, agentMessage{Role: "user", Content: reminder})
-			appendSessionHistory(chatIDStr, agentMessage{Role: "user", Content: reminder})
-			
-			thinkingLines = append(thinkingLines, "⚠️ Injected continuation reminder")
-			editMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
-			continue
-		}
+		// ── Handle "0 tool calls" responses with retry logic ──
+		if len(toolCalls) == 0 && iteration < maxIterations()-1 {
+			noToolRetries++
+			shouldRetry := false
+			reason := ""
 
-		// Check for incomplete multi-step task: user asked for N steps but model stopped early
-		if len(toolCalls) == 0 && iteration < maxIterations()-1 && toolCount > 0 {
-			if userSteps := countStepsInMessage(userMessage); userSteps >= 3 && toolCount < userSteps {
-				log.Printf("[agent] Detected incomplete multi-step task: user asked %d steps, only %d tools called. Injecting nudge.", userSteps, toolCount)
+			// Case 1: Model said it would continue but didn't call tools
+			if looksLikeContinuation(reply) {
+				shouldRetry = true
+				reason = "continuation detected"
+			}
+
+			// Case 2: Tools were called before but task seems incomplete
+			// If the agent has used tools and then suddenly stops, it likely hasn't finished.
+			// This catches cases where the model says "done" but the task isn't actually complete.
+			if !shouldRetry && toolCount > 0 && noToolRetries <= 2 {
+				// Check if user explicitly asked for multiple steps
+				if userSteps := countStepsInMessage(userMessage); userSteps >= 2 && toolCount < userSteps {
+					shouldRetry = true
+					reason = fmt.Sprintf("incomplete multi-step task (%d/%d steps)", toolCount, userSteps)
+				}
+				// Check if user mentioned browser/screenshot keywords but no screenshot was taken
+				if !shouldRetry && mentionsBrowserTask(userMessage) && !screenshotWasTaken(history) {
+					shouldRetry = true
+					reason = "browser task not complete (no screenshot taken)"
+				}
+			}
+
+			// Cap retries at 3 to prevent infinite loops
+			if shouldRetry && noToolRetries > 3 {
+				log.Printf("[agent] Max no-tool retries (%d) reached, accepting as final answer", noToolRetries)
+				shouldRetry = false
+			}
+
+			if shouldRetry {
+				log.Printf("[agent] 0 tool calls at iteration %d (%s), retry %d/3 — injecting nudge", iteration, reason, noToolRetries)
 				history = append(history, agentMessage{Role: "assistant", Content: reply})
 				appendSessionHistory(chatIDStr, agentMessage{Role: "assistant", Content: reply})
 
-				reminder := fmt.Sprintf("⚠️ The user asked for %d steps but you've only completed %d tool call(s). If there are remaining steps, CONTINUE executing them NOW. Do not stop until ALL steps are done.", userSteps, toolCount)
+				// Escalating urgency
+				var reminder string
+				if noToolRetries <= 2 {
+					reminder = fmt.Sprintf("⚠️ You haven't completed the task yet (%s). You must CALL TOOLS to finish. Do NOT describe what you would do — EXECUTE the tools NOW.", reason)
+				} else {
+					reminder = fmt.Sprintf("🚨 CRITICAL: The task is NOT complete (%s). This is your LAST CHANCE. Call the necessary tools immediately or explain clearly why you cannot proceed.", reason)
+				}
 				history = append(history, agentMessage{Role: "user", Content: reminder})
 				appendSessionHistory(chatIDStr, agentMessage{Role: "user", Content: reminder})
 
-				thinkingLines = append(thinkingLines, fmt.Sprintf("⚠️ Incomplete task: %d/%d steps", toolCount, userSteps))
+				thinkingLines = append(thinkingLines, fmt.Sprintf("⚠️ Retry %d/3: %s", noToolRetries, reason))
 				editMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
 				continue
 			}
+		} else if len(toolCalls) > 0 {
+			noToolRetries = 0 // Reset on successful tool call
 		}
 
 		if len(toolCalls) == 0 {
@@ -575,6 +604,11 @@ func resumeAgentLoop(chatID int64, messages []agentMessage, msgID int64) {
 	var thinkingLines []string
 	var toolCount int
 	var lastThinkingUpdate = time.Now()
+	noToolRetries := 0
+
+	// Mark session as "agent loop active" to prevent async summarization
+	setLoopActive(chatIDStr, true)
+	defer setLoopActive(chatIDStr, false)
 
 	for iteration := 0; iteration < maxIterations(); iteration++ {
 		chatMsgs := make([]chatMessage, len(messages))
@@ -597,20 +631,36 @@ func resumeAgentLoop(chatID int64, messages []agentMessage, msgID int64) {
 		toolCalls, cleanResponse := parseAllToolCalls(reply, nativeToolCalls)
 		log.Printf("[agent-continue] Model replied: %d tool calls (native=%d)", len(toolCalls), len(nativeToolCalls))
 
-		// Check if model is stopping mid-task (outputs text but no tools, and not at max iterations)
-		if len(toolCalls) == 0 && iteration < maxIterations()-1 && looksLikeContinuation(reply) {
-			// Model said "let me...", "I'll try...", etc. but didn't call tools — remind to continue
-			log.Printf("[agent-continue] Detected continuation without tools at iteration %d, injecting reminder", iteration)
-			messages = append(messages, agentMessage{Role: "assistant", Content: reply})
-			appendSessionHistory(chatIDStr, agentMessage{Role: "assistant", Content: reply})
+		// ── Handle "0 tool calls" with retry logic (same as runAgentLoop) ──
+		if len(toolCalls) == 0 && iteration < maxIterations()-1 {
+			noToolRetries++
+			shouldRetry := false
+			reason := ""
 
-			reminder := "⚠️ You said you'd continue but didn't call any tools. If the task is not complete, CALL THE APPROPRIATE TOOL(S) NOW. Do not just describe what you would do — actually execute tools."
-			messages = append(messages, agentMessage{Role: "user", Content: reminder})
-			appendSessionHistory(chatIDStr, agentMessage{Role: "user", Content: reminder})
+			if looksLikeContinuation(reply) {
+				shouldRetry = true
+				reason = "continuation detected"
+			}
+			if shouldRetry && noToolRetries > 3 {
+				log.Printf("[agent-continue] Max no-tool retries (%d) reached, accepting as final answer", noToolRetries)
+				shouldRetry = false
+			}
 
-			thinkingLines = append(thinkingLines, "⚠️ Injected continuation reminder")
-			editMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
-			continue
+			if shouldRetry {
+				log.Printf("[agent-continue] 0 tool calls at iteration %d (%s), retry %d/3", iteration, reason, noToolRetries)
+				messages = append(messages, agentMessage{Role: "assistant", Content: reply})
+				appendSessionHistory(chatIDStr, agentMessage{Role: "assistant", Content: reply})
+
+				reminder := fmt.Sprintf("⚠️ You haven't completed the task yet (%s). CALL THE APPROPRIATE TOOL(S) NOW.", reason)
+				messages = append(messages, agentMessage{Role: "user", Content: reminder})
+				appendSessionHistory(chatIDStr, agentMessage{Role: "user", Content: reminder})
+
+				thinkingLines = append(thinkingLines, fmt.Sprintf("⚠️ Retry %d/3: %s", noToolRetries, reason))
+				editMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
+				continue
+			}
+		} else if len(toolCalls) > 0 {
+			noToolRetries = 0
 		}
 
 		if len(toolCalls) == 0 {
@@ -717,4 +767,44 @@ func countStepsInMessage(msg string) int {
 	}
 
 	return 0
+}
+
+// mentionsBrowserTask checks if the user's message references browser actions
+// like login, screenshot, scrape, or navigate — used to detect incomplete browser tasks.
+func mentionsBrowserTask(msg string) bool {
+	lower := strings.ToLower(msg)
+	keywords := []string{
+		"screenshot", "login", "log in", "sign in", "scrape",
+		"ambil gambar", "tangkap layar", "masuk", "buka web",
+		"buka halaman", "cek halaman", "cek web", "navigate",
+	}
+	for _, kw := range keywords {
+		if strings.Contains(lower, kw) {
+			return true
+		}
+	}
+	return false
+}
+
+// screenshotWasTaken checks if a browser.screenshot tool call exists in the history.
+func screenshotWasTaken(history []agentMessage) bool {
+	for _, msg := range history {
+		content, ok := msg.Content.(string)
+		if !ok {
+			continue
+		}
+		// Tool results are stored as "[Tool Result: browser.screenshot]"
+		if strings.Contains(content, "[Tool Result: browser.screenshot]") ||
+			strings.Contains(content, "browser.screenshot") {
+			return true
+		}
+		// Also check assistant messages that contain tool call markup
+		if msg.Role == "assistant" && strings.Contains(strings.ToLower(content), "screenshot") {
+			// Only count if it's a tool call, not just text mentioning screenshot
+			if strings.Contains(content, "<tool") || strings.Contains(content, "```tool") {
+				return true
+			}
+		}
+	}
+	return false
 }

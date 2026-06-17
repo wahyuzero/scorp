@@ -23,6 +23,7 @@ type chatSession struct {
 	lastUsed       time.Time
 	history        []agentMessage     // Conversation history for context
 	autoStopCancel context.CancelFunc // Cancel previous auto-stop goroutine
+	loopActive     bool               // True while runAgentLoop is executing — prevents async summarization
 }
 
 // Sharded session map to reduce lock contention
@@ -286,8 +287,8 @@ func touchSession(chatID string) {
 
 // ── Conversation History (with disk persistence) ──
 
-const maxHistoryMessages = 30  // Trim when exceeds this
-const keepHistoryMessages = 20 // Keep this many after trim
+const maxHistoryMessages = 50  // Trim when exceeds this
+const keepHistoryMessages = 30 // Keep this many after trim
 // historyDir is resolved dynamically via historyDirPath()
 
 func historyFilePath(chatID string) string {
@@ -352,8 +353,8 @@ func appendSessionHistory(chatID string, msgs ...agentMessage) {
 		}
 	}
 
-	// Auto-summarize if too long
-	if len(sess.history) > maxHistoryMessages {
+	// Auto-summarize if too long — but NOT during an active agent loop (race condition)
+	if len(sess.history) > maxHistoryMessages && !sess.loopActive {
 		go summarizeHistory(chatID)
 	}
 	// Debounced persist — schedule save after 3 seconds
@@ -409,6 +410,14 @@ func scheduleHistorySave(chatID string) {
 			}
 		}()
 	}
+}
+
+// setLoopActive marks the session's agent loop as active/inactive.
+// When active, async summarization is suppressed to prevent race conditions.
+func setLoopActive(chatID string, active bool) {
+	sess := getOrCreateSession(chatID)
+	sess.loopActive = active
+	setSession(chatID, sess)
 }
 
 // summarizeHistory summarizes old conversation messages using the configured model

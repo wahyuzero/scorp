@@ -16,11 +16,11 @@ const (
 	// Approximate tokens-per-char ratio (rough estimate for mixed content)
 	tokensPerChar = 0.25
 	// Target token budget for conversation history (leaves room for system prompt + tools)
-	maxHistoryTokens = 24000
+	maxHistoryTokens = 32000
 	// When token count exceeds this, trigger compaction
-	compactionThreshold = 18000
+	compactionThreshold = 28000
 	// Tool results longer than this get truncated in the history
-	maxToolResultChars = 2000
+	maxToolResultChars = 4000
 )
 
 // estimateTokens gives a rough token count for a string.
@@ -72,6 +72,8 @@ func truncateToolResultsInHistory(history []agentMessage) ([]agentMessage, int) 
 // maybeCompactHistory checks if the conversation needs compaction based on token count.
 // If so, it triggers truncation of tool results first, then summarization if still over budget.
 // Called from the agent loop before each model call.
+// IMPORTANT: During an active agent loop, only truncation is performed — LLM-based
+// summarization is deferred to avoid race conditions and context loss mid-task.
 func maybeCompactHistory(chatID string, history []agentMessage) []agentMessage {
 	tokens := estimateHistoryTokens(history)
 
@@ -82,7 +84,7 @@ func maybeCompactHistory(chatID string, history []agentMessage) []agentMessage {
 	log.Printf("[compaction] History at ~%d tokens (threshold %d), compacting for %s",
 		tokens, compactionThreshold, chatID)
 
-	// Step 1: Truncate long tool results
+	// Step 1: Truncate long tool results (always safe — no LLM call)
 	history, n := truncateToolResultsInHistory(history)
 	if n > 0 {
 		log.Printf("[compaction] Truncated %d long tool results", n)
@@ -99,12 +101,19 @@ func maybeCompactHistory(chatID string, history []agentMessage) []agentMessage {
 		return history
 	}
 
-	// Step 2: Force summarization if still over budget
+	// Step 2: Check if we're in an active agent loop — if so, defer summarization
+	sess := getSession(chatID)
+	if sess != nil && sess.loopActive {
+		log.Printf("[compaction] Still at ~%d tokens but agent loop active — deferring LLM summarization to avoid mid-task context loss", tokens)
+		return history
+	}
+
+	// Step 3: Full summarization (only when NOT in agent loop)
 	log.Printf("[compaction] Still at ~%d tokens after truncation, summarizing old messages", tokens)
 	summarizeHistory(chatID)
 
 	// Return updated history from session
-	sess := getSession(chatID)
+	sess = getSession(chatID)
 	if sess != nil {
 		return sess.history
 	}
