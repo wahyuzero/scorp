@@ -1,0 +1,278 @@
+[1/6] Dumping databases...
+  ✅ sistem_surat dumped
+  ✅ wiv_default dumped
+  ✅ coolify dumped
+  ✅ n8n dumped
+  ✅ tunnel dumped
+[2/6] Docker volumes — skipped (data covered by DB dumps)
+[3/6] Coolify config — skipped (owned by UID 9999, needs root; Coolify has built-in backups)
+[4/6] Archiving Hermes agent (essential data only)...
+  ✅ hermes (essentials)
+[5/6] Archiving app configs...
+  ✅ app-configs
+[6/6] Daily mode — skipping weekly extras
+Compressing final archive...
+Uploading to Google Drive...
+Upload success
+Cleaning old backups...
+=========================================
+Backup daily BERHASIL
+Size: 19.5MB
+Duration: 0m 12s
+=========================================
+[1/6] Dumping databases...
+  ✅ sistem_surat dumped
+  ✅ wiv_default dumped
+  ✅ coolify dumped
+  ✅ n8n dumped
+  ✅ tunnel dumped
+[2/6] Docker volumes — skipped (data covered by DB dumps)
+[3/6] Coolify config — skipped (owned by UID 9999, needs root; Coolify has built-in backups)
+[4/6] Archiving Hermes agent (essential data only)...
+  ✅ hermes (essentials)
+[5/6] Archiving app configs...
+  ✅ app-configs
+[6/6] Daily mode — skipping weekly extras
+Compressing final archive...
+Uploading to Google Drive...
+Upload success
+Cleaning old backups...
+=========================================
+Backup daily BERHASIL
+Size: 19.6MB
+Duration: 0m 14s
+=========================================
+[1/6] Dumping databases...
+  ✅ sistem_surat dumped
+  ✅ wiv_default dumped
+  ✅ coolify dumped
+  ✅ n8n dumped
+  ✅ tunnel dumped
+[2/6] Docker volumes — skipped (data covered by DB dumps)
+[3/6] Coolify config — skipped (owned by UID 9999, needs root; Coolify has built-in backups)
+[4/6] Archiving Hermes agent (essential data only)...
+  ✅ hermes (essentials)
+[5/6] Archiving app configs...
+  ✅ app-configs
+[6/6] Daily mode — skipping weekly extras
+Compressing final archive...
+Uploading to Google Drive...
+Upload success
+Cleaning old backups...
+=========================================
+Backup daily BERHASIL
+Size: 19.0MB
+Duration: 0m 13s
+=========================================
+[1/9] Dumping databases...
+  ✅ sistem_surat dumped
+  ✅ wiv_default dumped
+  ✅ coolify dumped
+  ✅ n8n dumped
+  ✅ tunnel dumped
+[2/9] Dumping Docker volumes...
+  ✅ coolify-db
+  ✅ coolify-redis
+  ✅ e168c80b4fde712101ec5ce372a2e805179bc8999d5b1a3e94837c993d95076e
+  ✅ f11ev8soc0ffs8ujbu0627we_9router-data
+  ✅ mysql-data-wiv0y55b1f5dzbyzlagyas1k
+  ✅ ny715cro5ony1n6v2vdrxmva_9router-data
+  ✅ pgdata
+  ✅ q8c0kc0sogos8cgwscgsccgg-frugaldev-database
+  ✅ q8c0kc0sogos8cgwscgsccgg-frugaldev-storage
+  ⏭️ rclone-s3-gateway_rclone-cache (cache — skipped)
+  ✅ s4q9sws8se3p3g0c621qbq9b_n8n-data
+  ✅ s4q9sws8se3p3g0c621qbq9b_postgresql-data
+  ✅ s4q9sws8se3p3g0c621qbq9b_redis-data
+  ✅ sistem-surat-mysql-data
+[3/9] Archiving Coolify state...
+  ✅ coolify-state (excl gdrive mount)
+[4/9] Archiving Hermes agent (essential data only)...
+  ✅ hermes (essentials)
+[5/9] Archiving app + system configs...
+  ✅ app-configs
+  ✅ system-configs (SSH, crontab, docker, tunnel)
+[6/9] Daily mode — skipping projects
+[7/9] Daily mode — skipping docker images
+[8/9] Skipping full home backup (daily/weekly mode)
+[9/9] Building archive summary...
+Compressing final archive...
+Uploading to Google Drive...
+Upload success
+Cleaning old backups...
+=========================================
+Backup daily BERHASIL
+Size: 684.9MB
+Duration: 3m 38s
+=========================================
+[1/9] Dumping databases...
+  ✅ sistem_surat dumped
+  ✅ wiv_default dumped
+  ✅ coolify dumped
+  ✅ n8n dumped
+  ✅ tunnel dumped
+[2/9] Dumping Docker volumes...
+  ✅ coolify-db
+  ✅ coolify-redis
+  ✅ e168c80b4fde712101ec5ce372a2e805179bc8999d5b1a3e94837c993d95076e
+  ✅ f11ev8soc0ffs8ujbu0627we_9router-data
+  ✅ mysql-data-wiv0y55b1f5dzbyzlagyas1k
+  ✅ ny715cro5ony1n6v2vdrxmva_9router-data
+  ✅ pgdata
+  ✅ q8c0kc0sogos8cgwscgsccgg-frugaldev-database
+  ✅ q8c0kc0sogos8cgwscgsccgg-frugaldev-storage
+  ⏭️ rclone-s3-gateway_rclone-cache (cache — skipped)
+  ✅ s4q9sws8se3p3g0c621qbq9b_n8n-data
+  ✅ s4q9sws8se3p3g0c621qbq9b_postgresql-data
+  ✅ s4q9sws8se3p3g0c621qbq9b_redis-data
+  ✅ sistem-surat-mysql-data
+[3/9] Archiving Coolify state...
+  ✅ coolify-state (excl gdrive mount)
+[4/9] Archiving Hermes agent (essential data only)...
+  ✅ hermes (essentials)
+[5/9] Archiving app + system configs...
+  ✅ app-configs
+  ✅ system-configs (SSH, crontab, docker, tunnel)
+[6/9] Daily mode — skipping projects
+[7/9] Daily mode — skipping docker images
+[8/9] Skipping full home backup (daily/weekly mode)
+[9/9] Building archive summary...
+Compressing final archive...
+Uploading to Google Drive...
+Upload success
+Cleaning old backups...
+=========================================
+Backup daily BERHASIL
+Size: 718.7MB
+Duration: 3m 46s
+=========================================
+[1/9] Dumping databases...
+  ✅ sistem_surat dumped
+  ✅ wiv_default dumped
+  ✅ coolify dumped
+  ✅ n8n dumped
+  ✅ tunnel dumped
+[2/9] Dumping Docker volumes...
+  ✅ coolify-db
+  ✅ coolify-redis
+  ✅ e168c80b4fde712101ec5ce372a2e805179bc8999d5b1a3e94837c993d95076e
+  ✅ f11ev8soc0ffs8ujbu0627we_9router-data
+  ✅ mysql-data-wiv0y55b1f5dzbyzlagyas1k
+  ✅ ny715cro5ony1n6v2vdrxmva_9router-data
+  ✅ pgdata
+  ✅ q8c0kc0sogos8cgwscgsccgg-frugaldev-database
+  ✅ q8c0kc0sogos8cgwscgsccgg-frugaldev-storage
+  ⏭️ rclone-s3-gateway_rclone-cache (cache — skipped)
+  ✅ s4q9sws8se3p3g0c621qbq9b_n8n-data
+  ✅ s4q9sws8se3p3g0c621qbq9b_postgresql-data
+  ✅ s4q9sws8se3p3g0c621qbq9b_redis-data
+  ✅ sistem-surat-mysql-data
+[3/9] Archiving Coolify state...
+  ✅ coolify-state (excl gdrive mount)
+[4/9] Archiving Hermes agent (essential data only)...
+  ✅ hermes (essentials)
+[5/9] Archiving app + system configs...
+  ✅ app-configs
+  ✅ system-configs (SSH, crontab, docker, tunnel)
+[6/9] Weekly/Monthly: archiving projects & extras...
+  ✅ extras (best-effort)
+[7/9] Saving custom Docker images...
+  ✅ x10fjrc7dyd74dkogd1m3dvp-56f478a70eaf2b2401c4fa7b7d671ff7f03bc82e
+  ✅ xnvshnbpkfjzgbxphbcgpqo5-240256db8ec719375c57f9e8f99150c1619a7134
+  ✅ q8c0kc0sogos8cgwscgsccgg-bf3cb6959ab7cd56bf2c5dce2ed84dd0ff718552
+[8/9] Skipping full home backup (daily/weekly mode)
+[9/9] Building archive summary...
+Compressing final archive...
+Uploading to Google Drive...
+Upload success
+Cleaning old backups...
+=========================================
+Backup weekly SELESAI (dengan error)
+Size: 1.9GB
+Duration: 11m 15s
+=========================================
+[1/9] Dumping databases...
+  ✅ sistem_surat dumped
+  ✅ wiv_default dumped
+  ✅ coolify dumped
+  ✅ n8n dumped
+  ✅ tunnel dumped
+[2/9] Dumping Docker volumes...
+  ✅ 9router-ny715cro5ony1n6v2vdrxmva_9router-data
+  ✅ coolify-db
+  ✅ coolify-redis
+  ✅ e168c80b4fde712101ec5ce372a2e805179bc8999d5b1a3e94837c993d95076e
+  ✅ f11ev8soc0ffs8ujbu0627we_9router-data
+  ✅ mysql-data-wiv0y55b1f5dzbyzlagyas1k
+  ✅ ny715cro5ony1n6v2vdrxmva_9router-data
+  ✅ pgdata
+  ✅ q8c0kc0sogos8cgwscgsccgg-frugaldev-database
+  ✅ q8c0kc0sogos8cgwscgsccgg-frugaldev-storage
+  ⏭️ rclone-s3-gateway_rclone-cache (cache — skipped)
+  ✅ s4q9sws8se3p3g0c621qbq9b_n8n-data
+  ✅ s4q9sws8se3p3g0c621qbq9b_postgresql-data
+  ✅ s4q9sws8se3p3g0c621qbq9b_redis-data
+  ✅ sistem-surat-mysql-data
+[3/9] Archiving Coolify state...
+  ✅ coolify-state (excl gdrive mount)
+[4/9] Archiving Hermes agent (essential data only)...
+  ✅ hermes (essentials)
+[5/9] Archiving app + system configs...
+  ✅ app-configs
+  ✅ system-configs (SSH, crontab, docker, tunnel)
+[6/9] Daily mode — skipping projects
+[7/9] Daily mode — skipping docker images
+[8/9] Skipping full home backup (daily/weekly mode)
+[9/9] Building archive summary...
+Compressing final archive...
+Uploading to Google Drive...
+Upload success
+Cleaning old backups...
+=========================================
+Backup daily BERHASIL
+Size: 905.7MB
+Duration: 4m 54s
+=========================================
+[1/9] Dumping databases...
+  ✅ sistem_surat dumped
+  ✅ wiv_default dumped
+  ✅ coolify dumped
+  ✅ n8n dumped
+  ✅ tunnel dumped
+[2/9] Dumping Docker volumes...
+  ✅ 9router-ny715cro5ony1n6v2vdrxmva_9router-data
+  ✅ coolify-db
+  ✅ coolify-redis
+  ✅ e168c80b4fde712101ec5ce372a2e805179bc8999d5b1a3e94837c993d95076e
+  ✅ f11ev8soc0ffs8ujbu0627we_9router-data
+  ✅ mysql-data-wiv0y55b1f5dzbyzlagyas1k
+  ✅ ny715cro5ony1n6v2vdrxmva_9router-data
+  ✅ pgdata
+  ✅ q8c0kc0sogos8cgwscgsccgg-frugaldev-database
+  ✅ q8c0kc0sogos8cgwscgsccgg-frugaldev-storage
+  ⏭️ rclone-s3-gateway_rclone-cache (cache — skipped)
+  ✅ s4q9sws8se3p3g0c621qbq9b_n8n-data
+  ✅ s4q9sws8se3p3g0c621qbq9b_postgresql-data
+  ✅ s4q9sws8se3p3g0c621qbq9b_redis-data
+  ✅ sistem-surat-mysql-data
+[3/9] Archiving Coolify state...
+  ✅ coolify-state (excl gdrive mount)
+[4/9] Archiving Hermes agent (essential data only)...
+  ✅ hermes (essentials)
+[5/9] Archiving app + system configs...
+  ✅ app-configs
+  ✅ system-configs (SSH, crontab, docker, tunnel)
+[6/9] Daily mode — skipping projects
+[7/9] Daily mode — skipping docker images
+[8/9] Skipping full home backup (daily/weekly mode)
+[9/9] Building archive summary...
+Compressing final archive...
+Uploading to Google Drive...
+Upload success
+Cleaning old backups...
+=========================================
+Backup daily BERHASIL
+Size: 911.1MB
+Duration: 4m 53s
+=========================================
+SKIP: load 135.70 > 2.0
