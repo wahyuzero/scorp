@@ -146,8 +146,21 @@ func runSubagent(params delegateTaskParams) delegateResult {
 				}
 			}
 
-			// CRITICAL: Block re-delegation at execution level too
+			// CRITICAL: Block re-delegation except for orchestrator role
 			if tc.Name == "delegate" || tc.Name == "delegate_batch" {
+				if SubagentRole(params.Role) == RoleOrchestrator {
+					// Orchestrator can spawn workers — allow it
+					if !toolsUsed[tc.Name] {
+						toolsUsed[tc.Name] = true
+						toolNames = append(toolNames, tc.Name)
+					}
+					result, _ := executeTool(tc, 0)
+					if iso != nil {
+						result = iso.truncateOutput(result)
+					}
+					history = append(history, agentMessage{Role: "user", Content: fmt.Sprintf("[Tool Result: %s]\n%s", tc.Name, result)})
+					continue
+				}
 				toolResult := fmt.Sprintf("[Tool Result: %s]\nError: Re-delegation is BLOCKED. You cannot spawn subagents. Complete the task yourself using your available tools.", tc.Name)
 				history = append(history, agentMessage{Role: "user", Content: toolResult})
 				continue

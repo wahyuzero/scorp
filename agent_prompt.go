@@ -87,9 +87,10 @@ The click result tells you:
 - "📄 Page text:" — what the page says after clicking
 
 ### Screenshot
-- ALWAYS take a screenshot as the LAST step of any browser task
+- TAKE EXACTLY ONE SCREENSHOT at the VERY END of the browser task
+- Do NOT screenshot after every action — only when the task is COMPLETE
 - browser action=screenshot
-- If you were asked to screenshot something, the task is NOT done until you call screenshot
+- If you were asked to screenshot something, the task is NOT done until you call screenshot ONCE
 
 ### Loop Prevention
 - If you type the same thing and click the same button TWICE with no change, STOP

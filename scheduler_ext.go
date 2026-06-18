@@ -31,12 +31,14 @@ func runShellTaskConfig(task ScheduledTask) (string, string) {
 	output := string(out)
 
 	if err != nil {
-		msg := fmt.Sprintf("⏰ <b>Scheduled Task (Error)</b>\n\n"+
-			"<b>Task:</b> %s\n<b>Error:</b> %s\n\n<pre>%s</pre>",
-			escapeHTML(truncateStr(task.Name+" ("+task.ID+")", 100)),
-			escapeHTML(err.Error()),
-			escapeHTML(truncateStr(output, 2000)))
-		sendMessageSmart(msg, nil)
+		if task.NotifyOnError || task.NotifyOnSuccess {
+			msg := fmt.Sprintf("⏰ <b>Scheduled Task (Error)</b>\n\n"+
+				"<b>Task:</b> %s\n<b>Error:</b> %s\n\n<pre>%s</pre>",
+				escapeHTML(truncateStr(task.Name+" ("+task.ID+")", 100)),
+				escapeHTML(err.Error()),
+				escapeHTML(truncateStr(output, 2000)))
+			notifyTaskResult(task, msg)
+		}
 		return output, "error"
 	}
 
@@ -45,7 +47,7 @@ func runShellTaskConfig(task ScheduledTask) (string, string) {
 		msg := fmt.Sprintf("⏰ <b>Scheduled Task ✓</b>\n\n<b>%s</b>\n\n<pre>%s</pre>",
 			escapeHTML(task.Name),
 			escapeHTML(truncateStr(output, 3000)))
-		sendMessageSmart(msg, nil)
+		notifyTaskResult(task, msg)
 	}
 
 	return output, "ok"
@@ -81,7 +83,7 @@ func runScriptTask(task ScheduledTask) (string, string) {
 			msg := fmt.Sprintf("📜 <b>Script Task (Error): %s</b>\n\n<pre>%s</pre>",
 				escapeHTML(task.Name),
 				escapeHTML(truncateStr(output, 2000)))
-			sendMessageSmart(msg, nil)
+			notifyTaskResult(task, msg)
 		}
 		return output, "error"
 	}
@@ -90,10 +92,30 @@ func runScriptTask(task ScheduledTask) (string, string) {
 		msg := fmt.Sprintf("📜 <b>Script Task ✓: %s</b>\n\n<pre>%s</pre>",
 			escapeHTML(task.Name),
 			escapeHTML(truncateStr(output, 3000)))
-		sendMessageSmart(msg, nil)
+		notifyTaskResult(task, msg)
 	}
 
 	return output, "ok"
+}
+
+// notifyTaskResult sends a notification respecting per-job ChatTarget override.
+// S06: If ChatTarget is set, send to that chat ID; otherwise use default.
+func notifyTaskResult(task ScheduledTask, msg string) {
+	if task.ChatTarget != 0 {
+		// Send to specific chat ID via direct API call
+		chunks := splitMessage(msg, 4000)
+		for _, chunk := range chunks {
+			payload := map[string]interface{}{
+				"chat_id":                  task.ChatTarget,
+				"text":                     chunk,
+				"parse_mode":               "HTML",
+				"disable_web_page_preview": true,
+			}
+			tgPost("/sendMessage", payload)
+		}
+	} else {
+		sendMessageSmart(msg, nil)
+	}
 }
 
 func isLikelyScriptPath(s string) bool {

@@ -30,10 +30,11 @@ const (
 type SubagentRole string
 
 const (
-	RoleAuto     SubagentRole = "auto"     // Use agent model (default)
-	RoleCoding   SubagentRole = "coding"   // Powerful coding model
-	RoleResearch SubagentRole = "research" // Fast model for search/summarize
-	RoleCheap    SubagentRole = "cheap"    // Cheapest model
+	RoleAuto         SubagentRole = "auto"         // Use agent model (default)
+	RoleCoding       SubagentRole = "coding"       // Powerful coding model
+	RoleResearch     SubagentRole = "research"     // Fast model for search/summarize
+	RoleCheap        SubagentRole = "cheap"        // Cheapest model
+	RoleOrchestrator SubagentRole = "orchestrator" // Can spawn own workers (re-delegation allowed)
 )
 
 // roleToTaskType maps a subagent role to a model routing task type.
@@ -45,6 +46,8 @@ func roleToTaskType(role SubagentRole) string {
 		return "research"
 	case RoleCheap:
 		return "chat"
+	case RoleOrchestrator:
+		return "agent" // orchestrator uses full agent model
 	default:
 		return "agent"
 	}
@@ -94,7 +97,8 @@ func executeDelegate(args map[string]interface{}) (string, bool) {
 	}
 
 	// Validate tools
-	params.Tools = validateSubagentTools(params.Tools)
+	isOrch := SubagentRole(params.Role) == RoleOrchestrator
+	params.Tools = validateSubagentTools(params.Tools, isOrch)
 
 	log.Printf("[delegate] Starting subagent: role=%s model=%s iters=%d task=%s",
 		params.Role, params.Model, params.MaxIters, truncateStr(params.Task, 60))
@@ -135,7 +139,7 @@ func parseDelegateParams(args map[string]interface{}) delegateTaskParams {
 
 	// Validate role
 	switch SubagentRole(p.Role) {
-	case RoleAuto, RoleCoding, RoleResearch, RoleCheap:
+	case RoleAuto, RoleCoding, RoleResearch, RoleCheap, RoleOrchestrator:
 		// valid
 	default:
 		p.Role = string(RoleAuto)
@@ -149,18 +153,18 @@ func defaultSubagentTools() []string {
 	return []string{"read_file", "search_code", "system_info", "log", "web_fetch", "web_search", "list_dir", "index_search"}
 }
 
-// validateSubagentTools filters out non-existent tools and ALWAYS blocks
-// dangerous tools and the delegate tools themselves (no re-delegation).
-func validateSubagentTools(tools []string) []string {
-	// Tools that subagents can NEVER have access to
+// validateSubagentTools filters out non-existent tools and blocks dangerous tools.
+// S08/GC4: Orchestrator role can use delegate/delegate_batch for re-delegation.
+func validateSubagentTools(tools []string, isOrchestrator bool) []string {
+	// Tools that subagents can NEVER have access to (unless orchestrator)
 	blocked := map[string]bool{
-		"delegate":       true, // No re-delegation
-		"delegate_batch": true, // No re-delegation
+		"delegate":       true, // Blocked unless orchestrator
+		"delegate_batch": true, // Blocked unless orchestrator
 	}
 
 	valid := []string{}
 	for _, t := range tools {
-		if blocked[t] {
+		if blocked[t] && !isOrchestrator {
 			continue
 		}
 		if _, ok := toolRegistry[t]; ok {
@@ -241,7 +245,8 @@ func executeDelegateBatch(args map[string]interface{}) (string, bool) {
 		if len(p.Tools) == 0 {
 			p.Tools = defaultSubagentTools()
 		}
-		p.Tools = validateSubagentTools(p.Tools)
+		isOrch := SubagentRole(p.Role) == RoleOrchestrator
+		p.Tools = validateSubagentTools(p.Tools, isOrch)
 		params.Tasks = append(params.Tasks, p)
 	}
 

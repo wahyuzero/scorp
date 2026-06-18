@@ -36,7 +36,7 @@ func executeBrowser(args map[string]interface{}, chatID int64) (string, bool) {
 		if selector == "" || text == "" {
 			return "Error: selector and text required for type", false
 		}
-		return browserSessionFill(selector, url, text, chatID)
+		return browserSessionFill(selector, text, url, chatID)
 	case "evaluate":
 		if code == "" {
 			return "Error: code required for evaluate", false
