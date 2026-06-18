@@ -347,6 +347,13 @@ func runAgentLoop(chatID int64, userMessage string, msgID int64) {
 					"🔑 <b>Token expired!</b>\n\nJalankan di server:\n<pre>scorp login</pre>", nil)
 				return
 			}
+			if isRateLimitError(err) {
+				editMessageByID(chatID, msgID,
+					"⏳ <b>Model sedang rate-limited</b>\n\n"+
+						"Sudah dicoba retry dengan backoff (15s + 30s + 60s) tapi masih kena limit.\n"+
+						"Task di-pause. Kirim ulang perintah dalam beberapa menit.", nil)
+				return
+			}
 			editMessageByID(chatID, msgID, fmt.Sprintf("❌ Error: %v", err), nil)
 			return
 		}
@@ -379,26 +386,28 @@ func runAgentLoop(chatID int64, userMessage string, msgID int64) {
 					reason = fmt.Sprintf("incomplete multi-step task (%d/%d steps)", toolCount, userSteps)
 				}
 				// Check if user mentioned browser/screenshot keywords but no screenshot was taken
-				if !shouldRetry && mentionsBrowserTask(userMessage) && !screenshotWasTaken(history) {
+				// FIX: Only trigger if browser tools were actually used in this session
+				// to prevent false-positive nudges on non-browser tasks
+				if !shouldRetry && mentionsBrowserTask(userMessage) && browserToolsWereUsed(history) && !screenshotWasTaken(history) {
 					shouldRetry = true
 					reason = "browser task not complete (no screenshot taken)"
 				}
 			}
 
-			// Cap retries at 3 to prevent infinite loops
-			if shouldRetry && noToolRetries > 3 {
+			// Cap retries at 5 to prevent infinite loops but give complex tasks more chances
+			if shouldRetry && noToolRetries > 5 {
 				log.Printf("[agent] Max no-tool retries (%d) reached, accepting as final answer", noToolRetries)
 				shouldRetry = false
 			}
 
 			if shouldRetry {
-				log.Printf("[agent] 0 tool calls at iteration %d (%s), retry %d/3 — injecting nudge", iteration, reason, noToolRetries)
+				log.Printf("[agent] 0 tool calls at iteration %d (%s), retry %d/5 — injecting nudge", iteration, reason, noToolRetries)
 				history = append(history, agentMessage{Role: "assistant", Content: reply})
 				appendSessionHistory(chatIDStr, agentMessage{Role: "assistant", Content: reply})
 
 				// Escalating urgency
 				var reminder string
-				if noToolRetries <= 2 {
+				if noToolRetries <= 3 {
 					reminder = fmt.Sprintf("⚠️ You haven't completed the task yet (%s). You must CALL TOOLS to finish. Do NOT describe what you would do — EXECUTE the tools NOW.", reason)
 				} else {
 					reminder = fmt.Sprintf("🚨 CRITICAL: The task is NOT complete (%s). This is your LAST CHANCE. Call the necessary tools immediately or explain clearly why you cannot proceed.", reason)
@@ -406,7 +415,7 @@ func runAgentLoop(chatID int64, userMessage string, msgID int64) {
 				history = append(history, agentMessage{Role: "user", Content: reminder})
 				appendSessionHistory(chatIDStr, agentMessage{Role: "user", Content: reminder})
 
-				thinkingLines = append(thinkingLines, fmt.Sprintf("⚠️ Retry %d/3: %s", noToolRetries, reason))
+				thinkingLines = append(thinkingLines, fmt.Sprintf("⚠️ Retry %d/5: %s", noToolRetries, reason))
 				editMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
 				continue
 			}
@@ -656,13 +665,13 @@ func resumeAgentLoop(chatID int64, messages []agentMessage, msgID int64) {
 				shouldRetry = true
 				reason = "continuation detected"
 			}
-			if shouldRetry && noToolRetries > 3 {
+			if shouldRetry && noToolRetries > 5 {
 				log.Printf("[agent-continue] Max no-tool retries (%d) reached, accepting as final answer", noToolRetries)
 				shouldRetry = false
 			}
 
 			if shouldRetry {
-				log.Printf("[agent-continue] 0 tool calls at iteration %d (%s), retry %d/3", iteration, reason, noToolRetries)
+				log.Printf("[agent-continue] 0 tool calls at iteration %d (%s), retry %d/5", iteration, reason, noToolRetries)
 				messages = append(messages, agentMessage{Role: "assistant", Content: reply})
 				appendSessionHistory(chatIDStr, agentMessage{Role: "assistant", Content: reply})
 
@@ -670,7 +679,7 @@ func resumeAgentLoop(chatID int64, messages []agentMessage, msgID int64) {
 				messages = append(messages, agentMessage{Role: "user", Content: reminder})
 				appendSessionHistory(chatIDStr, agentMessage{Role: "user", Content: reminder})
 
-				thinkingLines = append(thinkingLines, fmt.Sprintf("⚠️ Retry %d/3: %s", noToolRetries, reason))
+				thinkingLines = append(thinkingLines, fmt.Sprintf("⚠️ Retry %d/5: %s", noToolRetries, reason))
 				editMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
 				continue
 			}
@@ -780,12 +789,18 @@ func countStepsInMessage(msg string) int {
 		return count
 	}
 
-	// Count "then" / "after that" / "next" chains
+	// Count "then" / "after that" / "next" chains (EN + ID)
 	count += strings.Count(lower, " then ")
 	count += strings.Count(lower, " after that ")
 	count += strings.Count(lower, " next,")
 	count += strings.Count(lower, "\nthen ")
 	count += strings.Count(lower, "→")
+	count += strings.Count(lower, " lalu ")
+	count += strings.Count(lower, " kemudian ")
+	count += strings.Count(lower, " setelah ")
+	count += strings.Count(lower, " lalu\n")
+	count += strings.Count(lower, " kemudian\n")
+	count += strings.Count(lower, " setelah\n")
 
 	if count >= 2 {
 		return count + 1 // "do X then Y" = 2 steps minimum
@@ -827,6 +842,38 @@ func screenshotWasTaken(history []agentMessage) bool {
 		if msg.Role == "assistant" && strings.Contains(strings.ToLower(content), "screenshot") {
 			// Only count if it's a tool call, not just text mentioning screenshot
 			if strings.Contains(content, "<tool") || strings.Contains(content, "```tool") {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// browserToolsWereUsed checks if any browser.* tool was actually called during this session.
+// Used to prevent false-positive browser completion nudges on non-browser tasks.
+func browserToolsWereUsed(history []agentMessage) bool {
+	for _, msg := range history {
+		content, ok := msg.Content.(string)
+		if !ok {
+			continue
+		}
+		// Check for tool call markers referencing browser tools
+		browserTools := []string{
+			"[Tool Result: browser.", "browser.goto", "browser.type",
+			"browser.click", "browser.screenshot", "browser.navigate",
+			"browser.fill", "browser.scroll", "browser.evaluate",
+			"browser.session", "browser.back", "browser.forward",
+		}
+		for _, bt := range browserTools {
+			if strings.Contains(content, bt) {
+				return true
+			}
+		}
+		// Check assistant messages for browser tool call markup
+		if msg.Role == "assistant" {
+			lower := strings.ToLower(content)
+			if (strings.Contains(lower, "<tool") || strings.Contains(lower, "```tool")) &&
+				strings.Contains(lower, "browser") {
 				return true
 			}
 		}

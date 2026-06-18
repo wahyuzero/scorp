@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 )
 
 // ──────────────────────────────────────────────
@@ -309,24 +310,78 @@ func callModelWithTools(ctx context.Context, model *ModelConfig, messages []chat
 	return content, toolCalls, nil
 }
 
-// callModelWithToolsAndFallback tries with tools first, falls back to plain callModel
+// isRateLimitError checks if an error is caused by HTTP 429 (rate limit) or 402 (quota exhausted).
+func isRateLimitError(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "HTTP 429") ||
+		strings.Contains(msg, "HTTP 402") ||
+		strings.Contains(msg, "rate_limit") ||
+		strings.Contains(msg, "rate limit") ||
+		strings.Contains(msg, "quota") ||
+		strings.Contains(msg, "suspicious activity")
+}
+
+// callModelWithToolsAndFallback tries with tools first, falls back to plain callModel.
+// On rate-limit errors (429/402), retries with exponential backoff before giving up.
 func callModelWithToolsAndFallback(ctx context.Context, taskType string, messages []chatMessage) (string, []ToolCall, string, error) {
 	primary := routeModel(taskType)
+
+	// Rate-limit retry loop: try primary model up to 3 times with backoff
+	maxRateLimitRetries := 3
+	backoffSteps := []time.Duration{15 * time.Second, 30 * time.Second, 60 * time.Second}
+
 	if primary != nil {
-		text, toolCalls, err := callModelWithTools(ctx, primary, messages)
-		if err == nil {
-			return text, toolCalls, primary.Model, nil
+		var lastErr error
+		for attempt := 0; attempt <= maxRateLimitRetries; attempt++ {
+			// Try with tools first
+			text, toolCalls, err := callModelWithTools(ctx, primary, messages)
+			if err == nil {
+				return text, toolCalls, primary.Model, nil
+			}
+			lastErr = err
+
+			if !isRateLimitError(err) {
+				// Non-rate-limit error — try plain call, then fallback
+				log.Printf("[models] Primary model %s with tools failed: %v, trying plain", primary.Model, err)
+				text2, err2 := callModel(ctx, primary, messages)
+				if err2 == nil {
+					return text2, nil, primary.Model, nil
+				}
+				log.Printf("[models] Primary plain also failed: %v", err2)
+				break
+			}
+
+			// Rate-limit error — backoff and retry
+			if attempt < maxRateLimitRetries {
+				wait := backoffSteps[attempt]
+				log.Printf("[models] ⏳ Rate-limit detected (HTTP 429/402), backing off for %v before retry %d/%d",
+					wait, attempt+1, maxRateLimitRetries)
+				select {
+				case <-time.After(wait):
+				case <-ctx.Done():
+					return "", nil, "", ctx.Err()
+				}
+			}
 		}
-		log.Printf("[models] Primary model %s with tools failed: %v, trying plain", primary.Model, err)
-		// Fall back to plain call
-		text2, err2 := callModel(ctx, primary, messages)
-		if err2 == nil {
-			return text2, nil, primary.Model, nil
+
+		// If we exhausted rate-limit retries, try plain call one more time
+		if isRateLimitError(lastErr) {
+			log.Printf("[models] Rate-limit retries exhausted, trying plain call once more")
+			text2, err2 := callModel(ctx, primary, messages)
+			if err2 == nil {
+				return text2, nil, primary.Model, nil
+			}
+			if !isRateLimitError(err2) {
+				lastErr = err2
+			}
 		}
-		log.Printf("[models] Primary plain also failed: %v", err2)
+		_ = lastErr
 	}
 
-	// Fallback to default
+	// Fallback to default (chat) model
 	fallback := routeModel("chat")
 	if fallback != nil && (primary == nil || fallback.Model != primary.Model) {
 		text, err := callModel(ctx, fallback, messages)
@@ -335,8 +390,11 @@ func callModelWithToolsAndFallback(ctx context.Context, taskType string, message
 		}
 	}
 
-	// All models failed
-	return "", nil, "", fmt.Errorf("all models failed")
+	// All models failed — return descriptive error
+	if primary != nil {
+		return "", nil, "", fmt.Errorf("all models failed (primary: %s) — if rate-limited, wait and retry later", primary.Model)
+	}
+	return "", nil, "", fmt.Errorf("all models failed — no models configured")
 }
 
 // ──────────────────────────────────────────────
