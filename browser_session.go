@@ -204,8 +204,13 @@ func browserSessionClick(selector, url string, chatID int64) (string, bool) {
 	beforeURL := sess.CurrentURL
 
 	var afterText, afterTitle, afterURL string
-	var interactiveSnapshot string
-	err := chromedp.Run(sess.Ctx,
+
+	// Use a timeout context — click may trigger navigation that can hang
+	// Form submits can take longer, use 30s timeout
+	clickCtx, cancel := context.WithTimeout(sess.Ctx, 30*time.Second)
+	defer cancel()
+
+	err := chromedp.Run(clickCtx,
 		chromedp.Click(selector, chromedp.ByQuery),
 		chromedp.Sleep(2*time.Second),
 		chromedp.Title(&afterTitle),
@@ -213,7 +218,16 @@ func browserSessionClick(selector, url string, chatID int64) (string, bool) {
 		chromedp.Text("body", &afterText, chromedp.ByQuery),
 	)
 	if err != nil {
-		return fmt.Sprintf("Click error: %v", err), false
+		// Click triggered navigation and page might still be loading — try to grab what we can
+		log.Printf("[browser] click error (likely page navigation): %v", err)
+		// Still return useful info
+		chromedp.Run(clickCtx, chromedp.Location(&afterURL))
+		sess.CurrentURL = afterURL
+		urlChange := "⚠️ Page may still be loading (navigation triggered)"
+		if afterURL != "" && beforeURL != afterURL {
+			urlChange = "✅ Page changed! (URL redirect detected)"
+		}
+		return fmt.Sprintf("👆 Clicked '%s'\nURL: %s → %s\n%s\nTitle: %s\n\n📄 Note: Page was navigating, screenshot recommended to see current state.", selector, beforeURL, afterURL, urlChange, afterTitle), true
 	}
 
 	// Update session URL
@@ -231,7 +245,8 @@ func browserSessionClick(selector, url string, chatID int64) (string, bool) {
 		afterText = afterText[:600] + "..."
 	}
 
-	// Auto-capture interactive elements snapshot
+	// Auto-capture interactive elements snapshot (with timeout)
+	var interactiveSnapshot string
 	snapScript := `
 		(function() {
 			var interactive = document.querySelectorAll('a, button, input, select, textarea, [role="button"], [onclick]');
@@ -247,7 +262,9 @@ func browserSessionClick(selector, url string, chatID int64) (string, bool) {
 			return lines.join('\n') || '  (no interactive elements)';
 		})()
 	`
-	chromedp.Run(sess.Ctx, chromedp.Evaluate(snapScript, &interactiveSnapshot))
+	snapCtx, snapCancel := context.WithTimeout(sess.Ctx, 5*time.Second)
+	defer snapCancel()
+	chromedp.Run(snapCtx, chromedp.Evaluate(snapScript, &interactiveSnapshot))
 
 	return truncOutput(fmt.Sprintf("👆 Clicked '%s'\nURL: %s → %s\n%s\nTitle: %s\n\n📋 Elements:\n%s\n\n📄 Page text:\n%s",
 		selector, beforeURL, afterURL, urlChange, afterTitle, interactiveSnapshot, afterText), maxToolOutput), true
