@@ -1,37 +1,38 @@
 # scorp
 
-A small project — a personal AI agent for VPS management, written in Go.
+**Small agent, big tools.** A tiny Go binary that connects an LLM to your system — shell, files, browser, network, code — accessible from terminal or Telegram.
 
-It started as a monitoring script, grew into a Telegram bot with LLM integration, and is slowly becoming a general-purpose agent. Still rough around the edges, but it works (mostly).
-
-Not affiliated with any company or project. Built for personal use, shared in case someone finds it useful.
+Not a framework, not a platform. Just one binary that runs on anything and does things when you ask it to.
 
 ---
 
 ## What it does
 
-- **Chat with tools** — send a message, the AI decides which tools to use
-- **CLI + Telegram** — interactive REPL by default, optional Telegram bot
-- **VPS monitoring** — CPU/RAM/disk alerts, SSH login detection
-- **Multiple LLM providers** — OpenAI, Anthropic, Gemini, Groq, DeepSeek, Z.ai, OpenRouter, local (Ollama/LM Studio)
-- **MCP client** — connects to Model Context Protocol servers via stdio
-- **Self-update** — checks GitHub releases, one-command update via `/update`
+- **Agent, not chatbot** — every message goes through a tool-use loop. Ask it to check disk space, it runs `df -h`. Ask it to fix a config, it patches the file.
+- **Shell, files, code** — read/write/patch files, run commands, execute Python
+- **Browser** — headless Chrome via chromedp (navigate, click, scrape, screenshot)
+- **Network** — fetch URLs, search the web, make HTTP requests
+- **CLI + Telegram** — interactive REPL by default, optional Telegram bot for remote access
+- **Monitoring** — CPU/RAM/disk alerts, SSH login detection (toggle on/off)
+- **Multi-provider** — OpenAI, Anthropic, Gemini, Groq, DeepSeek, OpenRouter, Z.ai, Ollama, LM Studio
+- **MCP client** — connect to Model Context Protocol servers
+- **Self-update** — check GitHub releases, update with one command
 
-That's the idea anyway. Some features work better than others.
+Some features work better than others.
 
 ---
 
 ## Try it
 
 ```bash
-git clone https://github.com/OWNER/scorp.git
+git clone https://github.com/wahyuzero/scorp.git
 cd scorp
 ./install.sh
 ```
 
 The installer walks you through provider setup and optional Telegram configuration.
 
-If you just want CLI mode without Telegram:
+CLI mode without Telegram:
 
 ```bash
 scorp          # interactive REPL
@@ -41,29 +42,80 @@ scorp          # interactive REPL
 
 ## Configuration
 
-### .env (Telegram + API keys)
+### .env
 
 Copy `.env.example` to `.env` and fill in what you need:
 
 ```
 TELEGRAM_BOT_TOKEN=...     # optional, skip for CLI-only
 OPENAI_API_KEY=sk-...      # set only what you use
-GITHUB_REPO=owner/scorp    # for self-update checks
+GITHUB_REPO=wahyuzero/scorp    # for self-update checks
 ```
 
 ### models.json
 
-Located at `~/.scorp/models.json`. Defines which LLM models to use:
+Located at `~/.scorp/models.json`. Defines which LLM models to use.
+
+**OpenAI example:**
 
 ```json
 {
-  "default_model": "glm-4.7",
+  "default_model": "gpt-4o-mini",
+  "agent_model": "gpt-4o-mini",
   "models": {
-    "glm-4.7": {
-      "provider": "zai-coding",
-      "model": "glm-4.7",
-      "key_env": "GLM_API_KEY",
-      "base_url": "https://api.z.ai/api/coding/paas/v4",
+    "gpt-4o-mini": {
+      "provider": "openai",
+      "model": "gpt-4o-mini",
+      "key_env": "OPENAI_API_KEY",
+      "base_url": "https://api.openai.com/v1",
+      "max_tokens": 4096,
+      "api": "openai"
+    }
+  },
+  "routing_rules": {
+    "agent": "gpt-4o-mini",
+    "chat": "gpt-4o-mini"
+  },
+  "fallback_on_error": ["rate_limit", "timeout", "server_error"]
+}
+```
+
+**Anthropic Claude example:**
+
+```json
+{
+  "default_model": "claude-sonnet-4-20250514",
+  "agent_model": "claude-sonnet-4-20250514",
+  "models": {
+    "claude-sonnet-4-20250514": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-20250514",
+      "key_env": "ANTHROPIC_API_KEY",
+      "base_url": "https://api.anthropic.com",
+      "max_tokens": 4096,
+      "api": "anthropic"
+    }
+  },
+  "routing_rules": {
+    "agent": "claude-sonnet-4-20250514",
+    "chat": "claude-sonnet-4-20250514"
+  },
+  "fallback_on_error": ["rate_limit", "timeout", "server_error"]
+}
+```
+
+**Local (Ollama, no API key):**
+
+```json
+{
+  "default_model": "llama3.2",
+  "agent_model": "llama3.2",
+  "models": {
+    "llama3.2": {
+      "provider": "ollama",
+      "model": "llama3.2",
+      "key_env": "",
+      "base_url": "http://localhost:11434/v1",
       "max_tokens": 4096,
       "api": "openai"
     }
@@ -88,19 +140,24 @@ Located at `~/.scorp/models.json`. Defines which LLM models to use:
 - `/model` — change AI model
 - `/start` — interactive menu
 
+Any text that doesn't start with `/` is sent to the agent with full tool access.
+
 ---
 
 ## Self-update
 
-If `GITHUB_REPO` is set in `.env`, scorp checks for new GitHub releases on startup and notifies you. Run `/update` (Telegram) or `scorp update` (CLI) to download and install.
+Set `GITHUB_REPO` in `.env` to enable update checks. Scorp checks for new GitHub releases on startup and notifies you.
+
+```
+scorp update       # CLI
+/update            # Telegram
+```
 
 The update process:
 1. Fetches latest release from GitHub API
 2. Downloads the binary matching your OS/arch
 3. Replaces the running binary (backup kept at `scorp.bak`)
 4. Restarts the service if running under systemd
-
-If no prebuilt binary is available for your platform, it tells you to `git pull && make`.
 
 ---
 
@@ -125,12 +182,11 @@ scorp/
 ├── telegram/         # bot transport
 ├── agent/            # agent loop, prompt, chat
 ├── bootstrap/        # tool registry
-├── tools/            # tool implementations
-├── models/           # LLM config
+├── tools/            # 48 tool implementations
+├── models/           # LLM provider config
 ├── updater/          # self-update logic
 ├── config/           # paths + env
-├── session/          # session DB (SQLite)
-├── ...
+├── session/          # session DB (SQLite + FTS5)
 └── install.sh
 ```
 
@@ -145,7 +201,3 @@ Personal project, developed sporadically. No guarantees of stability or support.
 ## License
 
 MIT — see [LICENSE](LICENSE).
-
-## Acknowledgements
-
-Inspired by various open-source agent projects. Uses standard Go libraries and a few third-party packages listed in `go.mod`.
