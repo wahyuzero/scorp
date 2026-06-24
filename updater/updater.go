@@ -34,6 +34,14 @@ func SelfUpdate() (string, error) {
 			"Build manually: git pull && make", rel.TagName, runtime.GOOS, runtime.GOARCH), nil
 	}
 
+	// Termux check: CI binaries use glibc, Termux uses Bionic — incompatible
+	if isTermux() {
+		return fmt.Sprintf("🔔 Update %s available.\n"+
+			"Termux detected — prebuilt binaries are incompatible (glibc vs Bionic).\n"+
+			"Update manually:\n"+
+			"  cd ~/scorp && git pull && ./install.sh", rel.TagName), nil
+	}
+
 	// Step 3: Download
 	fmt.Printf("Downloading %s (%s)...\n", asset.Name, humanSize(asset.Size))
 	tmpPath, err := DownloadAsset(asset)
