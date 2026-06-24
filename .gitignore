@@ -25,7 +25,8 @@ vault.key
 models.json
 memory.json
 tokens/
-skills/
+# skills/ Go source IS tracked, only JSON data files are ignored
+skills/*.json
 
 # OS files
 .DS_Store
