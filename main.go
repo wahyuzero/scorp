@@ -1,63 +1,172 @@
 package main
 
 import (
+	"scorp-agent/agent"
+	"scorp-agent/bootstrap"
+	"scorp-agent/browser"
+	"scorp-agent/mcp"
+	"scorp-agent/models"
+	"scorp-agent/skills"
+	"scorp-agent/testutil"
+	"scorp-agent/telegram"
+	"scorp-agent/tools"
+	"scorp-agent/wizard"
+	"scorp-agent/loop"
+	"scorp-agent/metrics"
+	"scorp-agent/collectors"
+	"scorp-agent/config"
+	"scorp-agent/session"
+	"scorp-agent/rag"
+	"scorp-agent/scheduler"
+	"scorp-agent/updater"
 	"fmt"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
+	"runtime"
 	"strings"
 	"sync"
 	"syscall"
 	"time"
 )
-
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime)
 
-	// MCP-only mode: skip Telegram, just serve MCP over stdio
-	if len(os.Args) > 1 && os.Args[1] == "--mcp-server" {
-		log.Println("[mcp] MCP-only mode starting...")
-		StartMCPServerMode()
+	// Update subcommand: scorp update
+	if len(os.Args) > 1 && os.Args[1] == "update" {
+		msg, err := updater.SelfUpdate()
+		if err != nil {
+			fmt.Printf("❌ %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println(msg)
 		return
 	}
 
-	if err := loadConfig(); err != nil {
+	// Version subcommand: scorp version
+	if len(os.Args) > 1 && (os.Args[1] == "version" || os.Args[1] == "--version" || os.Args[1] == "-v") {
+		fmt.Printf("scorp %s (%s/%s)\n", updater.Version, runtime.GOOS, runtime.GOARCH)
+		repo := os.Getenv("GITHUB_REPO")
+		if repo != "" {
+			fmt.Printf("repo: %s\n", repo)
+		}
+		return
+	}
+
+	// MCP-only mode: skip everything, just serve MCP over stdio
+	if len(os.Args) > 1 && os.Args[1] == "--mcp-server" {
+		log.Println("[mcp] MCP-only mode starting...")
+		mcp.StartMCPServerMode()
+		return
+	}
+
+	// CLI mode: --cli flag OR no Telegram token configured
+	if isCLIMode() {
+		if err := config.LoadConfig(); err != nil {
+			// CLI mode can work without TELEGRAM_* vars
+			config.Cfg.TelegramBotToken = ""
+			config.Cfg.TelegramChatID = ""
+		}
+		startCLI()
+		return
+	}
+
+	if err := config.LoadConfig(); err != nil {
 		log.Fatalf("Config error: %v", err)
 	}
 
-	initTelegram()
+	// Wire callback for models package
+	models.UpdateEnvFile = func(key, value string) {
+		wizard.UpdateEnvFile(key, value)
+	}
+
+	// Wire callback for browser package
+	browser.SendFile = func(chatID, filePath string) bool {
+		return telegram.SendFile(chatID, filePath)
+	}
+
+	// Initialize unified config manager
+	config.InitConfigManager()
+
+	telegram.InitTelegram()
+
+	// Wire callback for telegram → main.go
+	telegram.HandleAction = handleAction
+
+	// Wire tools package callbacks (avoid import cycles)
+	tools.TgPost = func(method string, payload map[string]interface{}) (tools.TgResponse, error) {
+		resp, err := telegram.TgPost(method, payload)
+		if err != nil || resp == nil {
+			return tools.TgResponse{}, err
+		}
+		// telegram.go tgResponse only has OK, Description — Result is always nil
+		return tools.TgResponse{OK: resp.OK, Description: resp.Description, Result: nil}, nil
+	}
+
+	// Telegram callbacks → telegram.go functions
+	tools.SendMessage = func(text string, keyboard map[string]interface{}) bool {
+		return telegram.SendMessage(text, keyboard)
+	}
+	tools.SendMessageGetID = func(text string, chatID int64) int64 {
+		return telegram.SendMessageGetID(text, chatID)
+	}
+	tools.EditMessageByID = func(chatID int64, messageID int64, text string, keyboard map[string]interface{}) bool {
+		return telegram.EditMessageByID(chatID, messageID, text, keyboard)
+	}
+	tools.SendChatAction = func(chatID int64, action string) {
+		telegram.SendChatAction(chatID, action)
+	}
+
+	// Agent callbacks → agent package
+	tools.StorePendingConfirmation = func(chatID, toolName, command string, _ []tools.AgentMessage) {
+		agent.StorePendingConfirmation(chatID, toolName, command, nil)
+	}
+	tools.IsDangerousCommand = func(cmd string) bool {
+		return agent.IsDangerousCommand(cmd)
+	}
+
+	// Autonomous callbacks → agent package variables (type alias makes this work)
+	tools.AutoConfig = &agent.AutoConfig
+	tools.AutoMu = &agent.AutoMu
+	tools.AutoLog = &agent.AutoLog
+	tools.AutoKillFile = agent.AutoKillFile
+	tools.AutoCycleNum = &agent.AutoCycleNum
+	tools.SaveAutonomousConfig = agent.SaveAutonomousConfig
+	tools.SetKillSwitch = agent.SetKillSwitch
+	tools.RunAutonomousCycle = agent.RunAutonomousCycle
 
 	// Load dynamic skills from JSON files
-	loadSkills()
+	skills.Load()
 
 	// Init credential vault
-	initVault()
-
+	// Handled by bootstrap/vault.go init() (runs before main)
+	
 	// Init browser monitor (scheduled scraping + change detection)
-	initMonitor()
+	tools.InitMonitor()
 
 	// Init autonomous agent (Phase 7)
-	initAutonomous()
+	agent.LoadAutonomousConfig()
+	agent.LoadAutoLog()
+	log.Printf("[autonomous] Config loaded: enabled=%v interval=%v approval=%s (cycles=%d actions=%d)",
+		agent.AutoConfig.Enabled, agent.AutoConfig.Interval,
+		agent.AutoConfig.ApprovalLevel, agent.AutoConfig.TotalCycles, agent.AutoConfig.TotalActions)
+	bootstrap.RegisterAutonomous()
 
 	// Periodic browser session cleanup (every 5 min)
 	go func() {
 		for {
 			time.Sleep(5 * time.Minute)
-			cleanupStaleBrowserSessions()
+			browser.CleanupStaleBrowserSessions()
 		}
 	}()
 
 	log.Println("==================================================")
-	log.Println("VPS Monitor (Go) starting...")
-	log.Printf("Telegram Chat ID: %s", cfg.TelegramChatID)
-	log.Printf("Report interval: %ds", cfg.ReportInterval)
+	log.Println("Scorp Agent starting...")
+	log.Printf("Telegram Chat ID: %s", config.Cfg.TelegramChatID)
+	log.Printf("Report interval: %ds", config.Cfg.ReportInterval)
 	log.Println("==================================================")
-
-	// Start background samplers
-	startCPUSampler()
-	startDockerStatsSampler()
 
 	// Graceful shutdown
 	stop := make(chan os.Signal, 1)
@@ -66,9 +175,13 @@ func main() {
 	var wg sync.WaitGroup
 	done := make(chan struct{})
 
+	// Start background samplers
+	collectors.StartCPUSampler(done)
+	collectors.StartDockerStatsSampler(done)
+
 	// Start webhook server if configured, otherwise use long polling
-	if cfg.TelegramWebhookURL != "" {
-		if err := startWebhookServer(cfg.TelegramWebhookURL); err != nil {
+	if config.Cfg.TelegramWebhookURL != "" {
+		if err := telegram.StartWebhookServer(config.Cfg.TelegramWebhookURL); err != nil {
 			log.Fatalf("Failed to start webhook: %v", err)
 		}
 		log.Println("Webhook mode enabled")
@@ -82,33 +195,36 @@ func main() {
 		log.Println("Long polling mode enabled")
 	}
 
-	// 1. Hourly report loop
+	// 1. Hourly report loop (only if scheduled reports enabled)
+	if config.Cfg.ScheduledReportsEnabled {
+		loop.RepLoopCtl.Start(func(d chan struct{}) { hourlyLoop(d) })
+		log.Println("[main] Scheduled reports: ON")
+	} else {
+		log.Println("[main] Scheduled reports: OFF (toggle via SCHEDULED_REPORTS_ENABLED or Settings)")
+	}
+
+	// 2. Resource alert loop (only if monitoring enabled)
+	if config.Cfg.MonitoringEnabled {
+		loop.MonLoopCtl.Start(func(d chan struct{}) { resourceAlertLoop(d) })
+		log.Println("[main] Monitoring (resource alerts): ON")
+	} else {
+		log.Println("[main] Monitoring (resource alerts): OFF (toggle via MONITORING_ENABLED or Settings)")
+	}
+
+	// 3. Journal watcher (always on — feeds security event processor)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		hourlyLoop(done)
+		collectors.WatchJournal(done)
 	}()
 
-	// 2. Resource alert loop
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		resourceAlertLoop(done)
-	}()
-
-	// 3. Journal watcher
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		watchJournal(done)
-	}()
-
-	// 4. Security event processor
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		securityEventLoop(done)
-	}()
+	// 4. Security event processor (only if security alerts enabled)
+	if config.Cfg.SecurityAlertsEnabled {
+		loop.SecLoopCtl.Start(func(d chan struct{}) { securityEventLoop(d) })
+		log.Println("[main] Security alerts: ON")
+	} else {
+		log.Println("[main] Security alerts: OFF (toggle via SECURITY_ALERTS_ENABLED or Settings)")
+	}
 
 	// 5. Command/callback poller (handled above in webhook/long-polling branch)
 
@@ -116,60 +232,59 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		cleanupSessionsLoop(done)
+		agent.CleanupSessionsLoop(done)
 	}()
 
 	// 7. Start MCP servers (blocking - tools must be registered before LLM calls)
 	log.Println("[main] Starting MCP servers...")
-	StartMCPServers()
+	mcp.StartMCPServers()
 	log.Println("[main] MCP servers started")
 
 	// 7b. Start test endpoint (localhost only)
-	startTestEndpoint()
+	testutil.StartTestEndpoint()
 
 	// 8. Start MCP server mode (scorp-agent as MCP server)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		StartMCPServerMode()
+		mcp.StartMCPServerMode()
 	}()
-
 	// 8. Start scheduler
-	loadScheduledTasks()
+	// Wire callbacks (scheduler package can't import main)
+	scheduler.SendMessage = agent.SendMessageSmart
+	scheduler.SendMessageGetID = telegram.SendMessageGetID
+	scheduler.TgPost = func(method string, payload map[string]interface{}) {
+		telegram.TgPost(method, payload) // ignore return
+	}
+	scheduler.RunAgentLoop = agent.RunAgentLoop
+	scheduler.LoadTasks()
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		schedulerLoop(done)
+		scheduler.Loop(done)
 	}()
 
 	// 9. Load model router
-	loadModelConfig()
-	initModelUsage()
-	loadCostConfig()
-	loadCostTracker()
-
-	// 11. Hermes model watcher
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		hermesMonitorLoop(done)
-	}()
+	models.LoadModelConfig()
+	models.InitModelUsage()
+	models.LoadCostConfig()
+	models.LoadCostTracker()
 
 	// 12. Initialize memory cache
-	initMemoryCache()
+	tools.InitMemoryCache()
 
 	// 12b. Initialize session search DB (SQLite + FTS5)
-	initSessionDB()
+	session.InitSessionDB()
 
 	// 13. Initialize RAG index
-	initRAG()
-	initVectorRAG()
+	rag.InitRAG()
+	rag.InitVectorRAG()
 
 	// 13b. Start autonomous agent loop (Phase 7)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		autonomousLoop(done)
+		agent.AutonomousLoop(done)
 	}()
 
 	// 14. Start pprof server (localhost only, for debugging)
@@ -181,16 +296,16 @@ func main() {
 	}()
 
 	// 15. Start Prometheus metrics server
-	startMetricsServer()
+	metrics.StartServer()
 
 	// Setup inline query mode
-	setupInlineMode()
+	tools.SetupInlineMode()
 
 	// 16. Start uptime monitor
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		uptimeLoop(done)
+		tools.UptimeLoop(done)
 	}()
 
 	// Wait for shutdown signal
@@ -199,19 +314,31 @@ func main() {
 	close(done)
 
 	// Stop metrics server
-	stopMetricsServer()
+	metrics.StopServer()
 
 	// Stop webhook server if running
-	stopWebhookServer()
+	telegram.StopWebhookServer()
 
 	// Stop MCP server mode
-	StopMCPServerMode()
+	mcp.StopMCPServerMode()
 
 	// Stop MCP servers
-	StopMCPServers()
-	sendMessage("🔴 <b>VPS Monitor Stopped</b>", nil)
+	mcp.StopMCPServers()
+	telegram.SendMessage("🔴 <b>Scorp Agent Stopped</b>", nil)
 	wg.Wait()
 	log.Println("Goodbye.")
+}
+
+// isCLIMode returns true if running in CLI mode (--cli flag or no Telegram token)
+func isCLIMode() bool {
+	if len(os.Args) > 1 && os.Args[1] == "--cli" {
+		return true
+	}
+	// If no token in config or env, default to CLI
+	if config.Cfg.TelegramBotToken == "" && os.Getenv("TELEGRAM_BOT_TOKEN") == "" {
+		return true
+	}
+	return false
 }
 
 // ──────────────────────────────────────────────
@@ -222,15 +349,27 @@ func hourlyLoop(done chan struct{}) {
 	time.Sleep(5 * time.Second)
 
 	// Startup message (only if user is not actively using agent)
-	if !isUserActive() {
-		welcome := "🟢 <b>VPS Monitor Started</b>\n\n" +
-			"I'll send hourly status reports and real-time alerts.\n" +
-			"Use the menu below to check status anytime:"
-		sendMessage(welcome, mainMenuKeyboard())
+	if !agent.IsUserActive() {
+		welcome := "🟢 <b>Scorp Agent Active</b>\n\n" +
+			"I'm ready to help. Send any message to get started.\n" +
+			"Use the menu below for quick access:"
+		telegram.SendMessage(welcome, telegram.MainMenuKeyboard())
 		sendHourlyReport()
 	} else {
 		log.Println("Startup report deferred: user is active")
 	}
+
+	// Async update check (non-blocking)
+	go func() {
+		msg, err := updater.CheckAndNotify()
+		if err != nil {
+			log.Printf("[updater] check failed: %v", err)
+			return
+		}
+		if msg != "" {
+			telegram.SendMessage(msg, nil)
+		}
+	}()
 
 	// Clock-aligned: wait until the next full hour
 	for {
@@ -244,7 +383,7 @@ func hourlyLoop(done chan struct{}) {
 			return
 		case <-time.After(wait):
 			// Defer report if user is actively chatting/using agent
-			if isUserActive() {
+			if agent.IsUserActive() {
 				log.Println("Hourly report deferred: user is active")
 				continue
 			}
@@ -257,37 +396,37 @@ func sendHourlyReport() {
 	log.Println("Generating hourly report...")
 
 	// Collect all data concurrently
-	var sys SystemData
-	var docker DockerData
-	var coolify CoolifyData
-	var sec SecuritySummary
-	var stor StorageData
-	var net NetworkData
+	var sys collectors.SystemData
+	var docker collectors.DockerData
+	var coolify collectors.CoolifyData
+	var sec collectors.SecuritySummary
+	var stor collectors.StorageData
+	var net collectors.NetworkData
 
 	var wg sync.WaitGroup
 
 	wg.Add(1)
-	go func() { defer wg.Done(); sys = collectSystem() }()
+	go func() { defer wg.Done(); sys = collectors.CollectSystem() }()
 
 	wg.Add(1)
-	go func() { defer wg.Done(); docker = collectDocker() }()
+	go func() { defer wg.Done(); docker = collectors.CollectDocker() }()
 
 	wg.Add(1)
-	go func() { defer wg.Done(); coolify = collectCoolify() }()
+	go func() { defer wg.Done(); coolify = collectors.CollectCoolify() }()
 
 	wg.Add(1)
-	go func() { defer wg.Done(); sec = collectSecurity() }()
+	go func() { defer wg.Done(); sec = collectors.CollectSecurity() }()
 
 	wg.Add(1)
-	go func() { defer wg.Done(); stor = collectStorage() }()
+	go func() { defer wg.Done(); stor = collectors.CollectStorage() }()
 
 	wg.Add(1)
-	go func() { defer wg.Done(); net = collectNetwork() }()
+	go func() { defer wg.Done(); net = collectors.CollectNetwork() }()
 
 	wg.Wait()
 
-	msg := formatHourlyReport(sys, docker, coolify, sec, stor, net)
-	ok := sendMessage(msg, backButtonKeyboard())
+	msg := scheduler.FormatHourlyReport(sys, docker, coolify, sec, stor, net)
+	ok := telegram.SendMessage(msg, telegram.BackButtonKeyboard())
 	if ok {
 		log.Println("Hourly report sent successfully")
 	} else {
@@ -310,32 +449,32 @@ func resourceAlertLoop(done chan struct{}) {
 		}
 
 		// Collect concurrently
-		var sys SystemData
-		var docker DockerData
-		var stor StorageData
-		var net NetworkData
+		var sys collectors.SystemData
+		var docker collectors.DockerData
+		var stor collectors.StorageData
+		var net collectors.NetworkData
 
 		var wg sync.WaitGroup
 		wg.Add(4)
-		go func() { defer wg.Done(); sys = collectSystem() }()
-		go func() { defer wg.Done(); docker = collectDocker() }()
-		go func() { defer wg.Done(); stor = collectStorage() }()
-		go func() { defer wg.Done(); net = collectNetwork() }()
+		go func() { defer wg.Done(); sys = collectors.CollectSystem() }()
+		go func() { defer wg.Done(); docker = collectors.CollectDocker() }()
+		go func() { defer wg.Done(); stor = collectors.CollectStorage() }()
+		go func() { defer wg.Done(); net = collectors.CollectNetwork() }()
 		wg.Wait()
 
 		var allAlerts []string
-		allAlerts = append(allAlerts, checkSystemAlerts(sys)...)
-		allAlerts = append(allAlerts, checkDockerAlerts(docker)...)
-		allAlerts = append(allAlerts, checkStorageAlerts(stor)...)
-		allAlerts = append(allAlerts, checkNetworkAlerts(net)...)
+		allAlerts = append(allAlerts, scheduler.CheckSystemAlerts(sys)...)
+		allAlerts = append(allAlerts, scheduler.CheckDockerAlerts(docker)...)
+		allAlerts = append(allAlerts, scheduler.CheckStorageAlerts(stor)...)
+		allAlerts = append(allAlerts, scheduler.CheckNetworkAlerts(net)...)
 
-		for _, vnc := range checkVNCConnections() {
+		for _, vnc := range collectors.CheckVNCConnections() {
 			allAlerts = append(allAlerts, fmt.Sprintf("🖥️ <b>VNC CONNECTION</b>\n🕐 Time: %s", vnc.Time))
 		}
 
 		for _, alert := range allAlerts {
 			log.Println("Resource alert fired")
-			sendMessageSmart(alert, nil)
+			agent.SendMessageSmart(alert, nil)
 			time.Sleep(500 * time.Millisecond)
 		}
 
@@ -360,7 +499,7 @@ func securityEventLoop(done chan struct{}) {
 		select {
 		case <-done:
 			return
-		case event := <-eventChan:
+		case event := <-collectors.EventChan:
 			// Only ssh_login events come through now (real-time)
 			log.Printf("Security alert: %s by %s from %s", event.Type, event.User, event.IP)
 
@@ -369,16 +508,16 @@ func securityEventLoop(done chan struct{}) {
 				continue
 			}
 
-			sendMessageSmart(basicMsg, nil)
+			agent.SendMessageSmart(basicMsg, nil)
 
 			if event.IP != "" {
-				go enrichWithGeo(event)
+				go collectors.EnrichWithGeo(event)
 			}
 		}
 	}
 }
 
-func formatBasicAlert(event SecurityEvent) string {
+func formatBasicAlert(event collectors.SecurityEvent) string {
 	switch event.Type {
 	case "ssh_login":
 		return fmt.Sprintf("🔐 <b>SSH LOGIN</b>\n"+
@@ -406,8 +545,8 @@ func formatBasicAlert(event SecurityEvent) string {
 func commandLoop(done chan struct{}) {
 	time.Sleep(3 * time.Second)
 	log.Println("[telegram] Command loop started")
-	setupBotCommands()
-	os.MkdirAll(uploadsDir(), 0755)
+	telegram.SetupBotCommands()
+	os.MkdirAll(config.UploadsDir(), 0755)
 
 	for {
 		select {
@@ -416,7 +555,7 @@ func commandLoop(done chan struct{}) {
 		default:
 		}
 
-		commands, callbacks, documents, inlineQueries := pollUpdates()
+		commands, callbacks, documents, inlineQueries := telegram.PollUpdates()
 
 		for _, cmd := range commands {
 			log.Printf("Command: %s from %d", cmd.Text, cmd.ChatID)
@@ -425,45 +564,20 @@ func commandLoop(done chan struct{}) {
 
 		for _, cb := range callbacks {
 			log.Printf("Callback: %s from %d", cb.Data, cb.ChatID)
-			answerCallback(cb.CBID, "")
+			telegram.AnswerCallback(cb.CBID, "")
 			handleAction(cb.Data, cb.ChatID, cb.MsgID, cb.CBID)
 		}
 
 		for _, doc := range documents {
-			log.Printf("Upload received: %s (%s, photo=%v, voice=%v)", doc.FileName, humanSize(doc.FileSize), doc.IsPhoto, doc.IsVoice)
-			cid := fmt.Sprintf("%d", doc.ChatID)
+			log.Printf("Upload received: %s (%s, photo=%v)", doc.FileName, telegram.HumanSize(doc.FileSize), doc.IsPhoto)
 
-			// Voice message → STT → process as text
-			if doc.IsVoice {
-				go handleVoiceMessage(doc)
-				continue
-			}
-
-			// If in agent mode, route through agent (with vision for photos)
-			if isAgentMode(cid) {
-				go handleUploadInAgentMode(doc)
-				continue
-			}
-
-			// Default behavior: just save the file
-			dest := fmt.Sprintf("%s/%s", uploadsDir(), doc.FileName)
-			os.MkdirAll(uploadsDir(), 0755)
-			ok := downloadTelegramFile(doc.FileID, dest)
-			if ok {
-				fileType := "📄"
-				if doc.IsPhoto {
-					fileType = "🖼"
-				}
-				sendMessage(fmt.Sprintf("✅ <b>File Saved</b>\n%s %s\n📏 %s\n📂 <code>~/%s</code>\n\n💡 <i>Gunakan /agent untuk agent mode — AI bisa analisis gambar!</i>",
-					fileType, doc.FileName, humanSize(doc.FileSize), doc.FileName), mainMenuKeyboard())
-			} else {
-				sendMessage(fmt.Sprintf("❌ Failed to save <b>%s</b>", doc.FileName), mainMenuKeyboard())
-			}
+			// All uploads go through agent (vision for photos, analysis for files)
+			go agent.HandleUploadInAgentMode(doc)
 		}
 
 		for _, iq := range inlineQueries {
 			log.Printf("Inline query: %s from %d", iq.Query, iq.UserID)
-			handleInlineQuery(iq)
+			tools.HandleInlineQuery(iq)
 		}
 	}
 }
@@ -473,194 +587,219 @@ func handleAction(action string, chatID int64, messageID int64, callbackID strin
 	edit := isCallback && messageID != 0
 
 	switch {
-	case action == "/start" || action == "menu":
-		text := "🤖 <b>VPS Monitor</b>\n\nChoose an option from the menu below:"
-		kb := mainMenuKeyboard()
+	case action == "/start" || action == "mn:main":
+		text := "🤖 <b>Scorp Agent</b>\n\n" +
+			"💬 Type anything to chat with AI (agent-first)\n" +
+			"🛠 <code>/agent</code> for shell, file, web access\n" +
+			"━━━━━━━━━━━━━━━━━━━"
+		kb := telegram.MainMenuKeyboard()
 		if edit {
-			editMessage(chatID, messageID, text, kb)
+			telegram.EditMessage(chatID, messageID, text, kb)
 		} else {
-			sendMessage(text, kb)
+			telegram.SendMessage(text, kb)
 		}
+
+	case action == "mn:mon":
+		text := "📊 <b>Monitor Server</b>"
+		kb := telegram.MonitorMenuKeyboard()
+		if edit {
+			telegram.EditMessage(chatID, messageID, text, kb)
+		} else {
+			telegram.SendMessage(text, kb)
+		}
+
+	case action == "mn:sys":
+		text := "🔧 <b>System &amp; Tools</b>"
+		kb := telegram.SystemMenuKeyboard()
+		if edit {
+			telegram.EditMessage(chatID, messageID, text, kb)
+		} else {
+			telegram.SendMessage(text, kb)
+		}
+
+	case action == "mn:set":
+		text := telegram.SettingsMenuText()
+		kb := telegram.SettingsMenuKeyboard()
+		if edit {
+			telegram.EditMessage(chatID, messageID, text, kb)
+		} else {
+			telegram.SendMessage(text, kb)
+		}
+
+	case strings.HasPrefix(action, "set:"):
+		sub := action[4:]
+		switch sub {
+		case "mon":
+			config.Cfg.MonitoringEnabled = !config.Cfg.MonitoringEnabled
+			if config.Cfg.MonitoringEnabled {
+				loop.MonLoopCtl.Start(func(d chan struct{}) { resourceAlertLoop(d) })
+				telegram.AnswerCallback(callbackID, "✅ Monitoring ON")
+			} else {
+				loop.MonLoopCtl.Stop()
+				telegram.AnswerCallback(callbackID, "⏹️ Monitoring OFF")
+			}
+		case "sec":
+			config.Cfg.SecurityAlertsEnabled = !config.Cfg.SecurityAlertsEnabled
+			if config.Cfg.SecurityAlertsEnabled {
+				loop.SecLoopCtl.Start(func(d chan struct{}) { securityEventLoop(d) })
+				telegram.AnswerCallback(callbackID, "✅ Security ON")
+			} else {
+				loop.SecLoopCtl.Stop()
+				telegram.AnswerCallback(callbackID, "⏹️ Security OFF")
+			}
+		case "rep":
+			config.Cfg.ScheduledReportsEnabled = !config.Cfg.ScheduledReportsEnabled
+			if config.Cfg.ScheduledReportsEnabled {
+				loop.RepLoopCtl.Start(func(d chan struct{}) { hourlyLoop(d) })
+				telegram.AnswerCallback(callbackID, "✅ Reports ON")
+			} else {
+				loop.RepLoopCtl.Stop()
+				telegram.AnswerCallback(callbackID, "⏹️ Reports OFF")
+			}
+		default:
+			telegram.AnswerCallback(callbackID, "")
+		}
+		log.Printf("[settings] Toggle %s → mon=%v sec=%v rep=%v",
+			sub, config.Cfg.MonitoringEnabled, config.Cfg.SecurityAlertsEnabled, config.Cfg.ScheduledReportsEnabled)
+		// Refresh settings page
+		telegram.EditMessage(chatID, messageID, telegram.SettingsMenuText(), telegram.SettingsMenuKeyboard())
 
 	case action == "/status" || action == "status":
-		sys := collectSystem()
-		docker := collectDocker()
-		stor := collectStorage()
-		text := formatStatusResponse(sys, docker, stor)
-		kb := backAndRefreshKeyboard("status")
+		sys := collectors.CollectSystem()
+		docker := collectors.CollectDocker()
+		stor := collectors.CollectStorage()
+		text := scheduler.FormatStatusResponse(sys, docker, stor)
+		kb := telegram.BackAndRefreshKeyboard("status")
 		if edit {
-			editMessage(chatID, messageID, text, kb)
+			telegram.EditMessage(chatID, messageID, text, kb)
 		} else {
-			sendMessage(text, kb)
+			telegram.SendMessage(text, kb)
 		}
 
-	case action == "/report" || action == "report":
+	case action == "report":
 		if isCallback {
-			answerCallback(callbackID, "⏳ Generating full report...")
+			telegram.AnswerCallback(callbackID, "⏳ Generating full report...")
 		}
 		sendHourlyReport()
 
 	case action == "/containers" || action == "containers":
-		docker := collectDocker()
-		text := sectionDocker(docker)
-		kb := backAndRefreshKeyboard("containers")
+		docker := collectors.CollectDocker()
+		text := scheduler.SectionDocker(docker)
+		kb := telegram.BackAndRefreshKeyboard("containers")
 		if edit {
-			editMessage(chatID, messageID, text, kb)
+			telegram.EditMessage(chatID, messageID, text, kb)
 		} else {
-			sendMessage(text, kb)
+			telegram.SendMessage(text, kb)
 		}
 
 	case action == "/coolify" || action == "coolify":
-		coolify := collectCoolify()
-		text := sectionCoolify(coolify)
-		kb := backAndRefreshKeyboard("coolify")
+		coolify := collectors.CollectCoolify()
+		text := scheduler.SectionCoolify(coolify)
+		kb := telegram.BackAndRefreshKeyboard("coolify")
 		if edit {
-			editMessage(chatID, messageID, text, kb)
+			telegram.EditMessage(chatID, messageID, text, kb)
 		} else {
-			sendMessage(text, kb)
+			telegram.SendMessage(text, kb)
 		}
 
 	case action == "/security" || action == "security":
-		sec := collectSecurityWithPeek()
-		text := sectionSecurity(sec)
-		kb := backAndRefreshKeyboard("security")
+		sec := collectors.CollectSecurityWithPeek()
+		text := scheduler.SectionSecurity(sec)
+		kb := telegram.BackAndRefreshKeyboard("security")
 		if edit {
-			editMessage(chatID, messageID, text, kb)
+			telegram.EditMessage(chatID, messageID, text, kb)
 		} else {
-			sendMessage(text, kb)
+			telegram.SendMessage(text, kb)
 		}
 
 	case action == "/storage" || action == "storage":
-		stor := collectStorage()
-		text := sectionStorage(stor)
-		kb := backAndRefreshKeyboard("storage")
+		stor := collectors.CollectStorage()
+		text := scheduler.SectionStorage(stor)
+		kb := telegram.BackAndRefreshKeyboard("storage")
 		if edit {
-			editMessage(chatID, messageID, text, kb)
+			telegram.EditMessage(chatID, messageID, text, kb)
 		} else {
-			sendMessage(text, kb)
+			telegram.SendMessage(text, kb)
 		}
 
 	case action == "/network" || action == "network":
-		net := collectNetwork()
-		text := sectionNetwork(net)
-		kb := backAndRefreshKeyboard("network")
+		net := collectors.CollectNetwork()
+		text := scheduler.SectionNetwork(net)
+		kb := telegram.BackAndRefreshKeyboard("network")
 		if edit {
-			editMessage(chatID, messageID, text, kb)
+			telegram.EditMessage(chatID, messageID, text, kb)
 		} else {
-			sendMessage(text, kb)
-		}
-
-	case action == "/hermes" || action == "hermes":
-		hd := collectHermes()
-		text := formatHermesStatus(hd)
-		kb := backAndRefreshKeyboard("hermes")
-		if edit {
-			editMessage(chatID, messageID, text, kb)
-		} else {
-			sendMessage(text, kb)
+			telegram.SendMessage(text, kb)
 		}
 
 	case action == "/help" || action == "help":
-		text := fmt.Sprintf("❓ <b>VPS Monitor Help</b>\n\n"+
-			"<b>Interactive Menu:</b>\nTap buttons to navigate.\n\n"+
-			"<b>Monitor Commands:</b>\n"+
-			"/status — Quick status\n/report — Full report\n"+
-			"/containers — Docker\n/coolify — Coolify apps\n"+
-			"/security — Security\n/storage — Storage\n/network — Network\n\n"+
-			"<b>🤖 AI:</b>\n"+
-			"Ketik pesan apapun → chat langsung dengan AI\n"+
-			"/agent &lt;task&gt; — Agent mode (file/shell/web)\n"+
-			"/stop — Stop chat/agent mode\n"+
-			"/clear — Clear chat history\n"+
-			"/forget — Hapus sesi sepenuhnya\n"+
-			"/sessions — Lihat semua sesi tersimpan\n\n"+
-			"<b>🎯 Skills:</b>\n"+
-			"/skills — List skills\n"+
-			"/skill &lt;name&gt; &lt;task&gt; — Run a skill\n\n"+
-			"<b>Auto:</b>\n"+
-			"📊 Report: setiap jam\n🔐 SSH login: instant alert\n"+
-			"⚡ Resource check: 30s\n🔕 Cooldown: %d min",
-			cfg.AlertCooldown/60)
-		kb := backButtonKeyboard()
+		text := "🤖 <b>Scorp Agent</b>\n\n" +
+			"<b>Agent-First Mode:</b>\n" +
+			"💬 Type anything → processed by AI with tools\n" +
+			"🛠 <code>/agent</code> — enable agent mode explicitly\n" +
+			"🛑 <code>/stop</code> — disable agent mode\n" +
+			"🧹 <code>/clear</code> — clear chat history\n\n" +
+			"<b>Quick Commands:</b>\n"+
+			"🏠 <code>/start</code> — interactive menu\n"+
+			"🤖 <code>/model</code> — change AI model\n"+
+			"📦 <code>/update</code> — check & install updates\n"+
+			"📋 <code>/version</code> — show current version\n\n"+
+			"<b>Menu:</b> Monitor, System, Models — all via /start"
+		kb := telegram.BackButtonKeyboard()
 		if edit {
-			editMessage(chatID, messageID, text, kb)
+			telegram.EditMessage(chatID, messageID, text, kb)
 		} else {
-			sendMessage(text, kb)
+			telegram.SendMessage(text, kb)
 		}
 
 	case action == "/agent" || strings.HasPrefix(action, "/agent "):
-		cid := fmt.Sprintf("%d", chatID)
-		// Block if in chat mode
-		if isChatMode(cid) {
-			sendMessage("⚠️ Kamu sedang dalam chat mode. Ketik /stop dulu untuk beralih ke agent.", nil)
-			break
-		}
-		task := strings.TrimPrefix(action, "/agent")
-		task = strings.TrimSpace(task)
+			cid := fmt.Sprintf("%d", chatID)
+			task := strings.TrimPrefix(action, "/agent")
+			task = strings.TrimSpace(task)
 
-		enterAgentMode(cid)
+			agent.EnterAgentMode(cid)
 
-		if task == "" {
-			sendMessage("🤖 <b>Agent Mode aktif!</b>\n\n"+
-				"Agent sekarang bisa menjalankan perintah, baca/tulis file, dan akses sistem.\n"+
-				"Kirim pesan apapun untuk mulai.\n"+
-				"Ketik /stop untuk keluar.", nil)
-		} else {
-			go func() {
-				msgID := sendMessageGetID("⏳ <i>Thinking...</i>", chatID)
-				if msgID == 0 {
-					return
-				}
-				runAgentLoop(chatID, task, msgID)
-			}()
-		}
+					if task == "" {
+						telegram.SendMessage("🤖 <b>Agent Mode Active!</b>\n\n" +
+							"Agent can now run commands, read/write files, and access system.\n" +
+							"Send any message to start.\n" +
+							"Type /stop to exit.", nil)
+			} else {
+				go func() {
+					msgID := telegram.SendMessageGetID("⏳ <i>Thinking...</i>", chatID)
+					if msgID == 0 {
+						return
+					}
+					agent.RunAgentLoop(chatID, task, msgID)
+				}()
+			}
 
 	case action == "/stop":
 		cid := fmt.Sprintf("%d", chatID)
 		stopped := false
-		if exitAgentMode(cid) {
-			sendMessage("🛑 Agent mode dimatikan.", nil)
-			stopped = true
-		}
-		if exitChatMode(cid) {
-			sendMessage("🛑 Chat mode dimatikan.", nil)
+		if agent.ExitAgentMode(cid) {
+			telegram.SendMessage("🛑 Agent mode disabled.", nil)
 			stopped = true
 		}
 		if !stopped {
-			sendMessage("ℹ️ Tidak ada mode aktif.", nil)
+			telegram.SendMessage("ℹ️ No active mode.", nil)
 		}
 
 	case action == "/clear":
 		cid := fmt.Sprintf("%d", chatID)
-		clearChatSession(cid)
-		exitAgentMode(cid)
-		exitChatMode(cid)
-		sendMessage("🧹 Chat history dan semua mode di-reset.", nil)
-
-	case action == "/forget":
-		cid := fmt.Sprintf("%d", chatID)
-		clearChatSession(cid)
-		exitAgentMode(cid)
-		exitChatMode(cid)
-		sendMessage("🧹 <b>Sesi dihapus!</b>\n\nHistory agent & chat telah di-reset sepenuhnya.\nGunakan /agent untuk memulai sesi baru.", nil)
-
-	case action == "/voice":
-		enabled := toggleVoiceReply(chatID)
-		if enabled {
-			sendMessage("🎤 <b>Voice replies ON</b>\n\nBot akan membalas dengan voice message. Kirim /voice lagi untuk matikan.", nil)
-		} else {
-			sendMessage("🔇 <b>Voice replies OFF</b>\n\nBot akan membalas dengan text.", nil)
-		}
+		agent.ClearChatSession(cid)
+		agent.ExitAgentMode(cid)
+		telegram.SendMessage("🧹 Chat history and agent mode reset.", nil)
 
 	case action == "/sessions":
 		// List all saved sessions from disk
-		entries, err := os.ReadDir(historyDirPath())
+		entries, err := os.ReadDir(config.HistoryDirPath())
 		if err != nil || len(entries) == 0 {
-			sendMessage("📂 <b>Tidak ada sesi tersimpan.</b>", nil)
+			telegram.SendMessage("📂 <b>No saved sessions.</b>", nil)
 			break
 		}
 		var sb strings.Builder
-		sb.WriteString("📂 <b>Sesi Tersimpan:</b>\n\n")
+		sb.WriteString("📂 <b>Saved Sessions:</b>\n\n")
 		for _, e := range entries {
 			info, err := e.Info()
 			if err != nil {
@@ -669,24 +808,17 @@ func handleAction(action string, chatID int64, messageID int64, callbackID strin
 			name := strings.TrimSuffix(e.Name(), ".json")
 			size := info.Size()
 			modTime := info.ModTime().Format("2006-01-02 15:04")
-			sb.WriteString(fmt.Sprintf("• <code>%s</code> — %s (%s)\n", name, modTime, humanSize(size)))
+			sb.WriteString(fmt.Sprintf("• <code>%s</code> — %s (%s)\n", name, modTime, telegram.HumanSize(size)))
 		}
-		sb.WriteString("\n💡 <i>Gunakan /forget untuk hapus sesi saat ini.</i>")
-		sendMessage(sb.String(), nil)
+		sb.WriteString("\n💡 <i>Use /forget to delete current session.</i>")
+		telegram.SendMessage(sb.String(), nil)
 
 	case action == "/mcp":
-		summary := MCPToolsSummary()
-		sendMessage("🔌 <b>MCP Servers</b>\n\n"+summary+"\nUse <code>/mcp reload</code> to restart servers.", nil)
-
-	case action == "/mcp reload":
-		sendMessage("🔄 Reloading MCP servers...", nil)
-		go func() {
-			ReloadMCPServers()
-			sendMessage("✅ MCP servers reloaded.\n\n"+MCPToolsSummary(), nil)
-		}()
+		summary := mcp.MCPToolsSummary()
+		telegram.SendMessage("🔌 <b>MCP Servers</b>\n\n"+summary, nil)
 
 	case action == "/cron":
-		sendMessage(formatScheduledTasksList(), nil)
+		telegram.SendMessage(scheduler.FormatTasksList(), nil)
 
 	case strings.HasPrefix(action, "/cron "):
 		subCmd := strings.TrimPrefix(action, "/cron ")
@@ -694,48 +826,48 @@ func handleAction(action string, chatID int64, messageID int64, callbackID strin
 		switch parts[0] {
 		case "run":
 			if len(parts) < 2 {
-				sendMessage("❓ Usage: <code>/cron run t1</code>", nil)
+				telegram.SendMessage("❓ Usage: <code>/cron run t1</code>", nil)
 				break
 			}
-			task := getScheduledTask(strings.TrimSpace(parts[1]))
+			task := scheduler.GetTask(strings.TrimSpace(parts[1]))
 			if task == nil {
-				sendMessage(fmt.Sprintf("❌ Task %s not found.", parts[1]), nil)
+				telegram.SendMessage(fmt.Sprintf("❌ Task %s not found.", parts[1]), nil)
 			} else {
-				sendMessage(fmt.Sprintf("🚀 Running task %s...", task.ID), nil)
-				go runScheduledTask(*task)
+				telegram.SendMessage(fmt.Sprintf("🚀 Running task %s...", task.ID), nil)
+				go scheduler.RunTask(*task)
 			}
 		case "del", "delete", "rm":
 			if len(parts) < 2 {
-				sendMessage("❓ Usage: <code>/cron del t1</code>", nil)
+				telegram.SendMessage("❓ Usage: <code>/cron del t1</code>", nil)
 				break
 			}
-			if removeScheduledTask(strings.TrimSpace(parts[1])) {
-				sendMessage(fmt.Sprintf("✅ Task %s deleted.", parts[1]), nil)
+			if scheduler.RemoveTask(strings.TrimSpace(parts[1])) {
+				telegram.SendMessage(fmt.Sprintf("✅ Task %s deleted.", parts[1]), nil)
 			} else {
-				sendMessage(fmt.Sprintf("❌ Task %s not found.", parts[1]), nil)
+				telegram.SendMessage(fmt.Sprintf("❌ Task %s not found.", parts[1]), nil)
 			}
 		case "pause":
 			if len(parts) < 2 {
-				sendMessage("❓ Usage: <code>/cron pause t1</code>", nil)
+				telegram.SendMessage("❓ Usage: <code>/cron pause t1</code>", nil)
 				break
 			}
-			if toggleScheduledTask(strings.TrimSpace(parts[1]), false) {
-				sendMessage(fmt.Sprintf("⏸ Task %s paused.", parts[1]), nil)
+			if scheduler.ToggleTask(strings.TrimSpace(parts[1]), false) {
+				telegram.SendMessage(fmt.Sprintf("⏸ Task %s paused.", parts[1]), nil)
 			} else {
-				sendMessage(fmt.Sprintf("❌ Task %s not found.", parts[1]), nil)
+				telegram.SendMessage(fmt.Sprintf("❌ Task %s not found.", parts[1]), nil)
 			}
 		case "resume":
 			if len(parts) < 2 {
-				sendMessage("❓ Usage: <code>/cron resume t1</code>", nil)
+				telegram.SendMessage("❓ Usage: <code>/cron resume t1</code>", nil)
 				break
 			}
-			if toggleScheduledTask(strings.TrimSpace(parts[1]), true) {
-				sendMessage(fmt.Sprintf("▶️ Task %s resumed.", parts[1]), nil)
+			if scheduler.ToggleTask(strings.TrimSpace(parts[1]), true) {
+				telegram.SendMessage(fmt.Sprintf("▶️ Task %s resumed.", parts[1]), nil)
 			} else {
-				sendMessage(fmt.Sprintf("❌ Task %s not found.", parts[1]), nil)
+				telegram.SendMessage(fmt.Sprintf("❌ Task %s not found.", parts[1]), nil)
 			}
 		default:
-			sendMessage("❓ Usage:\n"+
+			telegram.SendMessage("❓ Usage:\n"+
 				"<code>/cron</code> — List all tasks\n"+
 				"<code>/cron run t1</code> — Run now\n"+
 				"<code>/cron del t1</code> — Delete\n"+
@@ -743,134 +875,108 @@ func handleAction(action string, chatID int64, messageID int64, callbackID strin
 				"<code>/cron resume t1</code> — Resume", nil)
 		}
 
-	case action == "/skills":
-		sendMessage(listSkills(), nil)
-
 	case action == "/model" || action == "/model list":
-		sendMessage(formatModelList(), nil)
-
-	case action == "/model check":
-		sendMessage("⏳ <i>Checking all API keys...</i>", nil)
-		go func() {
-			result := formatModelListWithHealth()
-			sendMessage(result, nil)
-		}()
-
-	case strings.HasPrefix(action, "/model use "):
-		name := strings.TrimPrefix(action, "/model use ")
-		sendMessage(switchModel("chat", strings.TrimSpace(name)), nil)
-
-	case strings.HasPrefix(action, "/model agent "):
-		name := strings.TrimPrefix(action, "/model agent ")
-		sendMessage(switchModel("agent", strings.TrimSpace(name)), nil)
+		if isCallback && edit {
+			telegram.EditMessage(chatID, messageID, wizard.ModelMenuText(), wizard.ModelMenuKeyboard())
+		} else {
+			telegram.SendMessage(wizard.ModelMenuText(), wizard.ModelMenuKeyboard())
+		}
 
 	case action == "/usage":
-		sendMessage(formatUsageStats(), nil)
+		telegram.SendMessage(models.FormatUsageStats(), nil)
 
-	case strings.HasPrefix(action, "/skill ") || action == "/skill":
-		if action == "/skill" {
-			sendMessage(listSkills(), nil)
-			return
-		}
-		skillPrompt, task, found := handleSkillCommand(action)
-		if !found {
-			sendMessage("❌ Skill tidak ditemukan. Ketik /skills untuk melihat daftar.", nil)
-			return
-		}
-
-		cid := fmt.Sprintf("%d", chatID)
-		enterAgentMode(cid)
-
-		if task == "" {
-			sendMessage("🤖 <b>Skill mode aktif!</b>\nKirim pesan untuk mulai.", nil)
-		} else {
-			// Run agent with skill prompt injected
-			msgID := sendMessageGetID("⏳ <i>Processing with skill...</i>", chatID)
-			if msgID == 0 {
+	case action == "/version" || action == "/update":
+		go func() {
+			if action == "/version" {
+				telegram.SendMessage(fmt.Sprintf("📦 <b>Version</b>\n\n"+
+					"scorp %s\nPlatform: %s/%s", updater.Version, runtime.GOOS, runtime.GOARCH), nil)
 				return
 			}
-			go func() {
-				// Inject skill context into user message
-				enhancedTask := fmt.Sprintf("[Skill Context]\n%s\n\n[User Task]\n%s", skillPrompt, task)
-				runAgentLoop(chatID, enhancedTask, msgID)
-			}()
-		}
+			// /update
+			telegram.SendMessage("⏳ <i>Checking for updates...</i>", nil)
+			msg, err := updater.SelfUpdate()
+			if err != nil {
+				telegram.SendMessage(fmt.Sprintf("❌ Update failed: %v", err), nil)
+			} else {
+				telegram.SendMessage(msg, nil)
+			}
+		}()
 
 	case action == "/files" || action == "files":
 		text := "📂 <b>File Manager</b>\n\nChoose a directory to browse:"
-		kb := rootsKeyboard()
+		kb := telegram.RootsKeyboard()
 		if edit {
-			editMessage(chatID, messageID, text, kb)
+			telegram.EditMessage(chatID, messageID, text, kb)
 		} else {
-			sendMessage(text, kb)
+			telegram.SendMessage(text, kb)
 		}
 
 	case strings.HasPrefix(action, "fb:"):
 		pid := action[3:]
-		path := getPath(pid)
+		path := telegram.GetPath(pid)
 		if path != "" {
-			text, kb := dirKeyboard(path)
+			text, kb := telegram.DirKeyboard(path)
 			if edit {
-				editMessage(chatID, messageID, text, kb)
+				telegram.EditMessage(chatID, messageID, text, kb)
 			} else {
-				sendMessage(text, kb)
+				telegram.SendMessage(text, kb)
 			}
 		}
 
 	case strings.HasPrefix(action, "fd:"):
 		pid := action[3:]
-		path := getPath(pid)
+		path := telegram.GetPath(pid)
 		if path != "" {
-			text, kb := fileDetailKeyboard(path)
+			text, kb := telegram.FileDetailKeyboard(path)
 			if edit {
-				editMessage(chatID, messageID, text, kb)
+				telegram.EditMessage(chatID, messageID, text, kb)
 			} else {
-				sendMessage(text, kb)
+				telegram.SendMessage(text, kb)
 			}
 		}
 
 	case strings.HasPrefix(action, "zp:"):
 		pid := action[3:]
-		path := getPath(pid)
+		path := telegram.GetPath(pid)
 		if path != "" {
-			text, kb := folderZipInfo(path)
+			text, kb := telegram.FolderZipInfo(path)
 			if edit {
-				editMessage(chatID, messageID, text, kb)
+				telegram.EditMessage(chatID, messageID, text, kb)
 			} else {
-				sendMessage(text, kb)
+				telegram.SendMessage(text, kb)
 			}
 		}
 
 	case strings.HasPrefix(action, "zc:"):
 		pid := action[3:]
-		path := getPath(pid)
+		path := telegram.GetPath(pid)
 		if path != "" {
 			if isCallback {
-				answerCallback(callbackID, "📦 Creating ZIP...")
+				telegram.AnswerCallback(callbackID, "📦 Creating ZIP...")
 			}
-			sendFolderAsZip(cfg.TelegramChatID, path)
+			telegram.SendFolderAsZip(config.Cfg.TelegramChatID, path)
 		}
 
 	case strings.HasPrefix(action, "dl:"):
 		pid := action[3:]
-		path := getPath(pid)
+		path := telegram.GetPath(pid)
 		if path != "" {
 			if isCallback {
-				answerCallback(callbackID, "⬇️ Sending file...")
+				telegram.AnswerCallback(callbackID, "⬇️ Sending file...")
 			}
-			if !sendFile(cfg.TelegramChatID, path) {
-				sendMessage("❌ Failed to send file (may be too large)", nil)
+			if !telegram.SendFile(config.Cfg.TelegramChatID, path) {
+				telegram.SendMessage("❌ Failed to send file (may be too large)", nil)
 			}
 		}
 
 	case action == "upload":
-		text := "📤 <b>Upload File</b>\n\nSend me any file and I'll save it to the server.\n\n" +
-			"It will be saved to <code>~/uploads/</code>\n(max 20MB via Telegram Bot API)"
-		kb := backButtonKeyboard()
+		text := "📤 <b>Upload File</b>\n\nKirim file apa saja dan saya akan menganalisisnya.\n\n" +
+			"Foto → analisis gambar\nFile → analisis konten\n(maks 20MB via Telegram Bot API)"
+		kb := telegram.BackButtonKeyboard()
 		if edit {
-			editMessage(chatID, messageID, text, kb)
+			telegram.EditMessage(chatID, messageID, text, kb)
 		} else {
-			sendMessage(text, kb)
+			telegram.SendMessage(text, kb)
 		}
 
 	default:
@@ -878,111 +984,73 @@ func handleAction(action string, chatID int64, messageID int64, callbackID strin
 			cid := fmt.Sprintf("%d", chatID)
 
 			// Check if there's a pending clarify question
-			if hasPendingClarify(cid) {
-				resolveClarify(action, cid, "")
+			if tools.HasPendingClarify(cid) {
+				tools.ResolveClarify(action, cid, "")
 				break
 			}
 
-			// If in agent mode, forward plain text through agentic loop
-			if isAgentMode(cid) && !strings.HasPrefix(action, "/") {
+			// Check if user is in model wizard
+			if wizard.GetModelWizard(chatID) != nil && !strings.HasPrefix(action, "/") {
+				if wizard.HandleModelWizardTextRouter(action, chatID) {
+					break
+				}
+			}
+			// Allow /cancel from wizard even if starts with /
+			if action == "/cancel" && wizard.GetModelWizard(chatID) != nil {
+				wizard.HandleModelWizardTextRouter(action, chatID)
+				break
+			}
+
+			// All plain text goes through agent loop (agent-first architecture)
+			if !strings.HasPrefix(action, "/") {
 				go func() {
-					msgID := sendMessageGetID("⏳ <i>Thinking...</i>", chatID)
+					msgID := telegram.SendMessageGetID("⏳ <i>Thinking...</i>", chatID)
 					if msgID == 0 {
 						return
 					}
 					// Auto-detect skill mentions in message
 					msg := action
-					if skillCtx := getSkillPromptForMessage(action); skillCtx != "" {
+					if skillCtx := skills.GetPromptForMessage(action); skillCtx != "" {
 						msg = action + skillCtx
 					}
-					runAgentLoop(chatID, msg, msgID)
+					agent.RunAgentLoop(chatID, msg, msgID)
 				}()
-			} else if !strings.HasPrefix(action, "/") {
-				// Natural text input → auto-enter chat mode and send to AI
-				if !isChatMode(cid) {
-					enterChatMode(cid)
-				}
-				go scorpStreamChat(chatID, action)
 			} else {
-				sendMessage(fmt.Sprintf("❓ Unknown command: %s\nUse /start to open the menu.", action),
-					mainMenuKeyboard())
+				telegram.SendMessage(fmt.Sprintf("❓ Unknown command: %s\nUse /start to open the menu.", action),
+					telegram.MainMenuKeyboard())
 			}
 		} else {
 			// Handle confirmation callbacks
 			if action == "confirm_yes" {
 				if isCallback {
-					answerCallback(callbackID, "✅ Confirmed")
+					telegram.AnswerCallback(callbackID, "✅ Confirmed")
 				}
-				go handleConfirmation(chatID, true)
+				go agent.HandleConfirmation(chatID, true)
 			} else if action == "confirm_no" {
 				if isCallback {
-					answerCallback(callbackID, "❌ Cancelled")
+					telegram.AnswerCallback(callbackID, "❌ Cancelled")
 				}
-				go handleConfirmation(chatID, false)
+				go agent.HandleConfirmation(chatID, false)
 			} else if strings.HasPrefix(action, "clarify:") {
-				// Handle clarify callback responses
+						// Handle clarify callback responses
+						if isCallback {
+							telegram.AnswerCallback(callbackID, "")
+						}
+						tools.ResolveClarify(action, fmt.Sprintf("%d", chatID), callbackID)
+			} else if strings.HasPrefix(action, "mdl:") {
+				// Model manager callbacks
 				if isCallback {
-					answerCallback(callbackID, "")
+					telegram.AnswerCallback(callbackID, "")
 				}
-				resolveClarify(action, fmt.Sprintf("%d", chatID), callbackID)
+				text, kb, handled := wizard.HandleModelCallback(action, chatID, messageID)
+				if handled && text != "" {
+					if edit {
+						telegram.EditMessage(chatID, messageID, text, kb)
+					} else {
+						telegram.SendMessage(text, kb)
+					}
+				}
 			}
-		}
-	}
-}
-
-// ──────────────────────────────────────────────
-// Hermes Model Monitor Loop
-// ──────────────────────────────────────────────
-
-func hermesMonitorLoop(done chan struct{}) {
-	time.Sleep(10 * time.Second)
-
-	// Initialize baseline snapshot
-	initial := collectHermes()
-	lastHermesSnapshot = initial.modelSnapshot()
-	log.Printf("[hermes] Monitor started. Model: %s | Provider: %s | OMH roles: %d | MCP: %d | Gateway: %s",
-		initial.Model, initial.Provider, len(initial.OMHRoles), len(initial.MCPServers), initial.GatewayStatus)
-
-	// Send startup notification
-	startupMsg := fmt.Sprintf("🤖 <b>Hermes Monitor Active</b>\n"+
-		"Model: <code>%s</code> (%s)\n"+
-		"Gateway: %s\n"+
-		"OMH roles: <b>%d</b> | MCP: <b>%d</b> | Aliases: <b>%d</b>\n"+
-		"Plugins: <code>%s</code>\n"+
-		"━━━━━━━━━━━━━━━━━\n"+
-		"Auto-switch:\n"+
-		"🔥 13:00 WIB → glm-5.1 (peak)\n"+
-		"🌙 17:00 WIB → glm-5.2 (off-peak)",
-		initial.Model, quotaMultiplier(initial.Model, initial.IsPeak),
-		initial.GatewayStatus,
-		len(initial.OMHRoles), len(initial.MCPServers), len(initial.Aliases),
-		strings.Join(initial.Plugins, ", "))
-	sendMessageSmart(startupMsg, nil)
-
-	for {
-		select {
-		case <-done:
-			return
-		default:
-		}
-
-		data := collectHermes()
-
-		snap := data.modelSnapshot()
-		if snap != lastHermesSnapshot {
-			oldModel := strings.SplitN(lastHermesSnapshot, "|", 2)[0]
-			log.Printf("[hermes] Change detected: %s → %s", lastHermesSnapshot, snap)
-			alert := formatModelChangeAlert(data, oldModel)
-			sendMessageSmart(alert, nil)
-			lastHermesSnapshot = snap
-		}
-
-		timer := time.NewTimer(30 * time.Second)
-		select {
-		case <-done:
-			timer.Stop()
-			return
-		case <-timer.C:
 		}
 	}
 }

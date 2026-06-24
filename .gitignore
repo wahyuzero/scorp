@@ -1,4 +1,8 @@
 # Binaries
+scorp
+scorp-minimal
+scorp-debug
+scorp.bak
 scorp-agent
 scorp-agent-minimal
 scorp-agent.bak.*
@@ -17,6 +21,16 @@ rag_index/
 vault.json
 vault.key
 
+# Sensitive configs (contain API keys if not migrated)
+models.json
+memory.json
+tokens/
+skills/
+
 # OS files
 .DS_Store
 Thumbs.db
+
+# Example/template files ARE tracked
+!models.example.json
+!.env.example
