@@ -159,6 +159,19 @@ func FindAssetForArch(rel *Release) *Asset {
 	return nil
 }
 
+// isTermux checks if we're running inside Termux.
+// Termux builds use Android's Bionic libc, which is incompatible with
+// the glibc binaries produced by GitHub Actions CI.
+func isTermux() bool {
+	if prefix := os.Getenv("PREFIX"); strings.Contains(prefix, "com.termux") {
+		return true
+	}
+	if _, err := os.Stat("/data/data/com.termux"); err == nil {
+		return true
+	}
+	return false
+}
+
 // DownloadAsset downloads a release asset to a temp file.
 // Returns the path to the downloaded file.
 func DownloadAsset(asset *Asset) (string, error) {

@@ -3,9 +3,6 @@ set -euo pipefail
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
 BIN="$DIR/scorp"
-INSTALL_BIN="/usr/local/bin/scorp"
-SERVICE="scorp"
-SVC_FILE="/etc/systemd/system/${SERVICE}.service"
 ENV_FILE="$DIR/.env"
 MODELS_FILE="$HOME/.scorp/models.json"
 
@@ -18,7 +15,40 @@ askd() { local val; read -rp "$(echo -e "${C}$1${N} [${2:-}]:")" val; echo "${va
 confirm() { local val; read -rp "$(echo -e "${C}$1${N} [y/N]:")" val; [[ "$val" =~ ^[Yy] ]]; }
 confirmY() { local val; read -rp "$(echo -e "${C}$1${N} [Y/n]:")" val; [[ ! "$val" =~ ^[Nn] ]]; }
 
+# ─── Detect environment ───
+IS_TERMUX=false
+SUDO=""
+PREFIX_BIN=""
+HAS_SYSTEMD=false
+
+if [ -n "${PREFIX:-}" ] && [[ "$PREFIX" == */com.termux* ]]; then
+    IS_TERMUX=true
+    PREFIX_BIN="$PREFIX/bin"
+elif [ -d "/data/data/com.termux" ]; then
+    IS_TERMUX=true
+    PREFIX_BIN="${PREFIX:-/data/data/com.termux/files/usr}/bin"
+fi
+
+if [ "$IS_TERMUX" = false ]; then
+    HAS_SYSTEMD=$(systemctl is-system-running >/dev/null 2>&1 && echo "yes" || echo "no")
+    if command -v sudo >/dev/null 2>&1; then
+        SUDO="sudo"
+    fi
+fi
+
+# Install path
+if [ "$IS_TERMUX" = true ]; then
+    INSTALL_BIN="$PREFIX_BIN/scorp"
+else
+    INSTALL_BIN="/usr/local/bin/scorp"
+fi
+
+SERVICE="scorp"
+SVC_FILE="/etc/systemd/system/${SERVICE}.service"
+
 echo -e "${B}=== scorp installer ===${N}"
+[ "$IS_TERMUX" = true ] && echo -e "${Y}Termux detected${N} (${PREFIX_BIN})"
+[ "$HAS_SYSTEMD" = "yes" ] && echo "systemd detected"
 
 TAGS="fts5"
 for arg in "$@"; do
@@ -29,12 +59,20 @@ done
 
 command -v git >/dev/null || die "git not installed"
 [ -f "$DIR/go.mod" ] || die "run from project root (go.mod not found)"
+
+# Add Go to PATH (standard Linux install location)
 export PATH="$PATH:/usr/local/go/bin"
-command -v go >/dev/null 2>&1 || die "Go not installed"
+command -v go >/dev/null 2>&1 || die "Go not installed (run: pkg install golang on Termux, or install from go.dev)"
+
+# Use grep -E instead of -P for portability (Termux grep may lack PCRE)
+grep_word() {
+    grep -oE "$1" "$2" 2>/dev/null | head -1 || echo ""
+}
 
 EXISTING_TOKEN=""
 if [ -f "$ENV_FILE" ]; then
-    EXISTING_TOKEN=$(grep -oP '^TELEGRAM_BOT_TOKEN=\K.*' "$ENV_FILE" 2>/dev/null || echo "")
+    EXISTING_TOKEN=$(grep_word '^TELEGRAM_BOT_TOKEN=.*' "$ENV_FILE")
+    EXISTING_TOKEN="${EXISTING_TOKEN#TELEGRAM_BOT_TOKEN=}"
 fi
 
 # ═══ Step 1: LLM Provider ═══
@@ -43,7 +81,7 @@ echo -e "${B}[1/3] LLM Provider${N}"
 
 SKIP_LLM=false
 if [ -f "$MODELS_FILE" ]; then
-    EXISTING_MODEL=$(grep -oP '"default_model":\s*"\K[^"]+' "$MODELS_FILE" 2>/dev/null || echo "")
+    EXISTING_MODEL=$(grep_word '"default_model":\s*"[^"]+"' "$MODELS_FILE")
     if [ -n "$EXISTING_MODEL" ]; then
         ok "models.json exists (model: $EXISTING_MODEL)"
         confirm "Reconfigure LLM?" || SKIP_LLM=true
@@ -85,7 +123,8 @@ if [ "$SKIP_LLM" = false ]; then
     if [ -n "$KEY_ENV" ] && [ "$PROVIDER" != "ollama" ]; then
         EXISTING_KEY=""
         if [ -f "$ENV_FILE" ]; then
-            EXISTING_KEY=$(grep -oP "^${KEY_ENV}=\K.*" "$ENV_FILE" 2>/dev/null || echo "")
+            EXISTING_KEY=$(grep_word "^${KEY_ENV}=.*" "$ENV_FILE")
+            EXISTING_KEY="${EXISTING_KEY#${KEY_ENV}=}"
         fi
         if [ -n "$EXISTING_KEY" ]; then
             ok "API key exists: ${EXISTING_KEY:0:8}..."
@@ -109,7 +148,8 @@ if [ -n "$EXISTING_TOKEN" ]; then
     if confirmY "Keep Telegram?"; then
         USE_TELEGRAM=true
         TG_TOKEN="$EXISTING_TOKEN"
-        EXISTING_CHATID=$(grep -oP '^TELEGRAM_CHAT_ID=\K.*' "$ENV_FILE" 2>/dev/null || echo "")
+        EXISTING_CHATID=$(grep_word '^TELEGRAM_CHAT_ID=.*' "$ENV_FILE")
+        EXISTING_CHATID="${EXISTING_CHATID#TELEGRAM_CHAT_ID=}"
         TG_CHATID="$EXISTING_CHATID"
     fi
 else
@@ -134,7 +174,7 @@ if [ "$USE_TELEGRAM" = true ] && [ -z "$TG_CHATID" ]; then
     if [ -z "$TG_CHATID" ]; then
         echo -e "  ${C}Auto-detecting (send any message to your bot first)...${N}"
         TG_CHATID=$(curl -s "https://api.telegram.org/bot${TG_TOKEN}/getUpdates?limit=1&offset=-1" \
-            | grep -oP '"chat":\{"id":\K[0-9]+' | head -1)
+            | grep_word '"chat":{"id":[0-9]+' | grep -oE '[0-9]+')
         if [ -n "$TG_CHATID" ]; then
             ok "Detected Chat ID: $TG_CHATID"
         else
@@ -154,12 +194,6 @@ if [ "$USE_TELEGRAM" = true ]; then
     confirm "Enable security alerts (SSH login)?" && SEC_ON="true"
 fi
 
-COOLIFY_URL=$(askd "  Coolify URL" "")
-COOLIFY_TOKEN=""
-if [ -n "$COOLIFY_URL" ]; then
-    COOLIFY_TOKEN=$(ask "  Coolify API Token:")
-fi
-
 # ═══ Summary ═══
 echo ""
 echo -e "${B}Summary:${N}"
@@ -170,7 +204,7 @@ else
 fi
 echo "  Provider: ${PROVIDER:-existing} / ${MODEL_ID:-existing}"
 [ "$USE_TELEGRAM" = true ] && echo "  Monitoring: $MON_ON | Security: $SEC_ON"
-[ -n "$COOLIFY_URL" ] && echo "  Coolify: $COOLIFY_URL"
+[ "$IS_TERMUX" = true ] && echo -e "  ${Y}Platform: Termux${N} (build from source, no systemd)"
 echo ""
 
 # ═══ Build & Install ═══
@@ -187,10 +221,6 @@ fi
 echo "MONITORING_ENABLED=$MON_ON" >> "$ENV_FILE"
 echo "SECURITY_ALERTS_ENABLED=$SEC_ON" >> "$ENV_FILE"
 echo "SCHEDULED_REPORTS_ENABLED=false" >> "$ENV_FILE"
-if [ -n "$COOLIFY_URL" ]; then
-    echo "COOLIFY_API_URL=$COOLIFY_URL" >> "$ENV_FILE"
-    [ -n "$COOLIFY_TOKEN" ] && echo "COOLIFY_API_TOKEN=$COOLIFY_TOKEN" >> "$ENV_FILE"
-fi
 ok ".env"
 
 mkdir -p "$HOME/.scorp"
@@ -222,11 +252,28 @@ echo "Building ($TAGS)..."
 CGO_ENABLED=1 go build -tags "$TAGS" -ldflags="-s -w" -trimpath -o "$BIN" . || die "Build failed"
 ok "Built: $(du -h "$BIN" | cut -f1)"
 
-sudo cp "$BIN" "$INSTALL_BIN"
-ok "Installed: $INSTALL_BIN"
+# ─── Install binary ───
+if [ "$IS_TERMUX" = true ]; then
+    # Termux: no sudo needed, install to $PREFIX/bin
+    cp "$BIN" "$INSTALL_BIN"
+    ok "Installed: $INSTALL_BIN"
+elif [ "$HAS_SYSTEMD" = "yes" ]; then
+    $SUDO cp "$BIN" "$INSTALL_BIN"
+    ok "Installed: $INSTALL_BIN"
+else
+    # Non-Termux, no systemd — try local bin
+    LOCAL_BIN="$HOME/.local/bin"
+    mkdir -p "$LOCAL_BIN"
+    cp "$BIN" "$LOCAL_BIN/scorp"
+    INSTALL_BIN="$LOCAL_BIN/scorp"
+    ok "Installed: $INSTALL_BIN"
+    warn "Add to PATH: export PATH=\"\$HOME/.local/bin:\$PATH\""
+fi
 
-if [ "$USE_TELEGRAM" = true ]; then
-    sudo tee "$SVC_FILE" > /dev/null << EOF
+# ─── Service setup (systemd only) ───
+if [ "$HAS_SYSTEMD" = "yes" ]; then
+    if [ "$USE_TELEGRAM" = true ]; then
+        $SUDO tee "$SVC_FILE" > /dev/null << EOF
 [Unit]
 Description=Scorp - Personal AI Agent
 After=network-online.target docker.service
@@ -247,37 +294,48 @@ OOMScoreAdjust=-500
 [Install]
 WantedBy=multi-user.target
 EOF
-    sudo systemctl daemon-reload
-    sudo systemctl enable "$SERVICE" 2>/dev/null
-    sudo systemctl restart "$SERVICE"
-    sleep 2
-    if systemctl is-active --quiet "$SERVICE"; then
-        ok "Service running! PID $(systemctl show -p MainPID --value "$SERVICE")"
+        $SUDO systemctl daemon-reload
+        $SUDO systemctl enable "$SERVICE" 2>/dev/null
+        $SUDO systemctl restart "$SERVICE"
+        sleep 2
+        if systemctl is-active --quiet "$SERVICE"; then
+            ok "Service running! PID $(systemctl show -p MainPID --value "$SERVICE")"
+        else
+            die "Service failed. Check: journalctl -u $SERVICE -e"
+        fi
     else
-        die "Service failed. Check: journalctl -u $SERVICE -e"
+        $SUDO systemctl stop "$SERVICE" 2>/dev/null || true
+        $SUDO systemctl disable "$SERVICE" 2>/dev/null || true
+        $SUDO rm -f "$SVC_FILE" 2>/dev/null || true
+        ok "CLI mode ready"
     fi
-else
-    sudo systemctl stop "$SERVICE" 2>/dev/null || true
-    sudo systemctl disable "$SERVICE" 2>/dev/null || true
-    sudo rm -f "$SVC_FILE" 2>/dev/null || true
-    ok "CLI mode ready"
 fi
 
 echo ""
 echo -e "${B}=== Done ===${N}"
 echo ""
-if [ "$USE_TELEGRAM" = true ]; then
+if [ "$IS_TERMUX" = true ]; then
+    if [ "$USE_TELEGRAM" = true ]; then
+        echo "  Bot running in foreground. For background:"
+        echo "    nohup scorp &"
+        echo "    (or use tmux: tmux new -s scorp, run scorp, Ctrl-B D)"
+    else
+        echo "  Run 'scorp' to start chatting."
+        echo "  Config:  ~/.scorp/models.json"
+        echo "  Env:     $ENV_FILE"
+    fi
+elif [ "$HAS_SYSTEMD" = "yes" ] && [ "$USE_TELEGRAM" = true ]; then
     echo "  Bot running 24/7 via systemd. CLI also available: run 'scorp'"
     echo ""
-    echo "  Logs:    sudo journalctl -u $SERVICE -f"
-    echo "  Stop:    sudo systemctl stop $SERVICE"
-    echo "  Restart: sudo systemctl restart $SERVICE"
+    echo "  Logs:    journalctl -u $SERVICE -f"
+    echo "  Stop:    systemctl stop $SERVICE"
+    echo "  Restart: systemctl restart $SERVICE"
 else
     echo "  Run 'scorp' to start chatting."
     echo "  Config:  ~/.scorp/models.json"
     echo "  Env:     $ENV_FILE"
 fi
 echo ""
-echo "  Update:  scorp update  (or /update in Telegram)"
+echo "  Update:  scorp update"
 echo "  Version: scorp version"
 echo ""
