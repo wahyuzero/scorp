@@ -632,6 +632,16 @@ func ShouldFallbackOnError(err error, triggers []string) bool {
 				strings.Contains(msg, "network") || strings.Contains(msg, "dial tcp") {
 				return true
 			}
+		case "insufficient_balance", "insufficient-quota":
+			if strings.Contains(msg, "402") || strings.Contains(msg, "insufficient") ||
+				strings.Contains(msg, "quota") || strings.Contains(msg, "balance") {
+				return true
+			}
+		default:
+			// Custom trigger from config — match as substring in error message
+			if strings.Contains(msg, trigger) {
+				return true
+			}
 		}
 	}
 	return false
