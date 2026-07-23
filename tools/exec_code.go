@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -217,6 +218,11 @@ func executeCodeTool(args map[string]interface{}, chatID int64) (string, bool) {
 // serviceBridgeRequests polls the bridge directory for tool requests from the Python script
 // and executes them using the agent's tool system.
 func serviceBridgeRequests(bridgeDir string, chatID int64, ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("[bridge] Panic recovered: %v", r)
+		}
+	}()
 	for {
 		select {
 		case <-ctx.Done():
@@ -237,16 +243,13 @@ func serviceBridgeRequests(bridgeDir string, chatID int64, ctx context.Context) 
 			}
 
 			reqPath := filepath.Join(bridgeDir, name)
-			// Derive response path
 			respName := strings.Replace(name, "req_", "resp_", 1)
 			respPath := filepath.Join(bridgeDir, respName)
 
-			// Skip if response already exists
 			if _, err := os.Stat(respPath); err == nil {
 				continue
 			}
 
-			// Read request
 			reqData, err := os.ReadFile(reqPath)
 			if err != nil {
 				continue
@@ -261,16 +264,22 @@ func serviceBridgeRequests(bridgeDir string, chatID int64, ctx context.Context) 
 				continue
 			}
 
-			// Execute tool
-			tc := models.ToolCall{Name: req.Tool, Args: req.Args}
-			result, ok := ExecuteTool(tc, chatID)
-
-			writeBridgeResponse(respPath, result, func() string {
-				if !ok {
-					return "tool returned error"
-				}
-				return ""
-			}())
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						log.Printf("[bridge] Tool exec panic: %v", r)
+						writeBridgeResponse(respPath, "", fmt.Sprintf("tool panic: %v", r))
+					}
+				}()
+				tc := models.ToolCall{Name: req.Tool, Args: req.Args}
+				result, ok := ExecuteTool(tc, chatID)
+				writeBridgeResponse(respPath, result, func() string {
+					if !ok {
+						return "tool returned error"
+					}
+					return ""
+				}())
+			}()
 		}
 
 		time.Sleep(50 * time.Millisecond)
