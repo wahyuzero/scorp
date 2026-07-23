@@ -27,9 +27,13 @@ minimal:
 debug:
 	$(GO) build -o $(BIN)-debug .
 
+install: $(BIN)
+	cp $(BIN) /usr/local/bin/$(BIN)
+	@echo "installed to /usr/local/bin/$(BIN)"
+
 deploy: $(BIN)
-	sudo cp $(BIN) /usr/local/bin/$(BIN)
-	sudo systemctl restart $(BIN)
+	cp $(BIN) /usr/local/bin/$(BIN)
+	systemctl restart $(BIN) || true
 
 deploy-minimal: minimal
 	sudo cp $(BIN)-minimal /usr/local/bin/$(BIN)
@@ -38,4 +42,4 @@ deploy-minimal: minimal
 clean:
 	rm -f $(BIN) $(BIN)-* ./*.bak
 
-.PHONY: default minimal debug deploy deploy-minimal clean
+.PHONY: default minimal debug install deploy deploy-minimal clean
