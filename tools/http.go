@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
@@ -30,6 +31,17 @@ func ExecuteHTTP(args map[string]interface{}) (string, bool) {
 	authValue := helpers.GetStringArg(args, "auth_value", "")
 	timeoutSec := helpers.GetIntArg(args, "timeout", 15)
 	followRedirects := helpers.GetBoolArg(args, "follow_redirects", true)
+
+	// Auto-inject Bearer token for agenton.me if AGENTON_API_KEY env is set
+	if strings.Contains(url, "agenton.me") {
+		if apiKey := os.Getenv("AGENTON_API_KEY"); apiKey != "" {
+			// Only auto-inject if user didn't explicitly set auth
+			if authType == "" && authValue == "" && headersStr == "" {
+				authType = "bearer"
+				authValue = apiKey
+			}
+		}
+	}
 
 	if timeoutSec > 60 {
 		timeoutSec = 60

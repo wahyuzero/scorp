@@ -159,7 +159,7 @@ func getNativeToolDefs() []registry.ToolSchema {
 			Type: "function",
 			Function: registry.ToolSchemaFunc{
 				Name:        "http",
-				Description: "Make HTTP requests to APIs or websites.",
+				Description: "Make HTTP requests to APIs or websites. PREFERRED tool for API calls. For auth: use auth_type=\"bearer\" + auth_value, or set headers as JSON string.",
 				Parameters: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{

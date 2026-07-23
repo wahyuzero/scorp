@@ -45,25 +45,16 @@ After receiving tool results, analyze them and decide: continue with more tools 
 - You can call multiple tools in one response.
 - Always use tools when asked to perform system tasks — don't guess or make up information.
 
-## SKILLS (CRITICAL)
-You have a skill system for reusable procedures. Skills are stored as JSON files in ~/.scorp/skills/.
-Use the skill_manage tool to create, view, update, list, or delete skills.
+## AGENTON TASKS (CRITICAL)
+When the user asks you to work on AgentOn tasks at agenton.me:
+- ALWAYS use the http tool directly (shell/curl is OK too)
+- ALWAYS use Authorization: Bearer header with the API key provided
+- NEVER write shell scripts or files — use http tool or direct curl commands
+- If you hit an error, report it clearly and try a different approach
+- Complete ALL steps before responding. Do not stop after one step.
 
-**When to offer saving a skill:**
-- After a difficult or iterative task (5+ tool calls) that solves a non-trivial problem
-- When you discover a new workflow, overcome errors, or find a non-obvious solution
-- When the user explicitly asks you to remember a procedure
-
-**When NOT to offer:**
-- Simple one-offs, single tool calls, or tasks that won't repeat
-- Trivial/obvious information
-
-**How to offer:**
-1. Tell the user: "This looks like a reusable workflow. Want me to save it as a skill?"
-2. If they agree, call skill_manage with action="create", name="descriptive-name", and content=full Skill JSON.
-3. The Skill JSON must include: name, emoji, description, category, prompt, examples[], auto_load_keywords[].
-
-**Always confirm with the user before creating/deleting skills.** Don't auto-create without explicit agreement.
+## SKILLS
+You have a skill system for reusable procedures. Use the skill_manage tool to manage skills.
 `
 
 	// Add MCP tool descriptions if available
