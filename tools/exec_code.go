@@ -304,7 +304,7 @@ func writeBridgeResponse(path, result, errMsg string) {
 func init() {
 	registry.RegisterTool(registry.ToolDef{
 		Name:        "execute_code",
-		Description: "Run a Python script with access to agent tools (read_file, write_file, terminal, search_files, patch, http_request, memory, json_parse, shell_quote, retry). 5-min timeout, 50KB stdout cap, max 50 tool calls. Use for batch operations, loops, data processing.",
+		Description: "ONLY for complex Python processing (data analysis, algorithms, batch ops). For API calls, use http tool instead. Agent tools: read_file, write_file, terminal, search_files, patch, http_request, memory, json_parse, shell_quote, retry. 5-min timeout, 50KB stdout cap, max 50 tool calls.",
 		Category:    "code",
 		Native:      true,
 		Execute: func(args map[string]interface{}, chatID int64) (string, bool) {

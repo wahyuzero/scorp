@@ -151,7 +151,7 @@ func maybeCompactHistory(chatID string, history []AgentMessage) []AgentMessage {
 	if sess != nil && sess.loopActive {
 		// During active loop: aggressively truncate to keep only recent messages + system prompt
 		// This prevents session bloat without LLM summarization race conditions
-		const keepDuringActiveLoop = 30 // keep last 30 messages + system prompt
+		const keepDuringActiveLoop = 15 // keep last 15 messages + system prompt
 		if len(history) > keepDuringActiveLoop+1 { // +1 for system prompt
 			// Find system prompt (first message with role="system")
 			systemIdx := -1

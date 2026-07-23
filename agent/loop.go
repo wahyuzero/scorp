@@ -21,9 +21,9 @@ import (
 	"time"
 )
 
-// maxIterations returns the max agent iterations, configurable via SCORP_MAX_ITERATIONS env (default 20)
+// maxIterations returns the max agent iterations, configurable via SCORP_MAX_ITERATIONS env (default 12)
 func maxIterations() int {
-	const defaultMax = 20
+	const defaultMax = 12
 	if v := os.Getenv("SCORP_MAX_ITERATIONS"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {
 			return n
