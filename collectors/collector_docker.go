@@ -3,10 +3,12 @@ package collectors
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -55,7 +57,13 @@ type containerStats struct {
 // Docker API via unix socket (no SDK dependency needed)
 var dockerHTTPClient *http.Client
 
+var dockerAvailable = false
+
 func InitDockerClient() {
+	if _, err := os.Stat("/var/run/docker.sock"); err != nil {
+		return
+	}
+	dockerAvailable = true
 	dockerHTTPClient = &http.Client{
 		Transport: &http.Transport{
 			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
@@ -67,6 +75,9 @@ func InitDockerClient() {
 }
 
 func dockerGet(path string) ([]byte, error) {
+	if !dockerAvailable {
+		return nil, fmt.Errorf("Docker not available")
+	}
 	if dockerHTTPClient == nil {
 		InitDockerClient()
 	}
