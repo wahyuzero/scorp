@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -42,8 +43,10 @@ type Config struct {
 var Cfg Config
 
 func LoadConfig() error {
-	// Load .env file (ignore error if not found — env vars may be set directly)
-	godotenv.Load()
+	// Load .env files (ignore errors — env vars may be set directly)
+	godotenv.Load(ScorpPath(".env"))                        // ~/.scorp/.env (base config)
+	godotenv.Load(filepath.Join(HomeDir(), "scorp", ".env")) // ~/scorp/.env (deployment config)
+	godotenv.Load()                                          // .env in CWD (local overrides)
 
 	Cfg.TelegramBotToken = EnvStr("TELEGRAM_BOT_TOKEN", "")
 	Cfg.TelegramChatID = EnvStr("TELEGRAM_CHAT_ID", "")
