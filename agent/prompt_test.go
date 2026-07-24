@@ -362,8 +362,8 @@ func TestMaxIterations(t *testing.T) {
 	t.Run("default value", func(t *testing.T) {
 		// Unset env
 		os.Unsetenv("SCORP_MAX_ITERATIONS")
-		if got := maxIterations(); got != 20 {
-			t.Errorf("maxIterations() = %d, want 20", got)
+		if got := maxIterations(); got != 12 {
+			t.Errorf("maxIterations() = %d, want 12", got)
 		}
 	})
 
@@ -378,16 +378,16 @@ func TestMaxIterations(t *testing.T) {
 	t.Run("invalid value returns default", func(t *testing.T) {
 		os.Setenv("SCORP_MAX_ITERATIONS", "not-a-number")
 		defer os.Unsetenv("SCORP_MAX_ITERATIONS")
-		if got := maxIterations(); got != 20 {
-			t.Errorf("maxIterations() = %d, want 20", got)
+		if got := maxIterations(); got != 12 {
+			t.Errorf("maxIterations() = %d, want 12", got)
 		}
 	})
 
 	t.Run("negative value returns default", func(t *testing.T) {
 		os.Setenv("SCORP_MAX_ITERATIONS", "-5")
 		defer os.Unsetenv("SCORP_MAX_ITERATIONS")
-		if got := maxIterations(); got != 20 {
-			t.Errorf("maxIterations() = %d, want 20", got)
+		if got := maxIterations(); got != 12 {
+			t.Errorf("maxIterations() = %d, want 12", got)
 		}
 	})
 }
