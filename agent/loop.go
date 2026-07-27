@@ -488,16 +488,16 @@ func RunAgentLoop(chatID int64, userMessage string, msgID int64) {
 					lastThinkingUpdate = time.Now()
 				}
 
-				// Store pending confirmation with full context
-				StorePendingConfirmation(chatIDStr, "shell", cmd, history)
-
 				thinkingLines = append(thinkingLines, "⚠️ Awaiting confirmation...")
 				tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
 				lastThinkingUpdate = time.Now()
 
-				tools.SendMessage(
+				promptMsgID := tools.SendMessageGetIDWithKeyboard(
 					fmt.Sprintf("⚠️ <b>Dangerous Command</b>\n\n<pre>%s</pre>\n\nAllow execution?", helpers.EscapeHTML(cmd)),
-					confirmKeyboard())
+					chatID, confirmKeyboard())
+
+				// Store pending confirmation with full context and prompt message ID
+				StorePendingConfirmation(chatIDStr, "shell", cmd, history, promptMsgID)
 				return
 			}
 
@@ -544,25 +544,31 @@ func RunAgentLoop(chatID int64, userMessage string, msgID int64) {
 // ──────────────────────────────────────────────
 
 type pendingConfirmation struct {
-	toolName string
-	command  string
-	messages []AgentMessage
-	created  time.Time
+	toolName    string
+	command     string
+	messages    []AgentMessage
+	created     time.Time
+	promptMsgID int64
 }
 
 var (
-	pendingConfirms = make(map[string]*pendingConfirmation)
+	pendingConfirms   = make(map[string]*pendingConfirmation)
 	pendingConfirmsMu sync.Mutex
 )
 
-func StorePendingConfirmation(chatID, toolName, command string, messages []AgentMessage) {
+func StorePendingConfirmation(chatID, toolName, command string, messages []AgentMessage, promptMsgID ...int64) {
 	pendingConfirmsMu.Lock()
 	defer pendingConfirmsMu.Unlock()
+	var pMsgID int64
+	if len(promptMsgID) > 0 {
+		pMsgID = promptMsgID[0]
+	}
 	pendingConfirms[chatID] = &pendingConfirmation{
-		toolName: toolName,
-		command:  command,
-		messages: messages,
-		created:  time.Now(),
+		toolName:    toolName,
+		command:     command,
+		messages:    messages,
+		created:     time.Now(),
+		promptMsgID: pMsgID,
 	}
 }
 
@@ -598,8 +604,8 @@ func confirmKeyboard() map[string]interface{} {
 	}
 }
 
-// handleConfirmation processes a user's yes/no response to a pending confirmation
-func HandleConfirmation(chatID int64, confirmed bool) {
+// HandleConfirmation processes a user's yes/no response to a pending confirmation
+func HandleConfirmation(chatID int64, confirmed bool, callbackMsgID ...int64) {
 	chatIDStr := fmt.Sprintf("%d", chatID)
 	pc := getPendingConfirmation(chatIDStr)
 
@@ -608,9 +614,19 @@ func HandleConfirmation(chatID int64, confirmed bool) {
 		return
 	}
 
+	targetMsgID := pc.promptMsgID
+	if len(callbackMsgID) > 0 && callbackMsgID[0] != 0 {
+		targetMsgID = callbackMsgID[0]
+	}
+
 	if !confirmed {
 		// User rejected
 		clearPendingConfirmation(chatIDStr)
+
+		if targetMsgID != 0 {
+			tools.EditMessageByID(chatID, targetMsgID,
+				fmt.Sprintf("⚠️ <b>Dangerous Command</b>\n\n<pre>%s</pre>\n\n❌ <b>REJECTED</b>", helpers.EscapeHTML(pc.command)), nil)
+		}
 
 		if pc.messages != nil {
 			// Resume agent with rejection
@@ -628,6 +644,11 @@ func HandleConfirmation(chatID int64, confirmed bool) {
 
 	// User confirmed — execute the command
 	clearPendingConfirmation(chatIDStr)
+
+	if targetMsgID != 0 {
+		tools.EditMessageByID(chatID, targetMsgID,
+			fmt.Sprintf("⚠️ <b>Dangerous Command</b>\n\n<pre>%s</pre>\n\n✅ <b>APPROVED</b>", helpers.EscapeHTML(pc.command)), nil)
+	}
 
 	result, ok := tools.ExecuteShell(map[string]interface{}{"command": pc.command, "timeout": 60}, chatID)
 	status := "✅"
@@ -753,13 +774,15 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 
 			if tc.Name == "shell" && IsDangerousCommand(helpers.GetStringArg(tc.Args, "command", "")) {
 				cmd := helpers.GetStringArg(tc.Args, "command", "")
-				StorePendingConfirmation(chatIDStr, "shell", cmd, messages)
 				thinkingLines = append(thinkingLines, "⚠️ Awaiting confirmation...")
 				tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
 				lastThinkingUpdate = time.Now()
-				tools.SendMessage(
+
+				promptMsgID := tools.SendMessageGetIDWithKeyboard(
 					fmt.Sprintf("⚠️ <b>Dangerous Command</b>\n\n<pre>%s</pre>\n\nAllow execution?", helpers.EscapeHTML(cmd)),
-					confirmKeyboard())
+					chatID, confirmKeyboard())
+
+				StorePendingConfirmation(chatIDStr, "shell", cmd, messages, promptMsgID)
 				return
 			}
 
