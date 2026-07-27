@@ -415,7 +415,7 @@ func RunAgentLoop(chatID int64, userMessage string, msgID int64) {
 			// Case 2: Tools were called before but task seems incomplete
 			// If the agent has used tools and then suddenly stops, it likely hasn't finished.
 			// This catches cases where the model says "done" but the task isn't actually complete.
-			if !shouldRetry && toolCount > 0 && noToolRetries <= 2 {
+			if !shouldRetry && toolCount > 0 && noToolRetries <= 5 {
 				// Check if user explicitly asked for multiple steps
 				if userSteps := countStepsInMessage(userMessage); userSteps >= 2 && toolCount < userSteps {
 					shouldRetry = true
