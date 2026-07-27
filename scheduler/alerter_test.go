@@ -438,6 +438,15 @@ func TestCheckStorageAlerts(t *testing.T) {
 	setAlertThresholds(90, 85, 85, 4, 512, 3600)
 	defer resetAlertCooldowns()
 
+	origGDrive := config.Cfg.RcloneGDriveMount
+	origS3 := config.Cfg.RcloneS3GatewayURL
+	config.Cfg.RcloneGDriveMount = "/custom/gdrive"
+	config.Cfg.RcloneS3GatewayURL = "https://s3.example.com"
+	defer func() {
+		config.Cfg.RcloneGDriveMount = origGDrive
+		config.Cfg.RcloneS3GatewayURL = origS3
+	}()
+
 	t.Run("no alerts when mounted and reachable", func(t *testing.T) {
 		resetAlertCooldowns()
 		d := collectors.StorageData{
