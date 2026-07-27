@@ -149,35 +149,47 @@ func maybeCompactHistory(chatID string, history []AgentMessage) []AgentMessage {
 	// Step 2: Check if we're in an active agent loop
 	sess := getSession(chatID)
 	if sess != nil && sess.loopActive {
-		// During active loop: aggressively truncate to keep only recent messages + system prompt
-		// This prevents session bloat without LLM summarization race conditions
-		const keepDuringActiveLoop = 15 // keep last 15 messages + system prompt
-		if len(history) > keepDuringActiveLoop+1 { // +1 for system prompt
-			// Find system prompt (first message with role="system")
+		// During active loop: truncate to keep recent messages + system prompt + initial user request (anchor goal).
+		// This prevents context loss for original user instructions no matter how many iterations run.
+		const keepDuringActiveLoop = 20 // keep last 20 messages
+		if len(history) > keepDuringActiveLoop+2 {
 			systemIdx := -1
+			userGoalIdx := -1
 			for i, msg := range history {
-				if msg.Role == "system" {
+				if systemIdx < 0 && msg.Role == "system" {
 					systemIdx = i
-					break
+				}
+				if userGoalIdx < 0 && msg.Role == "user" {
+					if content, ok := msg.Content.(string); ok {
+						if !strings.HasPrefix(content, "[Tool Result:") && !strings.HasPrefix(content, "⚠️") && !strings.HasPrefix(content, "🚨") {
+							userGoalIdx = i
+						}
+					}
 				}
 			}
 
 			var newHistory []AgentMessage
 			if systemIdx >= 0 {
-				// Keep system prompt + last keepDuringActiveLoop messages
 				newHistory = append(newHistory, history[systemIdx])
-				start := len(history) - keepDuringActiveLoop
-				if start <= systemIdx {
-					start = systemIdx + 1
-				}
-				newHistory = append(newHistory, history[start:]...)
-			} else {
-				// No system prompt, just keep last keepDuringActiveLoop messages
-				newHistory = history[len(history)-keepDuringActiveLoop:]
+			}
+			if userGoalIdx >= 0 && userGoalIdx != systemIdx {
+				newHistory = append(newHistory, history[userGoalIdx])
 			}
 
-			log.Printf("[compaction] Active loop: truncated from %d to %d messages (kept system + last %d)",
-				len(history), len(newHistory), keepDuringActiveLoop)
+			start := len(history) - keepDuringActiveLoop
+			if start > userGoalIdx+1 {
+				note := fmt.Sprintf("ℹ️ [Note: %d intermediate execution messages truncated to preserve context window. The agent loop is active and progressing.]", start-(userGoalIdx+1))
+				newHistory = append(newHistory, AgentMessage{Role: "user", Content: note})
+			} else {
+				start = userGoalIdx + 1
+			}
+
+			if start < len(history) {
+				newHistory = append(newHistory, history[start:]...)
+			}
+
+			log.Printf("[compaction] Active loop: truncated from %d to %d messages (kept system + user goal + last %d)",
+				len(history), len(newHistory), len(history)-start)
 
 			// Update session
 			sess.history = newHistory
