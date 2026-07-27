@@ -293,7 +293,11 @@ func CollectStorage() StorageData {
 
 func checkGDriveMount() GDriveInfo {
 	info := GDriveInfo{Path: config.Cfg.RcloneGDriveMount}
-	fi, err := os.Stat(config.Cfg.RcloneGDriveMount)
+	// Skip check if not configured (still at default value)
+	if info.Path == "" || info.Path == "/data/coolify/storage/gdrive" {
+		return info
+	}
+	fi, err := os.Stat(info.Path)
 	if err != nil || !fi.IsDir() {
 		return info
 	}
@@ -311,6 +315,11 @@ func checkGDriveMount() GDriveInfo {
 
 func checkS3Gateway() S3Info {
 	info := S3Info{URL: config.Cfg.RcloneS3GatewayURL}
+	// Skip check if not configured (still at default value)
+	if info.URL == "" || info.URL == "http://localhost:9900" {
+		info.Reachable = true // treat as OK if not configured
+		return info
+	}
 	client := httpShort
 	resp, err := client.Get(config.Cfg.RcloneS3GatewayURL)
 	if err != nil {
