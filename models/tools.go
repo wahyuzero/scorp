@@ -142,8 +142,7 @@ func IsRateLimitError(err error) bool {
 
 // CallModelWithToolsAndFallback tries with tools first, falls back to plain models.CallModel.
 // On rate-limit errors (429/402), retries with exponential backoff before giving up.
-// Phase 2: Supports N-tier fallback chain from config (fallback_models).
-// Phase 3 fix: Uses *models.ModelConfig pointers directly to avoid model-key mismatch.
+// Supports N-tier fallback chain from config (fallback_models).
 func CallModelWithToolsAndFallback(ctx context.Context, taskType string, messages []ChatMessage) (string, []ToolCall, string, error) {
 	ModelCfgMu.RLock()
 	cfg := ModelCfg

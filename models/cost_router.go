@@ -11,7 +11,7 @@ import (
 )
 
 // ──────────────────────────────────────────────
-// S05: Cost-Aware Routing + Time-Based Auto-Switch
+// Cost-Aware Routing + Time-Based Auto-Switch
 //
 // Tracks cost per model (est. $/1M tokens), enforces daily budgets,
 // and auto-switches to cheaper models during off-peak hours.

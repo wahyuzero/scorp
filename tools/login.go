@@ -39,7 +39,6 @@ type CredentialEntry struct {
 	Domain     string    `json:"domain"`     // e.g. "mail.example.com"
 	Username   string    `json:"username"`   // encrypted base64
 	Password   string    `json:"password"`   // encrypted base64
-	TOTPSecret string    `json:"totp_secret"` // encrypted base64
 	Created    time.Time `json:"created"`
 	Updated    time.Time `json:"updated"`
 }
