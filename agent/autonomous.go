@@ -20,7 +20,7 @@ import (
 )
 
 // ──────────────────────────────────────────────
-// Phase 7 — Autonomous Agent
+// Autonomous Agent
 // ──────────────────────────────────────────────
 
 // AutonomousConfig holds runtime config for the autonomous agent.

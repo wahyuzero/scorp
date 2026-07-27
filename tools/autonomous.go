@@ -9,7 +9,7 @@ import (
 )
 
 // ──────────────────────────────────────────────
-// Phase 7 — Autonomous Agent Tools (user-facing)
+// Autonomous Agent Tools (user-facing)
 // ──────────────────────────────────────────────
 
 // ExecuteAutonomous handles autonomous agent control commands

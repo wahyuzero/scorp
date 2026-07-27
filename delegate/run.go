@@ -20,7 +20,7 @@ func runSubagent(params delegateTaskParams) delegateResult {
 	start := time.Now()
 	subagentID := fmt.Sprintf("sub_%d", start.UnixNano())
 
-	// S08: Create isolation context
+	// Create isolation context
 	iso := defaultIsolation()
 	iso.WorkDir = createSubagentSandbox(subagentID)
 	registerSubagentIsolation(subagentID, iso)
@@ -29,7 +29,7 @@ func runSubagent(params delegateTaskParams) delegateResult {
 		unregisterSubagentIsolation(subagentID)
 	}()
 
-	// S08: Filter out state-modifying tools even if requested
+	// Filter out state-modifying tools even if requested
 	filteredTools := make([]string, 0, len(params.Tools))
 	for _, t := range params.Tools {
 		if isSubagentToolBlocked(t) {
@@ -181,7 +181,7 @@ func runSubagent(params delegateTaskParams) delegateResult {
 
 			result, _ := registry.ExecuteToolByName(tc.Name, tc.Args, 0) // chatID=0 for subagent (no Telegram)
 
-			// S08: Enforce output size limit
+			// Enforce output size limit
 			if iso != nil {
 				result = iso.truncateOutput(result)
 			}

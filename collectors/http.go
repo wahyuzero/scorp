@@ -5,8 +5,7 @@ import (
 	"time"
 )
 
-// httpShort is a local HTTP client for collectors package.
-// In a future phase, this will be shared via a common transport package.
+// httpShort is a local HTTP client for the collectors package.
 var httpShort = &http.Client{
 	Timeout: 15 * time.Second,
 }

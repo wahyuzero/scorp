@@ -40,7 +40,7 @@ type ModelRouterConfig struct {
 	Models       map[string]ModelConfig `json:"models"`
 	RoutingRules map[string]string      `json:"routing_rules"` // taskType → modelName
 
-	// Phase 2: Fallback chain configuration
+	// Fallback chain configuration
 	FallbackModels []string `json:"fallback_models,omitempty"`      // ordered list of model names to try
 	FallbackOnError []string `json:"fallback_on_error,omitempty"`   // error types that trigger fallback: "rate_limit", "timeout", "server_error", "auth_error"
 
@@ -507,8 +507,7 @@ func CallModelStream(ctx context.Context, model *ModelConfig, messages []ChatMes
 }
 
 // callModelWithFallback tries models in order until one succeeds.
-// Phase 2: Supports N-tier fallback chain from config (fallback_models).
-// Phase 3 fix: Uses *ModelConfig pointers directly to avoid model-key mismatch.
+// Supports N-tier fallback chain from config (fallback_models).
 func CallModelWithFallback(ctx context.Context, taskType string, messages []ChatMessage) (string, string, error) {
 	ModelCfgMu.RLock()
 	cfg := ModelCfg

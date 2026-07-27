@@ -10,7 +10,7 @@ import (
 )
 
 // ──────────────────────────────────────────────
-// S08: Delegate Isolation
+// Delegate Isolation
 //
 // Provides fully isolated context per subagent:
 // - Working directory sandbox
