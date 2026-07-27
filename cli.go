@@ -110,6 +110,13 @@ func wireCLICallbacks() {
 		return 1
 	}
 
+	tools.SendMessageGetIDWithKeyboard = func(text string, chatID int64, keyboard map[string]interface{}) int64 {
+		mu.Lock()
+		defer mu.Unlock()
+		fmt.Println(stripHTML(text))
+		return 1
+	}
+
 	// EditMessageByID → overwrite (just print)
 	tools.EditMessageByID = func(chatID int64, messageID int64, text string, keyboard map[string]interface{}) bool {
 		mu.Lock()
@@ -127,8 +134,8 @@ func wireCLICallbacks() {
 	}
 
 	// Agent callbacks
-	tools.StorePendingConfirmation = func(chatID, toolName, command string, _ []tools.AgentMessage) {
-		agent.StorePendingConfirmation(chatID, toolName, command, nil)
+	tools.StorePendingConfirmation = func(chatID, toolName, command string, _ []tools.AgentMessage, promptMsgID ...int64) {
+		agent.StorePendingConfirmation(chatID, toolName, command, nil, promptMsgID...)
 	}
 	tools.IsDangerousCommand = func(cmd string) bool {
 		return agent.IsDangerousCommand(cmd)

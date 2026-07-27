@@ -112,6 +112,9 @@ func main() {
 	tools.SendMessageGetID = func(text string, chatID int64) int64 {
 		return telegram.SendMessageGetID(text, chatID)
 	}
+	tools.SendMessageGetIDWithKeyboard = func(text string, chatID int64, keyboard map[string]interface{}) int64 {
+		return telegram.SendMessageGetIDWithKeyboard(text, chatID, keyboard)
+	}
 	tools.EditMessageByID = func(chatID int64, messageID int64, text string, keyboard map[string]interface{}) bool {
 		return telegram.EditMessageByID(chatID, messageID, text, keyboard)
 	}
@@ -120,8 +123,8 @@ func main() {
 	}
 
 	// Agent callbacks → agent package
-	tools.StorePendingConfirmation = func(chatID, toolName, command string, _ []tools.AgentMessage) {
-		agent.StorePendingConfirmation(chatID, toolName, command, nil)
+	tools.StorePendingConfirmation = func(chatID, toolName, command string, _ []tools.AgentMessage, promptMsgID ...int64) {
+		agent.StorePendingConfirmation(chatID, toolName, command, nil, promptMsgID...)
 	}
 	tools.IsDangerousCommand = func(cmd string) bool {
 		return agent.IsDangerousCommand(cmd)
@@ -979,6 +982,18 @@ func handleAction(action string, chatID int64, messageID int64, callbackID strin
 			telegram.SendMessage(text, kb)
 		}
 
+	case action == "/confirm_yes" || action == "confirm_yes":
+		if isCallback {
+			telegram.AnswerCallback(callbackID, "✅ Confirmed")
+		}
+		go agent.HandleConfirmation(chatID, true, messageID)
+
+	case action == "/confirm_no" || action == "confirm_no":
+		if isCallback {
+			telegram.AnswerCallback(callbackID, "❌ Cancelled")
+		}
+		go agent.HandleConfirmation(chatID, false, messageID)
+
 	default:
 		if !isCallback {
 			cid := fmt.Sprintf("%d", chatID)
@@ -1021,22 +1036,12 @@ func handleAction(action string, chatID int64, messageID int64, callbackID strin
 			}
 		} else {
 			// Handle confirmation callbacks
-			if action == "confirm_yes" {
+			if strings.HasPrefix(action, "clarify:") {
+				// Handle clarify callback responses
 				if isCallback {
-					telegram.AnswerCallback(callbackID, "✅ Confirmed")
+					telegram.AnswerCallback(callbackID, "")
 				}
-				go agent.HandleConfirmation(chatID, true)
-			} else if action == "confirm_no" {
-				if isCallback {
-					telegram.AnswerCallback(callbackID, "❌ Cancelled")
-				}
-				go agent.HandleConfirmation(chatID, false)
-			} else if strings.HasPrefix(action, "clarify:") {
-						// Handle clarify callback responses
-						if isCallback {
-							telegram.AnswerCallback(callbackID, "")
-						}
-						tools.ResolveClarify(action, fmt.Sprintf("%d", chatID), callbackID)
+				tools.ResolveClarify(action, fmt.Sprintf("%d", chatID), callbackID)
 			} else if strings.HasPrefix(action, "mdl:") {
 				// Model manager callbacks
 				if isCallback {

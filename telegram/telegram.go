@@ -285,18 +285,26 @@ func EditMessageByID(chatID int64, messageID int64, text string, keyboard map[st
 	return true
 }
 
-// sendMessageGetID sends a message and returns the message_id (0 on failure).
+// SendMessageGetID sends a message and returns the message_id (0 on failure).
 func SendMessageGetID(text string, chatID int64) int64 {
+	return SendMessageGetIDWithKeyboard(text, chatID, nil)
+}
+
+// SendMessageGetIDWithKeyboard sends a message with optional keyboard and returns the message_id (0 on failure).
+func SendMessageGetIDWithKeyboard(text string, chatID int64, keyboard map[string]interface{}) int64 {
 	payload := map[string]interface{}{
 		"chat_id":                  chatID,
 		"text":                     text,
 		"parse_mode":               "HTML",
 		"disable_web_page_preview": true,
 	}
+	if keyboard != nil {
+		payload["reply_markup"] = keyboard
+	}
 	data, _ := json.Marshal(payload)
 	resp, err := HttpClient.Post(TgBase+"/sendMessage", "application/json", bytes.NewReader(data))
 	if err != nil {
-		log.Printf("[telegram] sendMessageGetID error: %v", err)
+		log.Printf("[telegram] SendMessageGetID error: %v", err)
 		return 0
 	}
 	defer resp.Body.Close()

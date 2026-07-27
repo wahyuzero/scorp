@@ -14,12 +14,13 @@ import (
 
 // Telegram callbacks
 var (
-	SendMessage       func(text string, keyboard map[string]interface{}) bool
-	SendMessageGetID  func(text string, chatID int64) int64
-	EditMessageByID   func(chatID int64, messageID int64, text string, keyboard map[string]interface{}) bool
-	SendChatAction    func(chatID int64, action string)
-	AnswerCallback    func(callbackID string, text string)
-	TgPost            func(method string, payload map[string]interface{}) (TgResponse, error)
+	SendMessage                  func(text string, keyboard map[string]interface{}) bool
+	SendMessageGetID             func(text string, chatID int64) int64
+	SendMessageGetIDWithKeyboard func(text string, chatID int64, keyboard map[string]interface{}) int64
+	EditMessageByID              func(chatID int64, messageID int64, text string, keyboard map[string]interface{}) bool
+	SendChatAction               func(chatID int64, action string)
+	AnswerCallback               func(callbackID string, text string)
+	TgPost                       func(method string, payload map[string]interface{}) (TgResponse, error)
 )
 
 // File/bridge callbacks
@@ -29,7 +30,7 @@ var (
 
 // Confirmation/danger callbacks
 var (
-	StorePendingConfirmation func(chatID, toolName, command string, messages []AgentMessage)
+	StorePendingConfirmation func(chatID, toolName, command string, messages []AgentMessage, promptMsgID ...int64)
 	IsDangerousCommand       func(cmd string) bool
 )
 
