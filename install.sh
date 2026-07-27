@@ -1,341 +1,290 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# ══════════════════════════════════════════════════════════════
+#  install-scorp.sh — Scorp Agent Installer
+#  Repo   : https://github.com/wahyuzero/scorp
+#  Fokus  : Agent-first, build from source, systemd service
+# ══════════════════════════════════════════════════════════════
 set -euo pipefail
 
-DIR="$(cd "$(dirname "$0")" && pwd)"
-BIN="$DIR/scorp"
-ENV_FILE="$DIR/.env"
-MODELS_FILE="$HOME/.scorp/models.json"
-
-G='\033[0;32m'; Y='\033[0;33m'; R='\033[0;31m'; C='\033[0;36m'; B='\033[1m'; N='\033[0m'
+# ── Colors ──────────────────────────────────────────────────
+G='\033[0;32m'; Y='\033[0;33m'; R='\033[0;31m'
+C='\033[0;36m'; B='\033[1m';    N='\033[0m'
 ok()   { echo -e "${G}✓${N} $1"; }
 warn() { echo -e "${Y}⚠${N}  $1"; }
 die()  { echo -e "${R}✗${N} $1"; exit 1; }
-ask()  { local val; read -rp "$(echo -e "${C}$1${N}")" val; echo "$val"; }
-askd() { local val; read -rp "$(echo -e "${C}$1${N} [${2:-}]:")" val; echo "${val:-$2}"; }
-confirm() { local val; read -rp "$(echo -e "${C}$1${N} [y/N]:")" val; [[ "$val" =~ ^[Yy] ]]; }
-confirmY() { local val; read -rp "$(echo -e "${C}$1${N} [Y/n]:")" val; [[ ! "$val" =~ ^[Nn] ]]; }
+ask()  { local v; read -rp "$(echo -e "${C}  $1: ${N}")" v; echo "$v"; }
 
-# ─── Detect environment ───
-IS_TERMUX=false
-SUDO=""
-PREFIX_BIN=""
-HAS_SYSTEMD=false
+# ── Constants ───────────────────────────────────────────────
+REPO_URL="https://github.com/wahyuzero/scorp"
+SRC_DIR="/root/scorp_src"
+WORK_DIR="/root/scorp"
+INSTALL_BIN="/usr/local/bin/scorp"
+ENV_FILE="$WORK_DIR/.env"
+MODELS_FILE="$HOME/.scorp/models.json"
+SVC_FILE="/etc/systemd/system/scorp.service"
+GO_BIN="/usr/local/go/bin/go"
 
-if [ -n "${PREFIX:-}" ] && [[ "$PREFIX" == */com.termux* ]]; then
-    IS_TERMUX=true
-    PREFIX_BIN="$PREFIX/bin"
-elif [ -d "/data/data/com.termux" ]; then
-    IS_TERMUX=true
-    PREFIX_BIN="${PREFIX:-/data/data/com.termux/files/usr}/bin"
-fi
+echo ""
+echo -e "${B}╔══════════════════════════════════╗${N}"
+echo -e "${B}║     Scorp Agent Installer        ║${N}"
+echo -e "${B}╚══════════════════════════════════╝${N}"
+echo ""
 
-if [ "$IS_TERMUX" = false ]; then
-    HAS_SYSTEMD=$(systemctl is-system-running >/dev/null 2>&1 && echo "yes" || echo "no")
-    if command -v sudo >/dev/null 2>&1; then
-        SUDO="sudo"
+# ── Step 0: Prasyarat ────────────────────────────────────────
+echo -e "${B}[0/4] Checking prerequisites...${N}"
+
+command -v git  >/dev/null 2>&1 || die "git tidak terinstall. Jalankan: apt install git"
+command -v curl >/dev/null 2>&1 || die "curl tidak terinstall. Jalankan: apt install curl"
+
+# Cari Go yang benar (prioritas /usr/local/go/bin/go)
+if [ -x "$GO_BIN" ]; then
+    GO_VER=$("$GO_BIN" version | awk '{print $3}' | sed 's/go//')
+    ok "Go ditemukan: $GO_VER ($GO_BIN)"
+elif command -v go >/dev/null 2>&1; then
+    GO_BIN=$(command -v go)
+    GO_VER=$(go version | awk '{print $3}' | sed 's/go//')
+    GO_MINOR=$(echo "$GO_VER" | cut -d. -f2)
+    if [ "$GO_MINOR" -lt 21 ]; then
+        die "Go $GO_VER terlalu lama (minimal 1.21). Install: https://go.dev/dl/"
     fi
-fi
-
-# Install path
-if [ "$IS_TERMUX" = true ]; then
-    INSTALL_BIN="$PREFIX_BIN/scorp"
+    ok "Go ditemukan: $GO_VER"
 else
-    INSTALL_BIN="/usr/local/bin/scorp"
+    die "Go tidak terinstall. Install: https://go.dev/dl/"
 fi
 
-SERVICE="scorp"
-SVC_FILE="/etc/systemd/system/${SERVICE}.service"
+# CGO untuk fts5
+if command -v gcc >/dev/null 2>&1; then
+    ok "gcc ditemukan (fts5 enabled)"
+    BUILD_TAGS="fts5"
+    CGO_FLAG="CGO_ENABLED=1"
+else
+    warn "gcc tidak ada — build tanpa fts5"
+    BUILD_TAGS=""
+    CGO_FLAG="CGO_ENABLED=0"
+fi
 
-echo -e "${B}=== scorp installer ===${N}"
-[ "$IS_TERMUX" = true ] && echo -e "${Y}Termux detected${N} (${PREFIX_BIN})"
-[ "$HAS_SYSTEMD" = "yes" ] && echo "systemd detected"
+# ── Step 1: Credentials ──────────────────────────────────────
+echo ""
+echo -e "${B}[1/4] Credentials...${N}"
 
-TAGS="fts5"
-for arg in "$@"; do
-    case "$arg" in
-        --minimal) TAGS="$TAGS nobrowser" ;;
-    esac
-done
+OLD_TG_TOKEN=""; OLD_TG_CHATID=""; OLD_DEEPSEEK=""; OLD_AGENTON=""
 
-command -v git >/dev/null || die "git not installed"
-[ -f "$DIR/go.mod" ] || die "run from project root (go.mod not found)"
-
-# Add Go to PATH (standard Linux install location)
-export PATH="$PATH:/usr/local/go/bin"
-command -v go >/dev/null 2>&1 || die "Go not installed (run: pkg install golang on Termux, or install from go.dev)"
-
-# Use grep -E instead of -P for portability (Termux grep may lack PCRE)
-grep_word() {
-    grep -oE "$1" "$2" 2>/dev/null | head -1 || echo ""
-}
-
-EXISTING_TOKEN=""
 if [ -f "$ENV_FILE" ]; then
-    EXISTING_TOKEN=$(grep_word '^TELEGRAM_BOT_TOKEN=.*' "$ENV_FILE")
-    EXISTING_TOKEN="${EXISTING_TOKEN#TELEGRAM_BOT_TOKEN=}"
+    OLD_TG_TOKEN=$(grep -oP '(?<=^TELEGRAM_BOT_TOKEN=).+' "$ENV_FILE" 2>/dev/null || true)
+    OLD_TG_CHATID=$(grep -oP '(?<=^TELEGRAM_CHAT_ID=).+' "$ENV_FILE" 2>/dev/null || true)
+    OLD_DEEPSEEK=$(grep -oP '(?<=^DEEPSEEK_API_KEY=).+' "$ENV_FILE" 2>/dev/null || true)
+    OLD_AGENTON=$(grep -oP '(?<=^AGENTON_API_KEY=).+' "$ENV_FILE" 2>/dev/null || true)
+    ok "Credentials lama ditemukan di $ENV_FILE"
 fi
 
-# ═══ Step 1: LLM Provider ═══
-echo ""
-echo -e "${B}[1/3] LLM Provider${N}"
-
-SKIP_LLM=false
-if [ -f "$MODELS_FILE" ]; then
-    EXISTING_MODEL=$(grep_word '"default_model":\s*"[^"]+"' "$MODELS_FILE")
-    if [ -n "$EXISTING_MODEL" ]; then
-        ok "models.json exists (model: $EXISTING_MODEL)"
-        confirm "Reconfigure LLM?" || SKIP_LLM=true
-    fi
-fi
-
-PROVIDER=""; MODEL_ID=""; KEY_ENV=""; BASE_URL=""; API_KEY=""
-if [ "$SKIP_LLM" = false ]; then
-    echo "  Select provider:"
-    echo "    1) Z.AI / GLM        (free tier, recommended)"
-    echo "    2) DeepSeek"
-    echo "    3) OpenAI"
-    echo "    4) Groq              (free tier, fast)"
-    echo "    5) OpenRouter        (100+ models)"
-    echo "    6) Google Gemini"
-    echo "    7) Anthropic Claude"
-    echo "    8) Ollama            (local, no API key)"
-    echo "    9) Custom"
-    PCHOICE=$(askd "  Provider" "1")
-
-    case "$PCHOICE" in
-        1) PROVIDER="zai-coding";   MODEL_ID="glm-4.7";                  KEY_ENV="ZAI_CODING_API_KEY"; BASE_URL="https://api.z.ai/api/coding/paas/v4" ;;
-        2) PROVIDER="deepseek";     MODEL_ID="deepseek-chat";             KEY_ENV="DEEPSEEK_API_KEY";  BASE_URL="https://api.deepseek.com/v1" ;;
-        3) PROVIDER="openai";       MODEL_ID="gpt-4o-mini";              KEY_ENV="OPENAI_API_KEY";    BASE_URL="https://api.openai.com/v1" ;;
-        4) PROVIDER="groq";         MODEL_ID="llama-3.3-70b-versatile";  KEY_ENV="GROQ_API_KEY";      BASE_URL="https://api.groq.com/openai/v1" ;;
-        5) PROVIDER="openrouter";   MODEL_ID="deepseek/deepseek-chat";   KEY_ENV="OPENROUTER_API_KEY"; BASE_URL="https://openrouter.ai/api/v1" ;;
-        6) PROVIDER="gemini";       MODEL_ID="gemini-2.0-flash";         KEY_ENV="GOOGLE_API_KEY";    BASE_URL="https://generativelanguage.googleapis.com/v1beta" ;;
-        7) PROVIDER="anthropic";    MODEL_ID="claude-sonnet-4-20250514"; KEY_ENV="ANTHROPIC_API_KEY"; BASE_URL="https://api.anthropic.com" ;;
-        8) PROVIDER="ollama";       MODEL_ID="llama3.2";                  KEY_ENV="";                   BASE_URL="http://localhost:11434/v1" ;;
-        9)
-            PROVIDER="custom"
-            MODEL_ID=$(ask "  Model ID:")
-            KEY_ENV=$(ask "  Env var name for key (e.g. MY_API_KEY):")
-            BASE_URL=$(ask "  Base URL:")
-            ;;
-        *) die "Invalid choice" ;;
-    esac
-
-    if [ -n "$KEY_ENV" ] && [ "$PROVIDER" != "ollama" ]; then
-        EXISTING_KEY=""
-        if [ -f "$ENV_FILE" ]; then
-            EXISTING_KEY=$(grep_word "^${KEY_ENV}=.*" "$ENV_FILE")
-            EXISTING_KEY="${EXISTING_KEY#${KEY_ENV}=}"
-        fi
-        if [ -n "$EXISTING_KEY" ]; then
-            ok "API key exists: ${EXISTING_KEY:0:8}..."
-            confirm "Change key?" || API_KEY="$EXISTING_KEY"
-        fi
-        if [ -z "$API_KEY" ]; then
-            API_KEY=$(ask "  API Key ($KEY_ENV):")
-            [ -z "$API_KEY" ] && warn "No key - set it later in .env"
-        fi
-    fi
-fi
-
-# ═══ Step 2: Telegram (optional) ═══
-echo ""
-echo -e "${B}[2/3] Telegram (optional)${N}"
-
-TG_TOKEN=""; TG_CHATID=""; USE_TELEGRAM=false
-
-if [ -n "$EXISTING_TOKEN" ]; then
-    ok "Telegram already configured: ${EXISTING_TOKEN:0:12}..."
-    if confirmY "Keep Telegram?"; then
-        USE_TELEGRAM=true
-        TG_TOKEN="$EXISTING_TOKEN"
-        EXISTING_CHATID=$(grep_word '^TELEGRAM_CHAT_ID=.*' "$ENV_FILE")
-        EXISTING_CHATID="${EXISTING_CHATID#TELEGRAM_CHAT_ID=}"
-        TG_CHATID="$EXISTING_CHATID"
-    fi
+# Telegram Token
+if [ -n "$OLD_TG_TOKEN" ]; then
+    echo -e "  Token lama: ${C}${OLD_TG_TOKEN:0:15}...${N}"
+    read -rp "  $(echo -e "${C}Gunakan token lama? [Y/n]: ${N}")" USE_OLD
+    [[ "$USE_OLD" =~ ^[Nn] ]] && TG_TOKEN=$(ask "Bot Token baru") || TG_TOKEN="$OLD_TG_TOKEN"
 else
-    echo "  Skip = CLI mode (default)."
-    if confirm "Set up Telegram bot now?"; then
-        USE_TELEGRAM=true
-    fi
+    echo -e "  Dapatkan token dari ${C}@BotFather${N} di Telegram"
+    TG_TOKEN=$(ask "Bot Token (kosong = CLI-only mode)")
 fi
 
-if [ "$USE_TELEGRAM" = true ] && [ -z "$TG_TOKEN" ]; then
-    echo -e "  Get token from ${C}@BotFather${N} on Telegram"
-    TG_TOKEN=$(ask "  Bot Token:")
-    if [ -z "$TG_TOKEN" ]; then
-        warn "No token - falling back to CLI mode"
-        USE_TELEGRAM=false
-    fi
-fi
-
-if [ "$USE_TELEGRAM" = true ] && [ -z "$TG_CHATID" ]; then
-    echo -e "  Chat ID - get from ${C}@userinfobot${N}, or Enter to auto-detect"
-    TG_CHATID=$(ask "  Your Chat ID:")
-    if [ -z "$TG_CHATID" ]; then
-        echo -e "  ${C}Auto-detecting (send any message to your bot first)...${N}"
-        TG_CHATID=$(curl -s "https://api.telegram.org/bot${TG_TOKEN}/getUpdates?limit=1&offset=-1" \
-            | grep_word '"chat":{"id":[0-9]+' | grep -oE '[0-9]+')
-        if [ -n "$TG_CHATID" ]; then
-            ok "Detected Chat ID: $TG_CHATID"
-        else
-            warn "Could not auto-detect."
-            TG_CHATID=$(ask "  Enter Chat ID manually:")
+# Chat ID
+TG_CHATID=""
+if [ -n "$TG_TOKEN" ]; then
+    if [ -n "$OLD_TG_CHATID" ]; then
+        echo -e "  Chat ID lama: ${C}$OLD_TG_CHATID${N}"
+        read -rp "  $(echo -e "${C}Gunakan Chat ID lama? [Y/n]: ${N}")" USE_OLD_ID
+        [[ "$USE_OLD_ID" =~ ^[Nn] ]] && TG_CHATID=$(ask "Chat ID baru") || TG_CHATID="$OLD_TG_CHATID"
+    else
+        TG_CHATID=$(ask "Chat ID (Enter = auto-detect)")
+        if [ -z "$TG_CHATID" ]; then
+            echo -e "  ${C}Auto-detecting...${N}"
+            TG_CHATID=$(curl -s "https://api.telegram.org/bot${TG_TOKEN}/getUpdates?limit=1&offset=-1" \
+                | grep -oP '"id":\K[0-9]+' | head -1 || true)
+            [ -n "$TG_CHATID" ] && ok "Chat ID: $TG_CHATID" || TG_CHATID=$(ask "Chat ID (manual)")
         fi
     fi
 fi
 
-# ═══ Step 3: Options ═══
-echo ""
-echo -e "${B}[3/3] Options${N}"
-
-MON_ON="false"; SEC_ON="false"
-if [ "$USE_TELEGRAM" = true ]; then
-    confirm "Enable resource monitoring (CPU/RAM/Disk)?" && MON_ON="true"
-    confirm "Enable security alerts (SSH login)?" && SEC_ON="true"
-fi
-
-# ═══ Summary ═══
-echo ""
-echo -e "${B}Summary:${N}"
-if [ "$USE_TELEGRAM" = true ]; then
-    echo "  Mode: Telegram + CLI"
+# DeepSeek Key
+if [ -n "$OLD_DEEPSEEK" ]; then
+    echo -e "  DeepSeek key lama: ${C}${OLD_DEEPSEEK:0:12}...${N}"
+    read -rp "  $(echo -e "${C}Gunakan key lama? [Y/n]: ${N}")" USE_DS
+    [[ "$USE_DS" =~ ^[Nn] ]] && DEEPSEEK_KEY=$(ask "DeepSeek API Key") || DEEPSEEK_KEY="$OLD_DEEPSEEK"
 else
-    echo "  Mode: CLI only"
+    DEEPSEEK_KEY=$(ask "DeepSeek API Key (dari platform.deepseek.com)")
 fi
-echo "  Provider: ${PROVIDER:-existing} / ${MODEL_ID:-existing}"
-[ "$USE_TELEGRAM" = true ] && echo "  Monitoring: $MON_ON | Security: $SEC_ON"
-[ "$IS_TERMUX" = true ] && echo -e "  ${Y}Platform: Termux${N} (build from source, no systemd)"
+
+# AgentON Key
+AGENTON_KEY="${OLD_AGENTON:-}"
+if [ -z "$AGENTON_KEY" ]; then
+    AGENTON_KEY=$(ask "AgentON API Key (opsional, Enter skip)")
+fi
+[ -n "$AGENTON_KEY" ] && ok "AgentON key tersimpan" || true
+
+# ── Step 2: Clone / Update ───────────────────────────────────
 echo ""
+echo -e "${B}[2/4] Source code...${N}"
 
-# ═══ Build & Install ═══
-echo -e "${B}Building...${N}"
-
-echo "# scorp - generated $(date)" > "$ENV_FILE"
-if [ "$USE_TELEGRAM" = true ]; then
-    echo "TELEGRAM_BOT_TOKEN=$TG_TOKEN" >> "$ENV_FILE"
-    echo "TELEGRAM_CHAT_ID=$TG_CHATID" >> "$ENV_FILE"
+if [ -d "$SRC_DIR/.git" ]; then
+    echo "  Update repo..."
+    git -C "$SRC_DIR" fetch origin
+    git -C "$SRC_DIR" reset --hard origin/main 2>&1 | tail -2
+    ok "Source diupdate"
+else
+    echo "  Cloning $REPO_URL..."
+    git clone "$REPO_URL" "$SRC_DIR" 2>&1 | tail -3
+    ok "Clone berhasil"
 fi
-if [ "$SKIP_LLM" = false ] && [ -n "$KEY_ENV" ] && [ -n "$API_KEY" ]; then
-    echo "$KEY_ENV=$API_KEY" >> "$ENV_FILE"
-fi
-echo "MONITORING_ENABLED=$MON_ON" >> "$ENV_FILE"
-echo "SECURITY_ALERTS_ENABLED=$SEC_ON" >> "$ENV_FILE"
-echo "SCHEDULED_REPORTS_ENABLED=false" >> "$ENV_FILE"
-ok ".env"
 
-mkdir -p "$HOME/.scorp"
-if [ "$SKIP_LLM" = false ]; then
+# ── FIX BUG UPSTREAM: go.mod versi 3-part tidak valid ──
+GOMOD_VER=$(grep '^go ' "$SRC_DIR/go.mod" | awk '{print $2}')
+GOMOD_PARTS=$(echo "$GOMOD_VER" | awk -F. '{print NF}')
+if [ "$GOMOD_PARTS" -gt 2 ]; then
+    warn "go.mod: versi '$GOMOD_VER' tidak valid (bug upstream). Auto-fix ke '1.24'..."
+    sed -i "s/^go $GOMOD_VER$/go 1.24/" "$SRC_DIR/go.mod"
+    ok "go.mod diperbaiki"
+fi
+
+# ── Step 3: Build ────────────────────────────────────────────
+echo ""
+echo -e "${B}[3/4] Building...${N}"
+
+cd "$SRC_DIR"
+
+echo "  go mod tidy..."
+"$GO_BIN" mod tidy 2>&1 | grep -v '^$' | head -15 || true
+
+echo "  Compiling..."
+if [ -n "$BUILD_TAGS" ]; then
+    CGO_ENABLED=1 "$GO_BIN" build -tags "$BUILD_TAGS" -ldflags="-s -w" -trimpath -o scorp .
+else
+    CGO_ENABLED=0 "$GO_BIN" build -ldflags="-s -w" -trimpath -o scorp .
+fi
+
+BIN_SIZE=$(du -h "$SRC_DIR/scorp" | cut -f1)
+ok "Build sukses: $BIN_SIZE"
+
+# Stop service lama jika jalan
+systemctl stop scorp 2>/dev/null || true
+
+cp "$SRC_DIR/scorp" "$INSTALL_BIN"
+chmod +x "$INSTALL_BIN"
+ok "Binary: $INSTALL_BIN"
+
+# ── Step 4: Config & Service ─────────────────────────────────
+echo ""
+echo -e "${B}[4/4] Konfigurasi...${N}"
+
+mkdir -p "$WORK_DIR" "$HOME/.scorp"
+
+# Tulis .env
+{
+    echo "# Scorp Agent — generated $(date '+%Y-%m-%d')"
+    echo ""
+    if [ -n "$TG_TOKEN" ]; then
+        echo "# Telegram"
+        echo "TELEGRAM_BOT_TOKEN=$TG_TOKEN"
+        [ -n "$TG_CHATID" ] && echo "TELEGRAM_CHAT_ID=$TG_CHATID"
+        echo ""
+    fi
+    [ -n "$DEEPSEEK_KEY" ] && echo "DEEPSEEK_API_KEY=$DEEPSEEK_KEY"
+    [ -n "$AGENTON_KEY"  ] && echo "AGENTON_API_KEY=$AGENTON_KEY"
+    echo ""
+    echo "GITHUB_REPO=wahyuzero/scorp"
+    echo "MONITORING_ENABLED=true"
+    echo "SECURITY_ALERTS_ENABLED=true"
+    echo "SCHEDULED_REPORTS_ENABLED=false"
+} > "$ENV_FILE"
+chmod 600 "$ENV_FILE"
+ok ".env → $ENV_FILE"
+
+# Tulis models.json jika belum ada
+if [ ! -f "$MODELS_FILE" ] && [ -n "$DEEPSEEK_KEY" ]; then
     cat > "$MODELS_FILE" << MEOF
 {
-  "default_model": "$MODEL_ID",
-  "agent_model": "$MODEL_ID",
+  "default_model": "deepseek-chat",
+  "agent_model": "deepseek-chat",
   "delegation_model": "",
   "premium_model": "",
   "models": {
-    "$MODEL_ID": {
-      "provider": "$PROVIDER",
-      "model": "$MODEL_ID",
-      "key_env": "$KEY_ENV",
-      "base_url": "$BASE_URL",
+    "deepseek-chat": {
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "key_env": "DEEPSEEK_API_KEY",
+      "base_url": "https://api.deepseek.com/v1",
       "max_tokens": 4096,
       "api": "openai"
     }
   },
-  "routing_rules": { "agent": "$MODEL_ID", "chat": "$MODEL_ID" },
+  "routing_rules": { "agent": "deepseek-chat", "chat": "deepseek-chat" },
   "fallback_on_error": ["rate_limit","timeout","server_error","auth_error","network_error"]
 }
 MEOF
-    ok "models.json ($MODEL_ID)"
+    ok "models.json → $MODELS_FILE"
 fi
 
-echo "Building ($TAGS)..."
-CGO_ENABLED=1 go build -tags "$TAGS" -ldflags="-s -w" -trimpath -o "$BIN" . || die "Build failed"
-ok "Built: $(du -h "$BIN" | cut -f1)"
-
-# ─── Install binary ───
-if [ "$IS_TERMUX" = true ]; then
-    # Termux: no sudo needed, install to $PREFIX/bin
-    cp "$BIN" "$INSTALL_BIN"
-    ok "Installed: $INSTALL_BIN"
-elif [ "$HAS_SYSTEMD" = "yes" ]; then
-    $SUDO cp "$BIN" "$INSTALL_BIN"
-    ok "Installed: $INSTALL_BIN"
-else
-    # Non-Termux, no systemd — try local bin
-    LOCAL_BIN="$HOME/.local/bin"
-    mkdir -p "$LOCAL_BIN"
-    cp "$BIN" "$LOCAL_BIN/scorp"
-    INSTALL_BIN="$LOCAL_BIN/scorp"
-    ok "Installed: $INSTALL_BIN"
-    warn "Add to PATH: export PATH=\"\$HOME/.local/bin:\$PATH\""
-fi
-
-# ─── Service setup (systemd only) ───
-if [ "$HAS_SYSTEMD" = "yes" ]; then
-    if [ "$USE_TELEGRAM" = true ]; then
-        $SUDO tee "$SVC_FILE" > /dev/null << EOF
+# Systemd service
+if [ -n "$TG_TOKEN" ] && systemctl is-system-running >/dev/null 2>&1; then
+    cat > "$SVC_FILE" << EOF
 [Unit]
 Description=Scorp - Personal AI Agent
-After=network-online.target docker.service
+After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
 ExecStart=$INSTALL_BIN
-WorkingDirectory=$DIR
+WorkingDirectory=$WORK_DIR
 Restart=always
 RestartSec=10
 User=root
-Environment=PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/go/bin
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
 Environment=HOME=$HOME
-EnvironmentFile=-$DIR/.env
+EnvironmentFile=$ENV_FILE
 OOMScoreAdjust=-500
 
 [Install]
 WantedBy=multi-user.target
 EOF
-        $SUDO systemctl daemon-reload
-        $SUDO systemctl enable "$SERVICE" 2>/dev/null
-        $SUDO systemctl restart "$SERVICE"
-        sleep 2
-        if systemctl is-active --quiet "$SERVICE"; then
-            ok "Service running! PID $(systemctl show -p MainPID --value "$SERVICE")"
-        else
-            die "Service failed. Check: journalctl -u $SERVICE -e"
-        fi
+    systemctl daemon-reload
+    systemctl enable scorp 2>/dev/null || true
+    systemctl restart scorp
+    sleep 2
+
+    if systemctl is-active --quiet scorp; then
+        ok "Service aktif! PID: $(systemctl show -p MainPID --value scorp)"
     else
-        $SUDO systemctl stop "$SERVICE" 2>/dev/null || true
-        $SUDO systemctl disable "$SERVICE" 2>/dev/null || true
-        $SUDO rm -f "$SVC_FILE" 2>/dev/null || true
-        ok "CLI mode ready"
+        warn "Service gagal start → cek: journalctl -u scorp -e"
     fi
+else
+    rm -f "$SVC_FILE" 2>/dev/null || true
+    systemctl daemon-reload 2>/dev/null || true
+    ok "Mode CLI (tanpa systemd)"
+fi
+
+# ── Done ─────────────────────────────────────────────────────
+echo ""
+echo -e "${B}╔══════════════════════════════════╗${N}"
+echo -e "${B}║       Instalasi Selesai! ✓       ║${N}"
+echo -e "${B}╚══════════════════════════════════╝${N}"
+echo ""
+echo -e "  Binary  : ${C}$INSTALL_BIN${N}"
+echo -e "  Config  : ${C}$ENV_FILE${N}"
+echo -e "  Models  : ${C}$MODELS_FILE${N}"
+echo -e "  Source  : ${C}$SRC_DIR${N}"
+echo ""
+
+if systemctl is-active --quiet scorp 2>/dev/null; then
+    echo -e "  ${G}● Bot berjalan 24/7 via systemd${N}"
+    echo ""
+    echo "  Logs    : journalctl -u scorp -f"
+    echo "  Stop    : systemctl stop scorp"
+    echo "  Restart : systemctl restart scorp"
+else
+    echo "  Jalankan : scorp"
 fi
 
 echo ""
-echo -e "${B}=== Done ===${N}"
-echo ""
-if [ "$IS_TERMUX" = true ]; then
-    if [ "$USE_TELEGRAM" = true ]; then
-        echo "  Bot running in foreground. For background:"
-        echo "    nohup scorp &"
-        echo "    (or use tmux: tmux new -s scorp, run scorp, Ctrl-B D)"
-    else
-        echo "  Run 'scorp' to start chatting."
-        echo "  Config:  ~/.scorp/models.json"
-        echo "  Env:     $ENV_FILE"
-    fi
-elif [ "$HAS_SYSTEMD" = "yes" ] && [ "$USE_TELEGRAM" = true ]; then
-    echo "  Bot running 24/7 via systemd. CLI also available: run 'scorp'"
-    echo ""
-    echo "  Logs:    journalctl -u $SERVICE -f"
-    echo "  Stop:    systemctl stop $SERVICE"
-    echo "  Restart: systemctl restart $SERVICE"
-else
-    echo "  Run 'scorp' to start chatting."
-    echo "  Config:  ~/.scorp/models.json"
-    echo "  Env:     $ENV_FILE"
-fi
-echo ""
-echo "  Update:  scorp update"
-echo "  Version: scorp version"
+echo "  Update  : scorp update"
+echo "  Version : scorp version"
 echo ""
