@@ -106,15 +106,25 @@ func CheckDockerAlerts(d collectors.DockerData) []string {
 	return alerts
 }
 
-// CheckStorageAlerts checks storage for alerts
+// CheckStorageAlerts checks storage for alerts.
+// GDrive and S3 alerts are only fired if the user has explicitly configured
+// RCLONE_GDRIVE_MOUNT / RCLONE_S3_GATEWAY_URL in their .env.
 func CheckStorageAlerts(d collectors.StorageData) []string {
 	var alerts []string
-	if !d.GDriveMount.Mounted && CanFire("gdrive_unmounted") {
+
+	// Only alert if user has configured a GDrive mount path
+	gdrivePath := config.Cfg.RcloneGDriveMount
+	gdriveConfigured := gdrivePath != "" && gdrivePath != "/data/coolify/storage/gdrive"
+	if gdriveConfigured && !d.GDriveMount.Mounted && CanFire("gdrive_unmounted") {
 		alerts = append(alerts, fmt.Sprintf("📁 <b>GDRIVE UNMOUNTED</b>\n"+
 			"Path: <code>%s</code>\nThe rclone Google Drive mount is down!",
 			d.GDriveMount.Path))
 	}
-	if !d.S3Gateway.Reachable && CanFire("s3_unreachable") {
+
+	// Only alert if user has configured a custom S3 gateway URL
+	s3URL := config.Cfg.RcloneS3GatewayURL
+	s3Configured := s3URL != "" && s3URL != "http://localhost:9900"
+	if s3Configured && !d.S3Gateway.Reachable && CanFire("s3_unreachable") {
 		alerts = append(alerts, fmt.Sprintf("📦 <b>S3 GATEWAY DOWN</b>\n"+
 			"URL: <code>%s</code>\nError: %s",
 			d.S3Gateway.URL, d.S3Gateway.Error))
