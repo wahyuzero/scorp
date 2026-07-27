@@ -15,18 +15,18 @@ import (
 const (
 	// Approximate tokens-per-char ratio (rough estimate for mixed content)
 	tokensPerChar = 0.25
-	// Target token budget for conversation history (leaves room for system prompt + tools)
-	maxHistoryTokens = 32000
+	// Target token budget for conversation history (keeps requests light & fast)
+	maxHistoryTokens = 16000
 	// When token count exceeds this, trigger compaction
-	compactionThreshold = 28000
+	compactionThreshold = 12000
 	// Tool results older than this many messages get progressively trimmed
-	oldToolResultTrimAge = 6
+	oldToolResultTrimAge = 3
 	// Tool results older than this get reduced to a one-line stub
-	veryOldToolResultAge = 12
+	veryOldToolResultAge = 6
 	// Max chars for recent tool results (within trim age)
-	recentToolResultMax = 3000
+	recentToolResultMax = 2000
 	// Max chars for old tool results (past trim age)
-	oldToolResultMax = 500
+	oldToolResultMax = 400
 )
 
 // estimateTokens gives a rough token count for a string.
