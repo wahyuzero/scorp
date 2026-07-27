@@ -82,68 +82,45 @@ func TestPrune_RecentOversized_TrimmedTo3000(t *testing.T) {
 func TestPrune_OldToolResult_TrimmedTo500(t *testing.T) {
 	// Build: 8 tool results of 2000 chars each.
 	// Each pair = user(tool) + assistant. So 16 msgs + system = 17 total.
-	// Last pair: tool at index 15, age=1 (recent)
-	// Index 13: age=3 (recent)
-	// Index 11: age=5 (recent, last in recent band since age < 6)
-	// Index 9: age=7 (old band: 6-11)
-	// Index 1: age=15 (very old band: >= 12)
+	// Tool results at indices 1,3,5,7,9,11,13,15 (system at 0)
+	// age of each: 15,13,11,9,7,5,3,1
+	// age < 3 → recent: index 15 (age 1) — 2000 chars, under recentToolResultMax (2000) → NOT trimmed
+	// age >= 3 → trimmed (7 items)
 	sizes := []int{2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000}
 	history := makeHistory(sizes)
 	result, n := truncateToolResultsInHistory(history)
 
-	// Tool results at indices 1,3,5,7,9,11,13,15 (system at 0)
-	// age of each: 15,13,11,9,7,5,3,1
-	// age < 6 → recent: indices 13(age3), 15(age1) — 2000 chars, under 3000 → NOT trimmed
-	// age < 12 → old: indices 9(age7), 11(age5→wait, age=5 < 6 so recent)
-	// Let me recalculate:
-	// history has 17 elements (index 0-16)
-	// n-1 = 16
-	// tool at index 1: age=15 → very old (≥12) → stub
-	// tool at index 3: age=13 → very old → stub
-	// tool at index 5: age=11 → old (6-11) → 500
-	// tool at index 7: age=9 → old → 500
-	// tool at index 9: age=7 → old → 500
-	// tool at index 11: age=5 → recent (<6) → 2000 < 3000 → no trim
-	// tool at index 13: age=3 → recent → no trim
-	// tool at index 15: age=1 → recent → no trim
-	// So: 2 very old + 3 old = 5 trims expected
-	if n != 5 {
-		t.Fatalf("expected 5 truncations, got %d", n)
+	if n != 7 {
+		t.Fatalf("expected 7 truncations, got %d", n)
 	}
 
-	// Verify old band (age 6-11) trimmed to ~500
-	oldContent := result[9].Content.(string) // age=7
-	if len(oldContent) > 600 {
-		t.Errorf("old tool result (age 7) not trimmed to ~500: got %d chars", len(oldContent))
+	// Verify old band trimmed to ~400
+	oldContent := result[13].Content.(string) // age=3
+	if len(oldContent) > 500 {
+		t.Errorf("old tool result (age 3) not trimmed to ~400: got %d chars", len(oldContent))
 	}
 
-	// Verify recent (age < 6) NOT trimmed
-	recentContent := result[11].Content.(string) // age=5
+	// Verify recent (age 1) NOT trimmed
+	recentContent := result[15].Content.(string) // age=1
 	if len(recentContent) != 2000 {
-		t.Errorf("recent tool result (age 5) should not be trimmed: expected 2000, got %d", len(recentContent))
+		t.Errorf("recent tool result (age 1) should not be trimmed: expected 2000, got %d", len(recentContent))
 	}
 }
 
 // ──────────────────────────────────────────────
-// Test 4: Very old tool result (age >= 12) — reduced to stub
+// Test 4: Very old tool result (age >= 6) — reduced to stub
 // ──────────────────────────────────────────────
 
 func TestPrune_VeryOldToolResult_StubOnly(t *testing.T) {
 	// 7 tool results → indices 1,3,5,7,9,11,13 in 15-element history (n-1=14)
-	// tool at index 1: age=13 → very old (≥12)
-	// Others: age=11,9,7,5,3,1
 	history := makeHistory([]int{5000, 2000, 2000, 2000, 2000, 2000, 2000})
 	result, n := truncateToolResultsInHistory(history)
 
-	// tool at index 1: age=13 → very old, size=5000 → stub
-	// tool at index 3: age=11 → old, size=2000 > 500 → trimmed
-	// tool at index 5: age=9 → old, size=2000 > 500 → trimmed
-	// tool at index 7: age=7 → old, size=2000 > 500 → trimmed
-	// tool at index 9: age=5 → recent, 2000 < 3000 → no trim
-	// tool at index 11: age=3 → recent → no trim
-	// tool at index 13: age=1 → recent → no trim
-	if n != 4 {
-		t.Fatalf("expected 4 truncations (1 very-old + 3 old), got %d", n)
+	// tool at index 1: age=13 → very old (>=6) → stub
+	// tool at index 13: age=1 → recent (<3) → untrimmed
+	// 6 tool results trimmed (5 very old + 1 old)
+	if n != 6 {
+		t.Fatalf("expected 6 truncations, got %d", n)
 	}
 
 	stub := result[1].Content.(string)
