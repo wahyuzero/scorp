@@ -2,7 +2,12 @@
 
 **Small agent, big tools.** A tiny Go binary that connects an LLM to your system — shell, files, browser, network, code — accessible from terminal or Telegram.
 
-Not a framework, not a platform. Just one binary that runs on anything and does things when you ask it to.
+Not a framework, not a platform. Just one binary that runs on anything (including Android Termux & $1 VPS) and does things when you ask it to.
+
+> 🚀 **v2.0 Roadmap & Strategy:**
+> - [AI Agent Modernization Roadmap v2.0 (Gemini, DeepSeek, Surgical Diffs, Low-RAM)](AI_AGENT_MODERNIZATION_ROADMAP.md)
+> - [Scorp vs ZeroClaw: Competitive Analysis & Growth Playbook](COMPETITIVE_ANALYSIS_ZEROCLAW.md)
+
 
 ---
 
