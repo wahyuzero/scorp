@@ -2,7 +2,7 @@
 
 > **State-of-the-Art (SOTA) Research & Comprehensive Engineering Upgrade Plan**  
 > **Target Repositories:** [`wahyuzero/scorp`](https://github.com/wahyuzero/scorp) (Go) & [`wahyuzero/termagent`](https://github.com/wahyuzero/termagent) (TypeScript/Termux)  
-> **Focus:** Memutakhirkan engine agent dari era awal (GPT-4/GLM) ke era modern (Multi-Model, Prompt Caching, MCP Standard, Surgical Diffs, Native Termux).
+> **Focus:** Memutakhirkan engine agent dari era awal (GPT-4/GLM) ke era modern (Multi-Model, Prompt Caching, MCP Standard, Surgical Diffs, Ultra-Low-RAM Web Engine, Native Termux).
 
 ---
 
@@ -15,7 +15,8 @@
 6. [Pilar Upgrade 4: Standardisasi MCP (Model Context Protocol)](#6-pilar-upgrade-4-standardisasi-mcp-model-context-protocol)
 7. [Pilar Upgrade 5: Subagent & Task Delegation System](#7-pilar-upgrade-5-subagent--task-delegation-system)
 8. [Pilar Upgrade 6: Deep Termux & Mobile Performance Optimization](#8-pilar-upgrade-6-deep-termux--mobile-performance-optimization)
-9. [Roadmap Eksekusi Teknis (Fase 1 s.d. 4)](#9-roadmap-eksekusi-teknis-fase-1-sd-4)
+9. [Pilar Upgrade 7: Ultra-Low-RAM Web Engine (< 5MB RAM di VPS 512MB & Termux)](#9-pilar-upgrade-7-ultra-low-ram-web-engine--5mb-ram-di-vps-512mb--termux)
+10. [Roadmap Eksekusi Teknis (Fase 1 s.d. 4)](#10-roadmap-eksekusi-teknis-fase-1-sd-4)
 
 ---
 
@@ -36,8 +37,8 @@
 ## 2. Evaluasi Arsitektur Scorp & Termagent Saat Ini
 
 ### 🦂 Status `scorp` (Golang Engine):
-* **Kelebihan:** Ditulis dengan Go (performa native, konsumsi memori rendah, single binary, startup kilat, mudah di-compile untuk ARM64 Android).
-* **Area Upgrade:** Loop model perlu dukungan dynamic streaming SSE untuk Gemini & DeepSeek; parser tool calls perlu standarisasi JSON Schema; peremajaan MCP client.
+* **Kelebihan:** Ditulis dengan Go (performa native, konsumsi memori rendah ~15MB, single binary, startup kilat, mudah di-compile untuk ARM64 Android).
+* **Area Upgrade:** Loop model perlu dukungan dynamic streaming SSE untuk Gemini & DeepSeek; parser tool calls perlu standarisasi JSON Schema; peremajaan MCP client; penggantian headless browser lokal berat dengan Tiered Web Engine.
 
 ### 📱 Status `termagent` (TypeScript Engine):
 * **Kelebihan:** Integrasi brilian dengan `Termux:API` (notifikasi Android, dialog konfirmasi modal, clipboard sync, haptic vibration).
@@ -143,24 +144,129 @@ Untuk proyek besar, chat history utama cepat penuh (*context bloat*). Solusinya 
 
 ---
 
-## 9. Roadmap Eksekusi Teknis
+## 9. Pilar Upgrade 7: Ultra-Low-RAM Web Engine (< 5MB RAM di VPS 512MB & Termux)
+
+### 🛑 Masalah Utama:
+Menjalankan Headless Chrome/Chromium secara lokal di VPS 512MB–1GB atau Termux memakan **400MB–800MB RAM**, memicu *OOM (Out Of Memory) Killer* yang membuat proses agent mati seketika.
+
+### 💡 3 Solusi Arsitektur Low-RAM Browser:
+
+```
+                      [ Permintaan Browsing AI ]
+                                  ⬇️
+               [ Apakah Halaman Butuh Render JS Kompleks? ]
+                      /                       \
+                 (TIDAK: 90%)              (YA: 10%)
+                     ⬇️                        ⬇️
+          [ Opsi 1: HTTP + Readability ]   [ Opsi 2: Remote Browser API ]
+             (RAM: ~2 MB - 5 MB)              (RAM Lokal: 0 MB!)
+                                               [ Opsi 3: Chromium Low-RAM ]
+                                                  (RAM: ~80 MB - 120 MB)
+```
+
+---
+
+### 🌐 Opsi 1 (Default): Zero-RAM HTTP Fetch + Readability Parser (~2MB RAM)
+90% kebutuhan AI adalah membaca teks (dokumentasi, GitHub, StackOverflow, berita, artikel blog). Tidak perlu membuka browser penuh!
+
+* **Implementasi di Go (`scorp`):**
+  1. Unduh HTML dengan `net/http` standar Go (waktu eksekusi: ~50ms).
+  2. Ekstrak konten artikel inti menggunakan library **`go-shiori/go-readability`** (porting dari mesin Firefox Reader).
+  3. Konversi HTML bersih ke format Markdown ringkas menggunakan `JohannesKaufmann/html-to-markdown`.
+
+```go
+// internal/tools/read_url.go
+package tools
+
+import (
+    "net/http"
+    "time"
+    readability "github.com/go-shiori/go-readability"
+    md "github.com/JohannesKaufmann/html-to-markdown"
+)
+
+func ReadURL(url string) (string, error) {
+    client := &http.Client{Timeout: 10 * time.Second}
+    resp, err := client.Get(url)
+    if err != nil {
+        return "", err
+    }
+    defer resp.Body.Close()
+
+    // 1. Ekstrak konten utama (buang script, css, iklan)
+    article, err := readability.FromReader(resp.Body, resp.Request.URL)
+    if err != nil {
+        return "", err
+    }
+
+    // 2. Konversi ke Markdown
+    converter := md.NewConverter("", true, nil)
+    markdown, err := converter.ConvertString(article.Content)
+    if err != nil {
+        return article.TextContent, nil
+    }
+
+    return "# " + article.Title + "\n\n" + markdown, nil
+}
+```
+* **Konsumsi RAM:** **Hanya ~2 MB – 5 MB!**
+* **Kecepatan:** **10x lebih cepat** daripada membuka tab browser.
+
+---
+
+### ☁️ Opsi 2: Remote / Offloaded Browser API (RAM Lokal = 0 MB!)
+Untuk website SPA berat (Single Page App React/Vue), halaman interaktif, atau web yang diproteksi antibot:
+
+* **Prinsip:** Jangan jalankan Chromium di VPS/HP kentang kamu. Biarkan server cloud luar yang me-render, dan agent kamu cuma menerima hasil Markdown bersih via REST API sederhana.
+* **Integrasi Service:**
+  * **Cloudflare Browser Rendering API** (Tersedia free tier).
+  * **Firecrawl / Tavily API:** Kirim URL $\rightarrow$ Terima Markdown bersih.
+  * **Self-Hosted Browserless.io di VPS Gratisan Terpisah:** Panggil via WebSocket CDP tanpa membebani VPS utama.
+* **Konsumsi RAM Lokal:** **0 MB overhead!**
+
+---
+
+### ⚙️ Opsi 3: Chromium Lokal Teroptimasi Ekstrem (~80MB–120MB RAM)
+Jika terpaksa menjalankan Chromium lokal di VPS 1GB:
+
+Gunakan flag alokasi memori ketat berikut saat meluncurkan Chromium:
+```bash
+chromium-browser \
+  --headless=new \
+  --disable-gpu \
+  --single-process \
+  --no-zygote \
+  --renderer-process-limit=1 \
+  --disable-extensions \
+  --disable-background-networking \
+  --disable-software-rasterizer \
+  --disable-dev-shm-usage \
+  --js-flags="--max-old-space-size=64"
+```
+* **Hasil:** Membatasi V8 heap memori ke 64MB dan mematikan multiprocess. RAM turun dari ~500MB+ menjadi **~80MB–120MB**.
+
+---
+
+## 10. Roadmap Eksekusi Teknis
 
 ```mermaid
 gantt
     title Roadmap Modernisasi Scorp & Termagent v2.0
     dateFormat  YYYY-MM-DD
-    section Fase 1 (Core)
+    section Fase 1 (Core & Web)
     Multi-Model Client (Gemini 2.0 / DeepSeek) :a1, 2026-09-01, 7d
-    Surgical Diff Tool (Replace Chunk)          :a2, after a1, 5d
+    Zero-RAM ReadURL Tool (Go-Readability)     :a2, after a1, 4d
+    Surgical Diff Tool (Replace Chunk)          :a3, after a2, 4d
     section Fase 2 (Protocol)
-    MCP Client Stdio/SSE Implementation         :b1, after a2, 7d
+    MCP Client Stdio/SSE Implementation         :b1, after a3, 7d
     Prompt Caching Optimization Engine          :b2, after b1, 4d
     section Fase 3 (Mobile)
     Native Termux:API Bridge Tools              :c1, after b2, 5d
     WakeLock & Background Task Notifier         :c2, after c1, 3d
     section Fase 4 (Advanced)
-    Subagent Delegation Protocol                :d1, after c2, 7d
-    Release Scorp v2.0 & Termagent v2.0         :d2, after d1, 3d
+    Remote Browser Fallback API Integration     :d1, after c2, 5d
+    Subagent Delegation Protocol                :d2, after d1, 7d
+    Release Scorp v2.0 & Termagent v2.0         :d3, after d2, 3d
 ```
 
 ---
