@@ -593,6 +593,20 @@ func clearPendingConfirmation(chatID string) {
 	delete(pendingConfirms, chatID)
 }
 
+// HasPendingConfirmation checks if there is an active pending confirmation for a chat
+func HasPendingConfirmation(chatID string) bool {
+	return getPendingConfirmation(chatID) != nil
+}
+
+// GetPendingConfirmationDetails returns details of pending confirmation
+func GetPendingConfirmationDetails(chatID string) (command string, toolName string, exists bool) {
+	pc := getPendingConfirmation(chatID)
+	if pc == nil {
+		return "", "", false
+	}
+	return pc.command, pc.toolName, true
+}
+
 func confirmKeyboard() map[string]interface{} {
 	return map[string]interface{}{
 		"inline_keyboard": [][]map[string]string{
@@ -650,7 +664,7 @@ func HandleConfirmation(chatID int64, confirmed bool, callbackMsgID ...int64) {
 			fmt.Sprintf("⚠️ <b>Dangerous Command</b>\n\n<pre>%s</pre>\n\n✅ <b>APPROVED</b>", helpers.EscapeHTML(pc.command)), nil)
 	}
 
-	result, ok := tools.ExecuteShell(map[string]interface{}{"command": pc.command, "timeout": 60}, chatID)
+	result, ok := tools.ExecuteShell(map[string]interface{}{"command": pc.command, "timeout": 60, "confirmed": true}, chatID)
 	status := "✅"
 	if !ok {
 		status = "❌"
@@ -826,6 +840,11 @@ func looksLikeContinuation(text string) bool {
 	patterns := []string{
 		"let me ", "i'll ", "i will ", "i'm going to ", "going to ",
 		"mar i coba", "mari coba", "saya akan ", "akan coba ", "coba ",
+		"saya perlu ", "perlu saya ", "perlu dicek", "perlu periksa", "harus ", "mari kita ",
+		"akan saya ", "akan memeriksa", "akan mengecek ", "cek dulu ", "tunggu sebentar",
+		"sekarang saya ", "sekarang kita ", "sekarang akan ", "saya buat ", "saya tulis ",
+		"buat file ", "tulis file ", "berikutnya ", "selanjutnya ", "langkah berikutnya ",
+		"akan saya buat ", "akan saya jalankan ", "now i will ", "next, ",
 		"i'll try", "let me try", "try to ", "attempt to ",
 		"next i", "then i", "now i", "continue to ",
 		"proceed to ", "follow up", "followup",

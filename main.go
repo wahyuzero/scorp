@@ -20,6 +20,7 @@ import (
 	"scorp-agent/scheduler"
 	"scorp-agent/updater"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
@@ -33,6 +34,23 @@ import (
 )
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime)
+
+	// In CLI mode, redirect diagnostic logs to ~/.scorp/scorp.log unless SCORP_DEBUG or --debug
+	if isCLIMode() && os.Getenv("SCORP_DEBUG") == "" && !hasDebugFlag() {
+		logDir := config.ScorpDir()
+		_ = os.MkdirAll(logDir, 0755)
+		if logFile, err := os.OpenFile(config.ScorpPath("scorp.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644); err == nil {
+			log.SetOutput(logFile)
+		} else {
+			log.SetOutput(io.Discard)
+		}
+	}
+
+	// Load config early (reads .env files)
+	if err := config.LoadConfig(); err != nil {
+		config.Cfg.TelegramBotToken = ""
+		config.Cfg.TelegramChatID = ""
+	}
 
 	// Update subcommand: scorp update
 	if len(os.Args) > 1 && os.Args[1] == "update" {
@@ -64,17 +82,24 @@ func main() {
 
 	// CLI mode: --cli flag OR no Telegram token configured
 	if isCLIMode() {
-		if err := config.LoadConfig(); err != nil {
-			// CLI mode can work without TELEGRAM_* vars
-			config.Cfg.TelegramBotToken = ""
-			config.Cfg.TelegramChatID = ""
+		var promptArgs []string
+		if len(os.Args) > 1 {
+			if os.Args[1] == "--cli" || os.Args[1] == "-c" || os.Args[1] == "-p" {
+				if len(os.Args) > 2 {
+					promptArgs = os.Args[2:]
+				}
+			} else if !strings.HasPrefix(os.Args[1], "-") {
+				promptArgs = os.Args[1:]
+			}
 		}
-		startCLI()
+
+		startCLI(promptArgs...)
 		return
 	}
 
-	if err := config.LoadConfig(); err != nil {
-		log.Fatalf("Config error: %v", err)
+	// Telegram mode requires valid tokens
+	if config.Cfg.TelegramBotToken == "" || config.Cfg.TelegramChatID == "" {
+		log.Fatalf("Config error: TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are required for Telegram mode")
 	}
 
 	// Wire callback for models package
@@ -334,8 +359,14 @@ func main() {
 
 // isCLIMode returns true if running in CLI mode (--cli flag or no Telegram token)
 func isCLIMode() bool {
-	if len(os.Args) > 1 && os.Args[1] == "--cli" {
-		return true
+	if len(os.Args) > 1 {
+		arg := os.Args[1]
+		if arg == "--cli" || arg == "-c" || arg == "-p" {
+			return true
+		}
+		if arg != "update" && arg != "version" && arg != "--version" && arg != "-v" && arg != "--mcp-server" && !strings.HasPrefix(arg, "-") {
+			return true
+		}
 	}
 	// If no token in config or env, default to CLI
 	if config.Cfg.TelegramBotToken == "" && os.Getenv("TELEGRAM_BOT_TOKEN") == "" {

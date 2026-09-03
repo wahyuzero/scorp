@@ -58,15 +58,23 @@ func defaultCostConfig() *CostConfig {
 		OffPeakModel:   "",
 		OffPeakStart:   22,
 		OffPeakEnd:     7,
-		Enabled:        false,
+		Enabled:        true,
 		ModelCosts: map[string]ModelCost{
-			"glm-4-flash":       {InputPer1M: 0.0, OutputPer1M: 0.0},
-			"deepseek-chat":     {InputPer1M: 0.14, OutputPer1M: 0.28},
-			"deepseek-coder":    {InputPer1M: 0.14, OutputPer1M: 0.28},
-			"groq-llama-70b":    {InputPer1M: 0.59, OutputPer1M: 0.79},
-			"gemini-flash":      {InputPer1M: 0.075, OutputPer1M: 0.30},
-			"glm-4.6":           {InputPer1M: 0.60, OutputPer1M: 2.20},
-			"glm-5.2":           {InputPer1M: 0.50, OutputPer1M: 2.00},
+			"deepseek/deepseek-v4-flash":       {InputPer1M: 0.22, OutputPer1M: 0.66},
+			"deepseek/deepseek-v4-pro":         {InputPer1M: 0.66, OutputPer1M: 1.98},
+			"poolside/laguna-s-2.1-free":       {InputPer1M: 0.0, OutputPer1M: 0.0},
+			"gpt-5.6-luna":                     {InputPer1M: 0.20, OutputPer1M: 1.20},
+			"meta/muse-spark-1.2-contributor":  {InputPer1M: 0.10, OutputPer1M: 0.20},
+			"z-ai/glm-5.3-flash":               {InputPer1M: 0.15, OutputPer1M: 0.50},
+			"xiaomi/mimo-v2.5":                 {InputPer1M: 0.14, OutputPer1M: 0.28},
+			"Qwen/Qwen3.8-Flash":               {InputPer1M: 0.16, OutputPer1M: 0.47},
+			"glm-4-flash":                      {InputPer1M: 0.0, OutputPer1M: 0.0},
+			"deepseek-chat":                    {InputPer1M: 0.14, OutputPer1M: 0.28},
+			"deepseek-coder":                   {InputPer1M: 0.14, OutputPer1M: 0.28},
+			"groq-llama-70b":                   {InputPer1M: 0.59, OutputPer1M: 0.79},
+			"gemini-flash":                     {InputPer1M: 0.075, OutputPer1M: 0.30},
+			"glm-4.6":                          {InputPer1M: 0.60, OutputPer1M: 2.20},
+			"glm-5.2":                          {InputPer1M: 0.50, OutputPer1M: 2.00},
 		},
 	}
 }
@@ -247,6 +255,11 @@ func getCheapestModel() *ModelConfig {
 		return GetModelByName(cheapest)
 	}
 	return nil
+}
+
+// FormatDailyCostSummary exports formatted cost report for CLI display
+func FormatDailyCostSummary() string {
+	return formatCostReport()
 }
 
 // formatCostReport generates a cost summary for the models tool.

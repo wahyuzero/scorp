@@ -91,8 +91,9 @@ func ExecuteShell(args map[string]interface{}, chatID int64) (string, bool) {
 		timeout = 300
 	}
 
-	// Check for dangerous commands
-	if IsDangerousCommand(command) {
+	// Check for dangerous commands (skip check if already explicitly confirmed by user)
+	confirmed := helpers.GetBoolArg(args, "confirmed", false)
+	if !confirmed && IsDangerousCommand(command) {
 		// Store for confirmation
 		chatIDStr := fmt.Sprintf("%d", chatID)
 		StorePendingConfirmation(chatIDStr, "shell", command, nil)
@@ -158,7 +159,7 @@ func isPathAllowed(path string, allowedPrefixes []string) bool {
 	return false
 }
 
-// ExecuteReadFile reads a file
+// ExecuteReadFile reads a file with support for offset, lines/limit, and line numbering
 func ExecuteReadFile(args map[string]interface{}) (string, bool) {
 	path := helpers.GetStringArg(args, "path", "")
 	if path == "" {
@@ -175,15 +176,54 @@ func ExecuteReadFile(args map[string]interface{}) (string, bool) {
 	}
 
 	content := string(data)
-	maxLines := helpers.GetIntArg(args, "lines", 0)
-	if maxLines > 0 {
-		lines := strings.Split(content, "\n")
-		if len(lines) > maxLines {
-			content = strings.Join(lines[:maxLines], "\n") + fmt.Sprintf("\n... (%d more lines)", len(lines)-maxLines)
-		}
+	lines := strings.Split(content, "\n")
+	totalLines := len(lines)
+
+	offset := helpers.GetIntArg(args, "offset", 1)
+	if offset < 1 {
+		offset = 1
 	}
 
-	return helpers.TruncOutput(content, helpers.MaxToolOutput), true
+	maxLines := helpers.GetIntArg(args, "lines", 0)
+	if maxLines == 0 {
+		maxLines = helpers.GetIntArg(args, "limit", 0)
+	}
+
+	if offset > 1 || maxLines > 0 {
+		startIdx := offset - 1
+		if startIdx >= totalLines {
+			return fmt.Sprintf("(File has %d lines, offset %d is past end of file)", totalLines, offset), true
+		}
+		endIdx := totalLines
+		if maxLines > 0 && startIdx+maxLines < endIdx {
+			endIdx = startIdx + maxLines
+		}
+		var sb strings.Builder
+		for i := startIdx; i < endIdx; i++ {
+			sb.WriteString(fmt.Sprintf("%4d | %s\n", i+1, lines[i]))
+		}
+		if endIdx < totalLines {
+			sb.WriteString(fmt.Sprintf("... (%d more lines, total %d)\n", totalLines-endIdx, totalLines))
+		}
+		return sb.String(), true
+	}
+
+	if len(content) > 10000 {
+		var sb strings.Builder
+		limit := 200
+		if totalLines < limit {
+			limit = totalLines
+		}
+		for i := 0; i < limit; i++ {
+			sb.WriteString(fmt.Sprintf("%4d | %s\n", i+1, lines[i]))
+		}
+		if totalLines > limit {
+			sb.WriteString(fmt.Sprintf("... (%d more lines, total %d. Use offset and limit to read more)\n", totalLines-limit, totalLines))
+		}
+		return sb.String(), true
+	}
+
+	return content, true
 }
 
 // ── File Writer ──

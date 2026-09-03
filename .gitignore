@@ -20,6 +20,8 @@ coverage.txt
 rag_index/
 vault.json
 vault.key
+.commandcode/
+graphify-out/cache/
 
 # Sensitive configs (contain API keys if not migrated)
 models.json

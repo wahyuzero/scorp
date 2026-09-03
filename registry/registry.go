@@ -3,6 +3,7 @@ package registry
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"sync"
 )
@@ -55,7 +56,9 @@ func RegisterTool(def ToolDef) {
 		return
 	}
 	toolRegistry[def.Name] = def
-	log.Printf("[registry] Registered tool: %s (%s)", def.Name, def.Category)
+	if os.Getenv("SCORP_DEBUG") != "" {
+		log.Printf("[registry] Registered tool: %s (%s)", def.Name, def.Category)
+	}
 }
 
 // GetTool retrieves a tool definition by name

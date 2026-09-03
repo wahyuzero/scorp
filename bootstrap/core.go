@@ -55,8 +55,10 @@ func init() {
 			return tools.ExecuteReadFile(args)
 		},
 		Arguments: map[string]registry.ArgDef{
-			"path":    {Type: "string", Description: "File path", Required: true},
-			"max_len": {Type: "integer", Description: "Max chars to return", Default: 50000},
+			"path":   {Type: "string", Description: "File path", Required: true},
+			"offset": {Type: "integer", Description: "1-based line number to start reading from (optional)", Default: 1},
+			"limit":  {Type: "integer", Description: "Maximum number of lines to read (optional)", Default: 100},
+			"lines":  {Type: "integer", Description: "Alias for limit (optional)", Default: 100},
 		},
 	})
 	registry.RegisterTool(registry.ToolDef{

@@ -24,6 +24,26 @@ type CatalogEntry struct {
 // Providers not listed here (ollama, lmstudio, 9router, custom) have no catalog
 // — users must add models manually.
 var providerCatalog = map[string][]CatalogEntry{
+	"command-code": {
+		{"deepseek/deepseek-v4-flash", 16384, false, "deepseek-flash"},
+		{"deepseek/deepseek-v4-pro", 32768, true, "deepseek-pro"},
+		{"poolside/laguna-s-2.1-free", 16384, false, "laguna-free"},
+		{"gpt-5.6-luna", 32768, true, "gpt-luna"},
+		{"meta/muse-spark-1.2-contributor", 16384, false, "muse-spark"},
+		{"z-ai/glm-5.3-flash", 16384, false, "glm-flash"},
+		{"xiaomi/mimo-v2.5", 16384, false, "mimo"},
+		{"Qwen/Qwen3.8-Flash", 16384, false, "qwen-flash"},
+	},
+	"commandcode": {
+		{"deepseek/deepseek-v4-flash", 16384, false, "deepseek-flash"},
+		{"deepseek/deepseek-v4-pro", 32768, true, "deepseek-pro"},
+		{"poolside/laguna-s-2.1-free", 16384, false, "laguna-free"},
+		{"gpt-5.6-luna", 32768, true, "gpt-luna"},
+		{"meta/muse-spark-1.2-contributor", 16384, false, "muse-spark"},
+		{"z-ai/glm-5.3-flash", 16384, false, "glm-flash"},
+		{"xiaomi/mimo-v2.5", 16384, false, "mimo"},
+		{"Qwen/Qwen3.8-Flash", 16384, false, "qwen-flash"},
+	},
 	"openai": {
 		{"gpt-4o", 16384, true, "gpt4o"},
 		{"gpt-4o-mini", 16384, false, "gpt4o-mini"},

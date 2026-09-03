@@ -30,6 +30,8 @@ func CallModelWithTools(ctx context.Context, model *ModelConfig, messages []Chat
 		return CallAnthropicWithTools(ctx, model, messages)
 	case "gemini":
 		return CallGeminiWithTools(ctx, model, messages)
+	case "command-code", "commandcode":
+		return CallCommandCodeWithTools(ctx, model, messages)
 	default:
 		return CallOpenAIWithTools(ctx, model, messages)
 	}

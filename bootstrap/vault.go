@@ -1,11 +1,12 @@
 package bootstrap
 
 import (
+	"log"
+	"os"
+
 	"scorp-agent/config"
 	"scorp-agent/tools"
 )
-
-import "log"
 
 func init() {
 	// Initialize vault from tools package
@@ -14,5 +15,7 @@ func init() {
 	}
 	tools.Vault.LoadMasterKey()
 	tools.Vault.Load()
-	log.Printf("[vault] Loaded %d credential entries", len(tools.Vault.Entries))
+	if os.Getenv("SCORP_DEBUG") != "" {
+		log.Printf("[vault] Loaded %d credential entries", len(tools.Vault.Entries))
+	}
 }

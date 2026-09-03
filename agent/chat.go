@@ -141,6 +141,12 @@ func agentAutoStop(ctx context.Context, chatID string) {
 	}
 }
 
+// IsAgentMode returns true if the chat session is currently in agent mode
+func IsAgentMode(chatID string) bool {
+	sess := getSession(chatID)
+	return sess != nil && sess.agentActive
+}
+
 func ExitAgentMode(chatID string) bool {
 	sess := getSession(chatID)
 	if sess != nil && sess.agentActive {

@@ -1,9 +1,12 @@
 package models
 
 import (
+	"encoding/json"
 	"log"
 	"os"
 	"strings"
+
+	"scorp-agent/config"
 )
 
 // ──────────────────────────────────────────────
@@ -23,6 +26,18 @@ type ProviderPreset struct {
 // providerRegistry is the built-in provider registry.
 // Users can reference these by name in models.json without specifying base_url.
 var ProviderRegistry = map[string]ProviderPreset{
+	"command-code": {
+		KeyEnvs:     []string{"COMMAND_CODE_API_KEY", "COMMANDCODE_API_KEY"},
+		BaseURL:     "https://api.commandcode.ai",
+		API:         "command-code",
+		DisplayName: "Command Code (CLI Gateway)",
+	},
+	"commandcode": {
+		KeyEnvs:     []string{"COMMAND_CODE_API_KEY", "COMMANDCODE_API_KEY"},
+		BaseURL:     "https://api.commandcode.ai",
+		API:         "command-code",
+		DisplayName: "Command Code (CLI Gateway)",
+	},
 	"openai": {
 		KeyEnvs:     []string{"OPENAI_API_KEY"},
 		BaseURL:     "https://api.openai.com/v1",
@@ -157,6 +172,51 @@ func ResolveAPIKey(cfg *ModelConfig) string {
 		return cfg.APIKey
 	}
 
+	// Tier 5: local auth fallback for command-code (~/.commandcode/auth.json or ~/.pi/agent/auth.json)
+	if cfg.Provider == "command-code" || cfg.Provider == "commandcode" {
+		if key := resolveCommandCodeKeyFromDisk(); key != "" {
+			return key
+		}
+	}
+
+	return ""
+}
+
+// resolveCommandCodeKeyFromDisk checks local auth.json files for Command Code key
+func resolveCommandCodeKeyFromDisk() string {
+	home := config.HomeDir()
+	// Check ~/.commandcode/auth.json
+	cmdPath := home + "/.commandcode/auth.json"
+	if data, err := os.ReadFile(cmdPath); err == nil {
+		var auth struct {
+			ApiKey string `json:"apiKey"`
+			Token  string `json:"token"`
+			Key    string `json:"key"`
+		}
+		if err := json.Unmarshal(data, &auth); err == nil {
+			if auth.Key != "" {
+				return auth.Key
+			}
+			if auth.ApiKey != "" {
+				return auth.ApiKey
+			}
+			if auth.Token != "" {
+				return auth.Token
+			}
+		}
+	}
+	// Check ~/.pi/agent/auth.json
+	piPath := home + "/.pi/agent/auth.json"
+	if data, err := os.ReadFile(piPath); err == nil {
+		var piAuth map[string]struct {
+			Key string `json:"key"`
+		}
+		if err := json.Unmarshal(data, &piAuth); err == nil {
+			if cc, ok := piAuth["command-code"]; ok && cc.Key != "" {
+				return cc.Key
+			}
+		}
+	}
 	return ""
 }
 

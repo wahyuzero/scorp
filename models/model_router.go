@@ -78,9 +78,9 @@ func LoadModelConfig() {
 		SaveModelConfig()
 		return
 	}
-	if ModelCfg == nil {
+	if ModelCfg == nil || len(ModelCfg.Models) == 0 || ModelCfg.AgentModel == "" {
 		ModelCfg = defaultModelConfig()
-		return
+		SaveModelConfig()
 	}
 
 	// Auto-migrate plaintext api_key → key_env, fill provider defaults
@@ -113,11 +113,87 @@ func SaveModelConfig() {
 
 func defaultModelConfig() *ModelRouterConfig {
 	return &ModelRouterConfig{
-		DefaultModel: "",
-		AgentModel:   "",
-		PremiumModel: "",
-		Models:       map[string]ModelConfig{},
-		RoutingRules: map[string]string{},
+		DefaultModel:    "deepseek/deepseek-v4-flash",
+		AgentModel:      "deepseek/deepseek-v4-flash",
+		DelegationModel: "deepseek/deepseek-v4-flash",
+		PremiumModel:    "deepseek/deepseek-v4-pro",
+		RoutingRules: map[string]string{
+			"agent":   "deepseek/deepseek-v4-flash",
+			"chat":    "deepseek/deepseek-v4-flash",
+			"complex": "deepseek/deepseek-v4-pro",
+		},
+		FallbackModels: []string{
+			"z-ai/glm-5.3-flash",
+			"meta/muse-spark-1.2-contributor",
+			"poolside/laguna-s-2.1-free",
+		},
+		FallbackOnError: []string{"rate_limit", "timeout", "server_error", "auth_error", "network_error"},
+		Models: map[string]ModelConfig{
+			"deepseek/deepseek-v4-flash": {
+				Provider:  "command-code",
+				Model:     "deepseek/deepseek-v4-flash",
+				KeyEnv:    "COMMAND_CODE_API_KEY",
+				BaseURL:   "https://api.commandcode.ai",
+				MaxTokens: 16384,
+				API:       "command-code",
+			},
+			"deepseek/deepseek-v4-pro": {
+				Provider:  "command-code",
+				Model:     "deepseek/deepseek-v4-pro",
+				KeyEnv:    "COMMAND_CODE_API_KEY",
+				BaseURL:   "https://api.commandcode.ai",
+				MaxTokens: 32768,
+				API:       "command-code",
+			},
+			"poolside/laguna-s-2.1-free": {
+				Provider:  "command-code",
+				Model:     "poolside/laguna-s-2.1-free",
+				KeyEnv:    "COMMAND_CODE_API_KEY",
+				BaseURL:   "https://api.commandcode.ai",
+				MaxTokens: 16384,
+				API:       "command-code",
+			},
+			"gpt-5.6-luna": {
+				Provider:  "command-code",
+				Model:     "gpt-5.6-luna",
+				KeyEnv:    "COMMAND_CODE_API_KEY",
+				BaseURL:   "https://api.commandcode.ai",
+				MaxTokens: 32768,
+				API:       "command-code",
+			},
+			"meta/muse-spark-1.2-contributor": {
+				Provider:  "command-code",
+				Model:     "meta/muse-spark-1.2-contributor",
+				KeyEnv:    "COMMAND_CODE_API_KEY",
+				BaseURL:   "https://api.commandcode.ai",
+				MaxTokens: 16384,
+				API:       "command-code",
+			},
+			"z-ai/glm-5.3-flash": {
+				Provider:  "command-code",
+				Model:     "z-ai/glm-5.3-flash",
+				KeyEnv:    "COMMAND_CODE_API_KEY",
+				BaseURL:   "https://api.commandcode.ai",
+				MaxTokens: 16384,
+				API:       "command-code",
+			},
+			"xiaomi/mimo-v2.5": {
+				Provider:  "command-code",
+				Model:     "xiaomi/mimo-v2.5",
+				KeyEnv:    "COMMAND_CODE_API_KEY",
+				BaseURL:   "https://api.commandcode.ai",
+				MaxTokens: 16384,
+				API:       "command-code",
+			},
+			"Qwen/Qwen3.8-Flash": {
+				Provider:  "command-code",
+				Model:     "Qwen/Qwen3.8-Flash",
+				KeyEnv:    "COMMAND_CODE_API_KEY",
+				BaseURL:   "https://api.commandcode.ai",
+				MaxTokens: 16384,
+				API:       "command-code",
+			},
+		},
 	}
 }
 
@@ -170,6 +246,30 @@ func GetModelByName(name string) *ModelConfig {
 	if m, ok := ModelCfg.Models[name]; ok {
 		return &m
 	}
+	return nil
+}
+
+// SwitchActiveModel sets the active default and agent model, updating routing rules and saving config
+func SwitchActiveModel(name string) error {
+	ModelCfgMu.Lock()
+	defer ModelCfgMu.Unlock()
+	if ModelCfg == nil {
+		return fmt.Errorf("model config not loaded")
+	}
+	if _, ok := ModelCfg.Models[name]; !ok {
+		return fmt.Errorf("model '%s' not found in config", name)
+	}
+	ModelCfg.DefaultModel = name
+	ModelCfg.AgentModel = name
+	if ModelCfg.RoutingRules == nil {
+		ModelCfg.RoutingRules = make(map[string]string)
+	}
+	ModelCfg.RoutingRules["agent"] = name
+	ModelCfg.RoutingRules["chat"] = name
+	if err := config.ConfigMgr().Save("models.json", ModelCfg); err != nil {
+		log.Printf("[models] Error saving switched model config: %v", err)
+	}
+	log.Printf("[models] Switched active model to: %s", name)
 	return nil
 }
 
@@ -236,6 +336,8 @@ func CallModel(ctx context.Context, model *ModelConfig, messages []ChatMessage) 
 		return callAnthropic(ctx, model, messages)
 	case "gemini":
 		return callGemini(ctx, model, messages)
+	case "command-code", "commandcode":
+		return CallCommandCode(ctx, model, messages)
 	default:
 		return CallOpenAI(ctx, model, messages)
 	}
@@ -350,8 +452,11 @@ func CallModelStream(ctx context.Context, model *ModelConfig, messages []ChatMes
 		return nil, fmt.Errorf("no model configured")
 	}
 
-	// For non-OpenAI formats, fall back to non-streaming and emit as single chunk.
+	// For non-OpenAI formats, dispatch or fall back
 	apiFormat := ResolveAPIFormat(model)
+	if apiFormat == "command-code" || apiFormat == "commandcode" {
+		return CallCommandCodeStream(ctx, model, messages)
+	}
 	if apiFormat != "openai" {
 		ch := make(chan StreamChunk, 2)
 		go func() {
@@ -840,6 +945,14 @@ func FormatUsageStats() string {
 	// Pricing per 1M tokens (approximate)
 	pricing := map[string][]float64{
 		// model: {input_per_1M, output_per_1M}
+		"deepseek/deepseek-v4-flash":                {0.22, 0.66},
+		"deepseek/deepseek-v4-pro":                  {0.66, 1.98},
+		"poolside/laguna-s-2.1-free":                {0, 0},
+		"gpt-5.6-luna":                              {0.20, 1.20},
+		"meta/muse-spark-1.2-contributor":           {0.10, 0.20},
+		"z-ai/glm-5.3-flash":                        {0.15, 0.50},
+		"xiaomi/mimo-v2.5":                          {0.14, 0.28},
+		"Qwen/Qwen3.8-Flash":                        {0.16, 0.47},
 		"llama-3.3-70b-versatile":                   {0, 0},
 		"qwen/qwen3-32b":                            {0, 0},
 		"meta-llama/llama-4-scout-17b-16e-instruct": {0, 0},
