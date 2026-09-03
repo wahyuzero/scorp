@@ -89,10 +89,19 @@ type activeToolCall struct {
 	ended      bool
 }
 
+// commandCodeToolResultPart represents tool execution output in Vercel AI SDK wire format
+type commandCodeToolResultPart struct {
+	Type       string                 `json:"type"`
+	ToolCallID string                 `json:"toolCallId"`
+	ToolName   string                 `json:"toolName"`
+	Output     map[string]interface{} `json:"output"`
+}
+
 // buildCommandCodePayload transforms ChatMessages and optional tools into Command Code schema
 func buildCommandCodePayload(model *ModelConfig, messages []ChatMessage, tools []registry.ToolSchema) (*commandCodePayload, error) {
 	var systemParts []string
 	var convertedMsgs []commandCodeMsg
+	toolNameMap := make(map[string]string)
 
 	for _, msg := range messages {
 		if msg.Role == "system" {
@@ -117,6 +126,7 @@ func buildCommandCodePayload(model *ModelConfig, messages []ChatMessage, tools [
 				if callID == "" {
 					callID = fmt.Sprintf("call_%d", time.Now().UnixNano())
 				}
+				toolNameMap[callID] = tc.Function.Name
 				parts = append(parts, toolCallContentPart{
 					Type:       "tool-call",
 					ToolCallID: callID,
@@ -131,9 +141,49 @@ func buildCommandCodePayload(model *ModelConfig, messages []ChatMessage, tools [
 			continue
 		}
 
+		// Check if message is a tool result:
+		// Either role == "tool" or content formatted as "[Tool Result: <toolName>]..."
+		if msg.Role == "tool" || (msg.Role == "user" && strings.HasPrefix(msg.Content, "[Tool Result: ")) {
+			toolName := "tool"
+			toolOutput := msg.Content
+			toolCallID := "call_prev"
+
+			if strings.HasPrefix(msg.Content, "[Tool Result: ") {
+				endHeader := strings.Index(msg.Content, "]\n")
+				if endHeader > 14 {
+					toolName = strings.TrimSpace(msg.Content[14:endHeader])
+					toolOutput = msg.Content[endHeader+2:]
+				}
+			}
+
+			// Find matching toolCallID if available
+			for id, name := range toolNameMap {
+				if name == toolName {
+					toolCallID = id
+					break
+				}
+			}
+
+			convertedMsgs = append(convertedMsgs, commandCodeMsg{
+				Role: "tool",
+				Content: []interface{}{
+					commandCodeToolResultPart{
+						Type:       "tool-result",
+						ToolCallID: toolCallID,
+						ToolName:   toolName,
+						Output: map[string]interface{}{
+							"type":  "text",
+							"value": toolOutput,
+						},
+					},
+				},
+			})
+			continue
+		}
+
 		// Standard user or assistant message
 		role := msg.Role
-		if role != "assistant" && role != "tool" {
+		if role != "assistant" {
 			role = "user"
 		}
 		convertedMsgs = append(convertedMsgs, commandCodeMsg{
