@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"strings"
 	"time"
 )
 
@@ -15,8 +16,25 @@ import (
 // ExecuteGit runs git operations
 func ExecuteGit(args map[string]interface{}, chatID int64) (string, bool) {
 	action := helpers.GetStringArg(args, "action", "")
+	if action == "" {
+		action = helpers.GetStringArg(args, "command", "")
+	}
 	repo := helpers.GetStringArg(args, "repo", ".")
-	_ = repo // repo is used via -C flag
+
+	// Parse flags and formats like "-C /path status" or "git status"
+	fields := strings.Fields(action)
+	if len(fields) > 0 {
+		if fields[0] == "git" {
+			fields = fields[1:]
+		}
+		for len(fields) >= 2 && fields[0] == "-C" {
+			repo = fields[1]
+			fields = fields[2:]
+		}
+		if len(fields) > 0 {
+			action = fields[0]
+		}
+	}
 
 	if action == "" {
 		return "Error: 'action' argument is required (status, log, diff, commit, branch, stash, pull, push)", false

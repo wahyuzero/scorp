@@ -77,7 +77,8 @@ func init() {
 		Native:      true,
 		Execute: tools.ExecuteGit,
 		Arguments: map[string]registry.ArgDef{
-			"command": {Type: "string", Description: "Git command (e.g. 'status', 'log')", Required: true},
+			"action":  {Type: "string", Description: "Git action: status, log, diff, commit, branch, stash, pull, push, show, remote", Required: true},
+			"command": {Type: "string", Description: "Alias for action (e.g. 'status', 'log')"},
 			"repo":    {Type: "string", Description: "Repo path", Default: "."},
 		},
 	})

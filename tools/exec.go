@@ -103,23 +103,7 @@ func ExecuteShell(args map[string]interface{}, chatID int64) (string, bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	defer cancel()
 
-	// For simple commands without shell metacharacters, execute directly (avoids quoting issues)
-	// Detect if command needs shell features (pipes, redirects, variables, etc.)
-	// But allow parentheses in arguments (common in output/summaries)
-	needsShell := needsShellExecution(command)
-	
-	var cmd *exec.Cmd
-	if needsShell {
-		cmd = exec.CommandContext(ctx, "bash", "-c", command)
-	} else {
-		// Split into command + args for direct execution (safer, no shell parsing)
-		parts := strings.Fields(command)
-		if len(parts) > 0 {
-			cmd = exec.CommandContext(ctx, parts[0], parts[1:]...)
-		} else {
-			cmd = exec.CommandContext(ctx, "bash", "-c", command)
-		}
-	}
+	cmd := exec.CommandContext(ctx, "bash", "-c", command)
 	
 	output, err := cmd.CombinedOutput()
 	result := string(output)

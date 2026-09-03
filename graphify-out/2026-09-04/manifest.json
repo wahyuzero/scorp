@@ -659,12 +659,6 @@
     "ast_hash": "f1da61271a8924b3def8d352f1d403f6",
     "semantic_hash": "f1da61271a8924b3def8d352f1d403f6"
   },
-  "tools_native_test.go": {
-    "mtime": 1788454397.7352636,
-    "seen": 1788456167.4335344,
-    "ast_hash": "f1db6a15f6a49049f2c027ac49b00ac8",
-    "semantic_hash": "f1db6a15f6a49049f2c027ac49b00ac8"
-  },
   "updater/checker.go": {
     "mtime": 1788454397.7353513,
     "seen": 1788456167.433536,
@@ -701,22 +695,10 @@
     "ast_hash": "7ce9bf0eaa8251ead4159390c19ef133",
     "semantic_hash": ""
   },
-  "AI_AGENT_MODERNIZATION_ROADMAP.md": {
-    "mtime": 1788454397.7282996,
-    "seen": 1788456271.852965,
-    "ast_hash": "7ea418e86571b1509fa0503211340e41",
-    "semantic_hash": ""
-  },
-  "COMPETITIVE_ANALYSIS_ZEROCLAW.md": {
-    "mtime": 1788454397.7284608,
-    "seen": 1788456271.8529665,
-    "ast_hash": "d00b087291afe6d9e32e852a92edb43a",
-    "semantic_hash": ""
-  },
   "README.md": {
-    "mtime": 1788454397.7285879,
-    "seen": 1788456271.852968,
-    "ast_hash": "9e38ff7697ba2badfc93bd84ef3c1450",
+    "mtime": 1788462305.802822,
+    "seen": 1788462352.1410716,
+    "ast_hash": "eb6f3acc2c0f946c41db1f8a890e4b6e",
     "semantic_hash": ""
   },
   "agent/repomap.go": {
@@ -969,6 +951,18 @@
     "mtime": 1788462036.969192,
     "seen": 1788462184.2393603,
     "ast_hash": "7b22e2ab39282149835cbf2ebae9d4fc",
+    "semantic_hash": ""
+  },
+  "models/tools_test.go": {
+    "mtime": 1788462335.3928885,
+    "seen": 1788462352.140919,
+    "ast_hash": "a02d8509d1e82527833652392625091d",
+    "semantic_hash": ""
+  },
+  "MODERNIZATION_NOTES.md": {
+    "mtime": 1788462298.6958063,
+    "seen": 1788462352.1410694,
+    "ast_hash": "6c0565a2b81e5000386d83908d5c8fc3",
     "semantic_hash": ""
   }
 }

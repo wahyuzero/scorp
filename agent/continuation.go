@@ -11,26 +11,40 @@ import (
 // but didn't actually call tools (preventing premature stopping).
 // ──────────────────────────────────────────────
 
+// hasCompletionIndicators detects if the model has explicitly finished the task.
+func hasCompletionIndicators(text string) bool {
+	lower := strings.ToLower(text)
+	indicators := []string{
+		"selesai", "berhasil", "terverifikasi", "sudah dihapus", "sudah dibuat",
+		"sudah selesai", "done", "completed", "verified", "tidak ada tindakan lebih lanjut",
+		"telah berhasil", "semua selesai", "hasil verifikasi", "ringkasnya:", "kesimpulannya",
+	}
+	for _, ind := range indicators {
+		if strings.Contains(lower, ind) {
+			return true
+		}
+	}
+	return false
+}
+
 // looksLikeContinuation detects if the model's response indicates intent to continue
 // but didn't actually call tools (e.g., "Let me...", "I'll try...", "Mari coba...")
 func looksLikeContinuation(text string) bool {
+	if hasCompletionIndicators(text) {
+		return false
+	}
+
 	lower := strings.ToLower(text)
 	patterns := []string{
 		"let me ", "i'll ", "i will ", "i'm going to ", "going to ",
-		"mar i coba", "mari coba", "saya akan ", "akan coba ", "coba ",
-		"saya perlu ", "perlu saya ", "perlu dicek", "perlu periksa", "harus ", "mari kita ",
+		"mari coba", "saya akan ", "akan coba ", "coba jalankan ", "coba periksa ",
+		"saya perlu ", "perlu saya ", "perlu dicek", "perlu periksa", "mari kita ",
 		"akan saya ", "akan memeriksa", "akan mengecek ", "cek dulu ", "tunggu sebentar",
-		"sekarang saya ", "sekarang kita ", "sekarang akan ", "saya buat ", "saya tulis ",
-		"buat file ", "tulis file ", "berikutnya ", "selanjutnya ", "langkah berikutnya ",
-		"akan saya buat ", "akan saya jalankan ", "now i will ", "next, ",
-		"i'll try", "let me try", "try to ", "attempt to ",
-		"next i", "then i", "now i", "continue to ",
-		"proceed to ", "follow up", "followup",
-		"i need to ", "still need to ", "first, let me",
-		"after that", "once that", "now let's",
-		"step 1", "step 2", "step 3",
-		"first,", "second,", "third,",
-		"i haven't", "not yet", "still working",
+		"sekarang saya ", "sekarang kita ", "sekarang akan ", "saya buat file", "saya tulis file",
+		"langkah berikutnya:", "tahap selanjutnya:", "akan saya buat ", "akan saya jalankan ",
+		"now i will ", "next, let me", "i'll try", "let me try", "try to execute",
+		"next i will", "then i will", "continue to ", "proceed to ",
+		"i need to ", "still need to ", "first, let me", "still working on",
 	}
 	for _, p := range patterns {
 		if strings.Contains(lower, p) {

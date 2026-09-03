@@ -52,6 +52,22 @@
       "base_url": "https://api.commandcode.ai",
       "max_tokens": 32768,
       "api": "command-code"
+    },
+    "meta/muse-spark-1.2-contributor": {
+      "provider": "command-code",
+      "model": "meta/muse-spark-1.2-contributor",
+      "key_env": "COMMAND_CODE_API_KEY",
+      "base_url": "https://api.commandcode.ai",
+      "max_tokens": 16384,
+      "api": "command-code"
+    },
+    "z-ai/glm-5.3-flash": {
+      "provider": "command-code",
+      "model": "z-ai/glm-5.3-flash",
+      "key_env": "COMMAND_CODE_API_KEY",
+      "base_url": "https://api.commandcode.ai",
+      "max_tokens": 16384,
+      "api": "command-code"
     }
   }
 }

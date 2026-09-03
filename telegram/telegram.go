@@ -214,6 +214,14 @@ func SendMessage(text string, keyboard map[string]interface{}) bool {
 			ok = false
 		} else if !resp.OK {
 			log.Printf("[telegram] send failed: %s", resp.Description)
+			if strings.Contains(resp.Description, "can't parse entities") {
+				delete(payload, "parse_mode")
+				respRetry, errRetry := TgPost("/sendMessage", payload)
+				if errRetry == nil && respRetry != nil && respRetry.OK {
+					log.Printf("[telegram] HTML parse error fallback without parse_mode succeeded")
+					continue
+				}
+			}
 			ok = false
 		}
 		if len(chunks) > 1 {
@@ -246,6 +254,13 @@ func EditMessageByID(chatID int64, messageID int64, text string, keyboard map[st
 		if resp != nil && strings.Contains(resp.Description, "message is not modified") {
 			return true
 		}
+		if resp != nil && strings.Contains(resp.Description, "can't parse entities") {
+			delete(payload, "parse_mode")
+			respRetry, errRetry := TgPost("/editMessageText", payload)
+			if errRetry == nil && respRetry != nil && (respRetry.OK || strings.Contains(respRetry.Description, "message is not modified")) {
+				return true
+			}
+		}
 		return false
 	}
 	return true
@@ -276,13 +291,32 @@ func SendMessageGetIDWithKeyboard(text string, chatID int64, keyboard map[string
 	defer resp.Body.Close()
 
 	var result struct {
-		OK     bool `json:"ok"`
-		Result struct {
+		OK          bool   `json:"ok"`
+		Description string `json:"description"`
+		Result      struct {
 			MessageID int64 `json:"message_id"`
 		} `json:"result"`
 	}
 	json.NewDecoder(resp.Body).Decode(&result)
 	if !result.OK {
+		if strings.Contains(result.Description, "can't parse entities") {
+			delete(payload, "parse_mode")
+			dataRetry, _ := json.Marshal(payload)
+			respRetry, errRetry := HttpClient.Post(TgBase+"/sendMessage", "application/json", bytes.NewReader(dataRetry))
+			if errRetry == nil {
+				defer respRetry.Body.Close()
+				var retryRes struct {
+					OK     bool `json:"ok"`
+					Result struct {
+						MessageID int64 `json:"message_id"`
+					} `json:"result"`
+				}
+				json.NewDecoder(respRetry.Body).Decode(&retryRes)
+				if retryRes.OK {
+					return retryRes.Result.MessageID
+				}
+			}
+		}
 		return 0
 	}
 	return result.Result.MessageID

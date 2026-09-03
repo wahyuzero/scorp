@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 )
@@ -149,8 +150,8 @@ func (idx *VectorIndex) AddVecChunkWithHash(source, content string, fp uint64) s
 	return id
 }
 
-// vecSearch searches by simhash similarity.
-func (idx *VectorIndex) vecSearch(queryFP uint64, topK int) []searchResult {
+// vecSearch searches by simhash similarity and keyword relevance.
+func (idx *VectorIndex) vecSearch(queryFP uint64, queryText string, topK int) []searchResult {
 	idx.mu.RLock()
 	defer idx.mu.RUnlock()
 
@@ -158,9 +159,29 @@ func (idx *VectorIndex) vecSearch(queryFP uint64, topK int) []searchResult {
 		return nil
 	}
 
+	queryLower := strings.ToLower(queryText)
+	words := strings.Fields(queryLower)
+
 	results := make([]searchResult, 0, len(idx.Chunks))
 	for _, chunk := range idx.Chunks {
 		score := simhashSimilarity(queryFP, chunk.Simhash)
+		contentLower := strings.ToLower(chunk.Content)
+
+		// Keyword match boost
+		matchedWords := 0
+		for _, w := range words {
+			if strings.Contains(contentLower, w) {
+				matchedWords++
+			}
+		}
+		if len(words) > 0 && matchedWords > 0 {
+			keywordRatio := float64(matchedWords) / float64(len(words))
+			boost := 0.75 + (0.24 * keywordRatio)
+			if boost > score {
+				score = boost
+			}
+		}
+
 		if score >= SimHashThreshold {
 			results = append(results, searchResult{Chunk: chunk, Score: score})
 		}
@@ -209,8 +230,8 @@ func (idx *VectorIndex) vecSearchTFIDF(queryText string, topK int) []searchResul
 
 // hybridSearch combines simhash + TF-IDF with weighted scoring.
 func (idx *VectorIndex) HybridSearch(queryFP uint64, queryText string, topK int, simhashWeight float64) []hybridResult {
-	// Get simhash results
-	shResults := idx.vecSearch(queryFP, topK*2)
+	// Get simhash + keyword results
+	shResults := idx.vecSearch(queryFP, queryText, topK*2)
 
 	// Get TF-IDF results
 	tfidfWeight := 1.0 - simhashWeight
@@ -512,6 +533,9 @@ func RagVecIngest(args map[string]interface{}) (string, bool) {
 			for i, chunk := range chunks {
 				sourceKey := fmt.Sprintf("%s#chunk%d", f, i)
 				VecIndex.AddVecChunk(sourceKey, chunk)
+				if ragIndex != nil {
+					ragIndex.addChunk(sourceKey, chunk)
+				}
 				totalChunks++
 			}
 		}
@@ -525,11 +549,17 @@ func RagVecIngest(args map[string]interface{}) (string, bool) {
 		for i, chunk := range chunks {
 			sourceKey := fmt.Sprintf("%s#chunk%d", path, i)
 			VecIndex.AddVecChunk(sourceKey, chunk)
+			if ragIndex != nil {
+				ragIndex.addChunk(sourceKey, chunk)
+			}
 			totalChunks++
 		}
 	}
 
 	VecIndex.Persist()
+	if ragIndex != nil {
+		ragIndex.persist()
+	}
 	return fmt.Sprintf("✅ Indexed %d chunks from %s (simhash)\nTotal vector chunks: %d",
 		totalChunks, path, len(VecIndex.Chunks)), true
 }
@@ -551,7 +581,7 @@ func RagVecSearch(args map[string]interface{}) (string, bool) {
 	if hybridMode {
 		results = VecIndex.HybridSearch(queryFP, query, topK, vectorWeight)
 	} else {
-		simResults := VecIndex.vecSearch(queryFP, topK)
+		simResults := VecIndex.vecSearch(queryFP, query, topK)
 		for _, sr := range simResults {
 			results = append(results, hybridResult{
 				Chunk:  sr.Chunk,

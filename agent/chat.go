@@ -592,7 +592,7 @@ func markdownToTelegramHTML(md string) string {
 		}
 
 		if inCodeBlock {
-			result = append(result, line)
+			result = append(result, helpers.EscapeHTML(line))
 			i++
 			continue
 		}

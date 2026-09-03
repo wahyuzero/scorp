@@ -376,6 +376,7 @@ func CollectSystem() SystemData {
 	totalKB, availKB, usedKB, swapTotalKB, swapFreeKB := getMemInfo()
 
 	const kbToGB = 1024 * 1024
+	const bytesToGB = 1024 * 1024 * 1024
 	d.RAMTotalGB = float64(totalKB) / float64(kbToGB)
 	d.RAMUsedGB = float64(usedKB) / float64(kbToGB)
 	d.RAMAvailGB = float64(availKB) / float64(kbToGB)
@@ -391,13 +392,13 @@ func CollectSystem() SystemData {
 	}
 
 	diskTotal, diskUsed, diskPct := getDiskUsage()
-	d.DiskTotalGB = float64(diskTotal) / float64(kbToGB)
-	d.DiskUsedGB = float64(diskUsed) / float64(kbToGB)
+	d.DiskTotalGB = float64(diskTotal) / float64(bytesToGB)
+	d.DiskUsedGB = float64(diskUsed) / float64(bytesToGB)
 	d.DiskPercent = float64(diskPct)
 
 	sent, recv := getNetBytes()
-	d.NetSentGB = float64(sent) / float64(kbToGB)
-	d.NetRecvGB = float64(recv) / float64(kbToGB)
+	d.NetSentGB = float64(sent) / float64(bytesToGB)
+	d.NetRecvGB = float64(recv) / float64(bytesToGB)
 
 	uptime := getUptime()
 	d.Uptime = FormatDuration(uptime)

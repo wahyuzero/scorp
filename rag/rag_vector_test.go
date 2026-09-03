@@ -123,7 +123,7 @@ func TestSimHash_VectorIndexAddAndSearch(t *testing.T) {
 
 	// Search for something similar to first chunk
 	queryFP := ComputeSimhash("golang test document")
-	results := idx.vecSearch(queryFP, 5)
+	results := idx.vecSearch(queryFP, "golang test document", 5)
 
 	if len(results) == 0 {
 		t.Log("No results found (may be below threshold)")

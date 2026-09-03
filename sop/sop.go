@@ -69,7 +69,7 @@ func InitDefaultSOPs() {
 			Name:        "site_check",
 			Description: "Verify web service reachability and content via low-RAM web engine",
 			Steps: []string{
-				"1. Read target endpoint using read_url (<5MB RAM)",
+				"1. Read target endpoint using read_url (under 5MB RAM)",
 				"2. Verify HTTP response and title header",
 				"3. Report availability and page excerpt",
 			},
