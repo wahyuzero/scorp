@@ -1,6 +1,6 @@
 {
   "0": "TruncateStr",
-  "1": "HandleTelegramAction",
+  "1": "StartDaemon",
   "2": "testing.T",
   "3": "chat.go",
   "4": "MCPServer",
@@ -35,13 +35,17 @@
   "33": ".listenSSEStream",
   "34": "RegisterTool",
   "35": "serviceBridgeRequests",
+  "36": "bg.go",
+  "37": "HandleTelegramAction",
+  "38": "ComputeSimhash",
+  "39": "inline.go",
+  "40": "prompt_test.go",
   "41": "GetStringArg",
-  "44": "TestSessionManager",
-  "47": "TestSteeringQueue",
+  "42": "clarify.go",
+  "43": "EscapeHTML",
+  "44": "ResetNativeToolCache",
+  "45": "StartServer",
   "48": "LoadMCPConfig",
-  "50": "ExecuteTermuxAPI",
-  "51": "collector_native_test.go",
   "55": "monitor_nobrowser.go",
-  "56": "login_nobrowser.go",
-  "61": "HandleUploadInAgentMode"
+  "56": "login_nobrowser.go"
 }
