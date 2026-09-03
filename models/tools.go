@@ -1,15 +1,10 @@
 package models
 
 import (
-	"scorp-agent/internal/helpers"
-	"scorp-agent/registry"
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -19,109 +14,14 @@ import (
 // Shared Model Calling Functions
 // ──────────────────────────────────────────────
 
-// CallModelWithTools calls a model with native tool definitions (OpenAI/Anthropic/Gemini)
+// CallModelWithTools calls a model with native tool definitions via the modular LLMProvider
 func CallModelWithTools(ctx context.Context, model *ModelConfig, messages []ChatMessage) (string, []ToolCall, error) {
 	if model == nil {
 		return "", nil, fmt.Errorf("no model configured")
 	}
 
-	switch ResolveAPIFormat(model) {
-	case "anthropic":
-		return CallAnthropicWithTools(ctx, model, messages)
-	case "gemini":
-		return CallGeminiWithTools(ctx, model, messages)
-	case "command-code", "commandcode":
-		return CallCommandCodeWithTools(ctx, model, messages)
-	default:
-		return CallOpenAIWithTools(ctx, model, messages)
-	}
-}
-
-// CallOpenAIWithTools sends a chat completion with native tool definitions to an OpenAI-compatible API.
-func CallOpenAIWithTools(ctx context.Context, model *ModelConfig, messages []ChatMessage) (string, []ToolCall, error) {
-	apiKey := ResolveAPIKey(model)
-	if apiKey == "" {
-		return "", nil, fmt.Errorf("no API key for provider '%s' — %s", model.Provider, KeySourceLabel(model))
-	}
-
-	maxTokens := model.MaxTokens
-	if maxTokens == 0 {
-		maxTokens = 4096
-	}
-
-	reqBody := ChatRequest{
-		Model:       model.Model,
-		Messages:    messages,
-		MaxTokens:   maxTokens,
-		Temperature: 0.7,
-		Tools:       registry.GenerateNativeToolsSchema(),
-		ToolChoice:  "auto",
-	}
-
-	jsonData, err := json.Marshal(reqBody)
-	if err != nil {
-		return "", nil, fmt.Errorf("marshal error: %w", err)
-	}
-
-	endpoint := strings.TrimRight(model.BaseURL, "/") + "/chat/completions"
-
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewReader(jsonData))
-	if err != nil {
-		return "", nil, fmt.Errorf("request error: %w", err)
-	}
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
-	if model.Provider == "openrouter" {
-		httpReq.Header.Set("HTTP-Referer", "https://scorp-agent.local")
-		httpReq.Header.Set("X-Title", "ScorpAgent")
-	}
-
-	resp, err := GetAIClient(model.BaseURL).Do(httpReq)
-	if err != nil {
-		return "", nil, fmt.Errorf("API call failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", nil, fmt.Errorf("read error: %w", err)
-	}
-
-	if resp.StatusCode != 200 {
-		return "", nil, fmt.Errorf("API error (HTTP %d): %s", resp.StatusCode, helpers.TruncateStr(string(body), 300))
-	}
-
-	var chatResp ChatResponse
-	if err := json.Unmarshal(body, &chatResp); err != nil {
-		return "", nil, fmt.Errorf("parse error: %s", helpers.TruncateStr(string(body), 200))
-	}
-
-	if chatResp.Error != nil {
-		return "", nil, fmt.Errorf("API error: %s", chatResp.Error.Message)
-	}
-
-	if len(chatResp.Choices) == 0 {
-		return "", nil, fmt.Errorf("no response choices")
-	}
-
-	choice := chatResp.Choices[0]
-	content := choice.Message.Content
-
-	// Parse native tool calls
-	var toolCalls []ToolCall
-	for _, tc := range choice.Message.ToolCalls {
-		var args map[string]interface{}
-		if err := json.Unmarshal([]byte(tc.Function.Arguments), &args); err != nil {
-			log.Printf("[agent] Failed to parse tool args '%s': %v", tc.Function.Arguments, err)
-			args = make(map[string]interface{})
-		}
-		toolCalls = append(toolCalls, ToolCall{
-			Name: tc.Function.Name,
-			Args: args,
-		})
-	}
-
-	return content, toolCalls, nil
+	provider := GetProvider(ResolveAPIFormat(model))
+	return provider.CallWithTools(ctx, model, messages)
 }
 
 

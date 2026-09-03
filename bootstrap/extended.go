@@ -14,7 +14,21 @@ import (
 
 // init() — register remaining tools (web, git, docker, mcp, vision, browser)
 func init() {
-	// ── Web ──
+	// ── Web (Ultra-Low-RAM Web Engine) ──
+	registry.RegisterTool(registry.ToolDef{
+		Name:        "read_url",
+		Description: "Read URL content in reader mode (Markdown) with <5MB RAM usage. Uses Firefox Readability engine + html-to-markdown, with automatic cloud offload fallback. PREFERRED over heavy browser navigation.",
+		Category:    "network",
+		Native:      true,
+		Execute: func(args map[string]interface{}, chatID int64) (string, bool) {
+			return tools.ExecuteReadURL(args)
+		},
+		Arguments: map[string]registry.ArgDef{
+			"url":        {Type: "string", Description: "URL to read", Required: true},
+			"max_length": {Type: "integer", Description: "Maximum characters to return (default: 8000)", Default: 8000},
+			"remote":     {Type: "boolean", Description: "Force remote cloud scraper (Firecrawl/Tavily) for complex JS SPAs", Default: false},
+		},
+	})
 	registry.RegisterTool(registry.ToolDef{
 		Name:        "web_fetch",
 		Description: "Fetch a URL and return HTML/text content",
@@ -107,6 +121,39 @@ func init() {
 		Arguments: map[string]registry.ArgDef{
 			"action": {Type: "string", Description: "list, kill, or info", Required: true, Enum: []string{"list", "kill", "info"}},
 			"pid":    {Type: "integer", Description: "Process ID (for kill/info)"},
+		},
+	})
+
+	// ── SOP (Standard Operating Procedures) Engine ──
+	registry.RegisterTool(registry.ToolDef{
+		Name:        "sop",
+		Description: "Standard Operating Procedures (SOP) playbook engine. Actions: list (view playbooks), get (inspect playbook steps), init (create default templates).",
+		Category:    "agent",
+		Native:      true,
+		Execute: func(args map[string]interface{}, chatID int64) (string, bool) {
+			return tools.ExecuteSOP(args)
+		},
+		Arguments: map[string]registry.ArgDef{
+			"action": {Type: "string", Description: "list, get, init", Required: true},
+			"name":   {Type: "string", Description: "SOP playbook name"},
+		},
+	})
+
+	// ── Termux Mobile Bridge ──
+	registry.RegisterTool(registry.ToolDef{
+		Name:        "termux_api",
+		Description: "Interact with Android Termux hardware and API: notification, toast, clipboard_get, clipboard_set, battery, vibrate, wake_lock, wake_unlock.",
+		Category:    "system",
+		Native:      true,
+		Execute: func(args map[string]interface{}, chatID int64) (string, bool) {
+			return tools.ExecuteTermuxAPI(args)
+		},
+		Arguments: map[string]registry.ArgDef{
+			"action":      {Type: "string", Description: "notification, toast, clipboard_get, clipboard_set, battery, vibrate, wake_lock, wake_unlock", Required: true},
+			"title":       {Type: "string", Description: "Notification title (for action=notification)"},
+			"content":     {Type: "string", Description: "Notification content or message"},
+			"text":        {Type: "string", Description: "Toast message or text to copy into clipboard"},
+			"duration_ms": {Type: "integer", Description: "Vibration duration in milliseconds"},
 		},
 	})
 
@@ -360,23 +407,6 @@ func init() {
 	})
 
 	// ── Uptime Monitor ──
-	registry.RegisterTool(registry.ToolDef{
-		Name:        "uptime",
-		Description: "Manage uptime/health monitoring targets: list, add, remove, check",
-		Category:    "monitoring",
-		Native:      true,
-		Execute: func(args map[string]interface{}, chatID int64) (string, bool) {
-			return tools.ExecuteUptime(args)
-		},
-		Arguments: map[string]registry.ArgDef{
-			"action":          {Type: "string", Description: "Action: list, add, remove, check", Required: true},
-			"name":            {Type: "string", Description: "Target name (for add/remove)"},
-			"url":             {Type: "string", Description: "URL to monitor (for add)"},
-			"expected_status": {Type: "integer", Description: "Expected HTTP status code (default: 200)"},
-			"timeout":         {Type: "integer", Description: "Check timeout in seconds (default: 10)"},
-		},
-	})
-
 	// ── Tool Discovery (for deferred/on-demand tools) ──
 	registry.RegisterTool(registry.ToolDef{
 		Name:        "tool_search",

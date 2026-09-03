@@ -63,7 +63,7 @@ func init() {
 	})
 	registry.RegisterTool(registry.ToolDef{
 		Name:        "write_file",
-		Description: "Write content to a file (overwrites)",
+		Description: "Write content to a file (overwrites). Only use for brand new files. For editing existing files, use replace_file_content.",
 		Category:    "shell",
 		Native:      true,
 		Execute: func(args map[string]interface{}, chatID int64) (string, bool) {
@@ -72,6 +72,39 @@ func init() {
 		Arguments: map[string]registry.ArgDef{
 			"path":    {Type: "string", Description: "File path", Required: true},
 			"content": {Type: "string", Description: "Content to write", Required: true},
+		},
+	})
+	// ── Surgical Diff / Chunk Replacement ──
+	registry.RegisterTool(registry.ToolDef{
+		Name:        "replace_file_content",
+		Description: "Surgically replace exact or fuzzy content chunk in a file. PREFERRED over write_file when editing existing files to avoid rewriting the entire file and saving tokens.",
+		Category:    "shell",
+		Native:      true,
+		Execute: func(args map[string]interface{}, chatID int64) (string, bool) {
+			return tools.ExecuteReplaceFileContent(args)
+		},
+		Arguments: map[string]registry.ArgDef{
+			"target_file":         {Type: "string", Description: "File path to modify", Required: true},
+			"target_content":      {Type: "string", Description: "Exact existing content chunk to replace", Required: true},
+			"replacement_content": {Type: "string", Description: "New replacement content chunk", Required: true},
+			"start_line":          {Type: "integer", Description: "Optional starting line number constraint"},
+			"end_line":            {Type: "integer", Description: "Optional ending line number constraint"},
+			"replace_all":         {Type: "boolean", Description: "Replace all occurrences instead of first/unique", Default: false},
+		},
+	})
+	registry.RegisterTool(registry.ToolDef{
+		Name:        "patch",
+		Description: "Alias for surgical replacement (replace_file_content). Use path, old_string, new_string.",
+		Category:    "shell",
+		Native:      true,
+		Execute: func(args map[string]interface{}, chatID int64) (string, bool) {
+			return tools.ExecutePatch(args)
+		},
+		Arguments: map[string]registry.ArgDef{
+			"path":        {Type: "string", Description: "File path to patch", Required: true},
+			"old_string":  {Type: "string", Description: "Exact text or chunk to find", Required: true},
+			"new_string":  {Type: "string", Description: "New replacement text", Required: true},
+			"replace_all": {Type: "boolean", Description: "Replace all occurrences", Default: false},
 		},
 	})
 	registry.RegisterTool(registry.ToolDef{

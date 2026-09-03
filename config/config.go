@@ -67,9 +67,9 @@ func LoadConfig() error {
 	Cfg.AlertCooldown = EnvInt("ALERT_COOLDOWN", 600)
 	Cfg.ReportInterval = EnvInt("REPORT_INTERVAL", 3600)
 
-	// Monitoring toggles — defaults: monitoring ON, security ON, reports OFF
-	Cfg.MonitoringEnabled = EnvBool("MONITORING_ENABLED", true)
-	Cfg.SecurityAlertsEnabled = EnvBool("SECURITY_ALERTS_ENABLED", true)
+	// Monitoring toggles — VPS monitoring disabled by default
+	Cfg.MonitoringEnabled = EnvBool("MONITORING_ENABLED", false)
+	Cfg.SecurityAlertsEnabled = EnvBool("SECURITY_ALERTS_ENABLED", false)
 	Cfg.ScheduledReportsEnabled = EnvBool("SCHEDULED_REPORTS_ENABLED", false)
 
 	Cfg.RcloneGDriveMount = EnvStr("RCLONE_GDRIVE_MOUNT", "/data/coolify/storage/gdrive")

@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"strings"
@@ -30,9 +31,12 @@ type MCPServerModeConfig struct {
 
 // MCPServerConfig is the config for a single MCP server in mcp.json
 type MCPServerConfig struct {
-	Command string            `json:"command"`
-	Args    []string          `json:"args"`
-	Env     map[string]string `json:"env"`
+	Command   string            `json:"command,omitempty"`
+	Args      []string          `json:"args,omitempty"`
+	Env       map[string]string `json:"env,omitempty"`
+	URL       string            `json:"url,omitempty"`       // Remote HTTP or SSE URL
+	Transport string            `json:"transport,omitempty"` // "stdio" (default) or "sse"
+	Headers   map[string]string `json:"headers,omitempty"`   // Custom headers
 }
 
 // MCPTool represents a tool discovered from an MCP server
@@ -45,15 +49,20 @@ type MCPTool struct {
 
 // MCPServer is a running MCP server process
 type MCPServer struct {
-	Name    string
-	Config  MCPServerConfig
-	cmd     *exec.Cmd
-	stdin   *json.Encoder
-	scanner *bufio.Scanner
-	tools   []MCPTool
-	mu      sync.Mutex
-	reqID   int64
-	alive   bool
+	Name       string
+	Config     MCPServerConfig
+	cmd        *exec.Cmd
+	stdin      *json.Encoder
+	scanner    *bufio.Scanner
+	tools      []MCPTool
+	mu         sync.Mutex
+	reqID      int64
+	alive      bool
+	isSSE      bool
+	ssePostURL string
+	sseClient  *http.Client
+	sseRespCh  chan *jsonRPCResponse
+	sseCancel  context.CancelFunc
 }
 
 // JSON-RPC 2.0 types
@@ -357,6 +366,10 @@ func buildArgDefsFromInputSchema(schema map[string]interface{}) map[string]regis
 // ──────────────────────────────────────────────
 
 func startMCPServer(name string, cfg MCPServerConfig) (*MCPServer, error) {
+	if isRemoteMCP(cfg) {
+		return startSSEServer(name, cfg)
+	}
+
 	log.Printf("[mcp] Starting server %s: %s %s", name, cfg.Command, strings.Join(cfg.Args, " "))
 
 	cmd := exec.Command(cfg.Command, cfg.Args...)
@@ -415,8 +428,15 @@ func startMCPServer(name string, cfg MCPServerConfig) (*MCPServer, error) {
 // Close shuts down the MCP server process gracefully
 func (s *MCPServer) Close() {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	s.alive = false
+	if s.isSSE {
+		if s.sseCancel != nil {
+			s.sseCancel()
+		}
+		s.mu.Unlock()
+		return
+	}
+	s.mu.Unlock()
 
 	// Try graceful shutdown: send MCP shutdown notification if process still alive
 	if s.cmd != nil && s.cmd.Process != nil {
@@ -458,6 +478,10 @@ func (s *MCPServer) Close() {
 // ──────────────────────────────────────────────
 
 func (s *MCPServer) sendRequest(method string, params interface{}) (*jsonRPCResponse, error) {
+	if s.isSSE {
+		return s.sendRemoteRequest(method, params)
+	}
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -519,6 +543,10 @@ func (s *MCPServer) sendRequest(method string, params interface{}) (*jsonRPCResp
 }
 
 func (s *MCPServer) sendNotification(method string, params interface{}) error {
+	if s.isSSE {
+		return s.sendRemoteNotification(method, params)
+	}
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

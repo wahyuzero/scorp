@@ -325,110 +325,14 @@ type ChatResponse struct {
 	} `json:"error,omitempty"`
 }
 
-// callModel sends a chat completion request, dispatching to the correct API format.
+// CallModel sends a chat completion request, dispatching to the modular LLMProvider.
 func CallModel(ctx context.Context, model *ModelConfig, messages []ChatMessage) (string, error) {
 	if model == nil {
 		return "", fmt.Errorf("no model configured")
 	}
 
-	switch ResolveAPIFormat(model) {
-	case "anthropic":
-		return callAnthropic(ctx, model, messages)
-	case "gemini":
-		return callGemini(ctx, model, messages)
-	case "command-code", "commandcode":
-		return CallCommandCode(ctx, model, messages)
-	default:
-		return CallOpenAI(ctx, model, messages)
-	}
-}
-
-// callOpenAI sends a chat completion request to an OpenAI-compatible API.
-func CallOpenAI(ctx context.Context, model *ModelConfig, messages []ChatMessage) (string, error) {
-	// Resolve API key (4-tier: key_env → preset → generic → deprecated inline)
-	apiKey := ResolveAPIKey(model)
-	if apiKey == "" {
-		return "", fmt.Errorf("no API key for provider '%s' — set %s",
-			model.Provider, KeySourceLabel(model))
-	}
-
-	maxTokens := model.MaxTokens
-	if maxTokens == 0 {
-		maxTokens = 4096
-	}
-
-	reqBody := ChatRequest{
-		Model:       model.Model,
-		Messages:    messages,
-		MaxTokens:   maxTokens,
-		Temperature: 0.7,
-	}
-
-	jsonData, err := json.Marshal(reqBody)
-	if err != nil {
-		return "", fmt.Errorf("marshal error: %w", err)
-	}
-
-	endpoint := strings.TrimRight(model.BaseURL, "/") + "/chat/completions"
-
-	req, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewReader(jsonData))
-	if err != nil {
-		return "", fmt.Errorf("request error: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+apiKey)
-
-	// Provider-specific headers
-	if model.Provider == "openrouter" {
-		req.Header.Set("HTTP-Referer", "https://scorp-agent.local")
-		req.Header.Set("X-Title", "ScorpAgent")
-	}
-
-	// Use per-provider transport pool
-	client := GetAIClient(model.BaseURL)
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("API call failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("read error: %w", err)
-	}
-
-	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("API error (HTTP %d): %s", resp.StatusCode, helpers.TruncateStr(string(body), 300))
-	}
-
-	var chatResp ChatResponse
-	if err := json.Unmarshal(body, &chatResp); err != nil {
-		return "", fmt.Errorf("parse error: %s", helpers.TruncateStr(string(body), 200))
-	}
-
-	if chatResp.Error != nil {
-		return "", fmt.Errorf("API error: %s", chatResp.Error.Message)
-	}
-
-	if len(chatResp.Choices) == 0 {
-		return "", fmt.Errorf("no response choices")
-	}
-
-	content := chatResp.Choices[0].Message.Content
-
-	// Debug: log response details if content is empty but no error
-	if content == "" {
-		log.Printf("[models] ⚠️ Empty content from %s — finish=%s, choices=%d, usage=%+v, body_preview=%s",
-			model.Model, chatResp.Choices[0].FinishReason, len(chatResp.Choices), chatResp.Usage,
-			helpers.TruncateStr(string(body), 500))
-	}
-
-	// Track usage + cost
-	TrackModelUsage(model.Model, chatResp.Usage.PromptTokens, chatResp.Usage.CompletionTokens)
-	RecordCost(model.Model, chatResp.Usage.PromptTokens, chatResp.Usage.CompletionTokens)
-
-	return content, nil
+	provider := GetProvider(ResolveAPIFormat(model))
+	return provider.Call(ctx, model, messages)
 }
 
 // ──────────────────────────────────────────────

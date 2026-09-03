@@ -1,11 +1,11 @@
-package main
+package models
 
 import (
-	"scorp-agent/models"
-	"scorp-agent/registry"
 	"context"
 	"errors"
 	"testing"
+
+	"scorp-agent/registry"
 )
 
 func TestIsRateLimitError(t *testing.T) {
@@ -29,9 +29,9 @@ func TestIsRateLimitError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := models.IsRateLimitError(tt.err)
+			got := IsRateLimitError(tt.err)
 			if got != tt.want {
-				t.Errorf("models.IsRateLimitError(%v) = %v, want %v", tt.err, got, tt.want)
+				t.Errorf("IsRateLimitError(%v) = %v, want %v", tt.err, got, tt.want)
 			}
 		})
 	}
@@ -39,15 +39,23 @@ func TestIsRateLimitError(t *testing.T) {
 
 func TestCallModelWithToolsNilModel(t *testing.T) {
 	ctx := context.Background()
-	_, _, err := models.CallModelWithTools(ctx, nil, nil)
+	_, _, err := CallModelWithTools(ctx, nil, nil)
 	if err == nil {
-		t.Error("models.CallModelWithTools with nil model expected error, got nil")
+		t.Error("CallModelWithTools with nil model expected error, got nil")
 	}
 }
 
 func TestGenerateNativeToolsSchema(t *testing.T) {
+	registry.RegisterTool(registry.ToolDef{
+		Name:        "test_schema_tool",
+		Description: "A test tool",
+		Native:      true,
+	})
+	registry.ResetNativeToolCache()
 	schema := registry.GenerateNativeToolsSchema()
 	if len(schema) == 0 {
-		t.Fatal("registry.GenerateNativeToolsSchema() returned empty")
+		t.Error("GenerateNativeToolsSchema returned empty schema")
 	}
+	registry.UnregisterTool("test_schema_tool")
+	registry.ResetNativeToolCache()
 }

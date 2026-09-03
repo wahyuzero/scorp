@@ -72,14 +72,15 @@ func MainMenuKeyboard() map[string]interface{} {
 	return map[string]interface{}{
 		"inline_keyboard": []interface{}{
 			[]interface{}{
-				map[string]string{"text": "📊 Monitor", "callback_data": "mn:mon"},
 				map[string]string{"text": "🤖 Models", "callback_data": "/model"},
+				map[string]string{"text": "⏰ Cron Tasks", "callback_data": "/cron"},
+			},
+			[]interface{}{
+				map[string]string{"text": "📋 SOPs", "callback_data": "/sops"},
+				map[string]string{"text": "🔌 MCP", "callback_data": "/mcp"},
 			},
 			[]interface{}{
 				map[string]string{"text": "🔧 System", "callback_data": "mn:sys"},
-				map[string]string{"text": "⚙️ Settings", "callback_data": "mn:set"},
-			},
-			[]interface{}{
 				map[string]string{"text": "❓ Help", "callback_data": "help"},
 			},
 		},
@@ -141,50 +142,15 @@ func BackButtonKeyboard() map[string]interface{} {
 // ─── Settings Menu ───
 
 func SettingsMenuText() string {
-	monStatus := "OFF"
-	if config.Cfg.MonitoringEnabled {
-		monStatus = "ON"
-	}
-	secStatus := "OFF"
-	if config.Cfg.SecurityAlertsEnabled {
-		secStatus = "ON"
-	}
-	repStatus := "OFF"
-	if config.Cfg.ScheduledReportsEnabled {
-		repStatus = "ON"
-	}
-	return "⚙️ <b>Settings</b>\n\n" +
-		"<i>Toggle monitoring modules on/off:</i>\n" +
-		"━━━━━━━━━━━━━━━━━━━\n" +
-		fmt.Sprintf("📊 <b>Resource Monitoring</b>: %s\n", monStatus) +
-		fmt.Sprintf("🔐 <b>Security Alerts</b>: %s\n", secStatus) +
-		fmt.Sprintf("📅 <b>Scheduled Reports</b>: %s", repStatus)
+	return fmt.Sprintf("⚙️ <b>Settings</b>\n\n"+
+		"🛡️ <b>Autonomy Mode</b>: %s\n"+
+		"⏰ <b>Cron Scheduler</b>: ACTIVE\n\n"+
+		"<i>VPS resource monitoring loops and alert spam have been removed.</i>", config.GetAutonomyLevel())
 }
 
 func SettingsMenuKeyboard() map[string]interface{} {
-	monLabel := "📊 Monitoring: OFF"
-	if config.Cfg.MonitoringEnabled {
-		monLabel = "📊 Monitoring: ON"
-	}
-	secLabel := "🔐 Security: OFF"
-	if config.Cfg.SecurityAlertsEnabled {
-		secLabel = "🔐 Security: ON"
-	}
-	repLabel := "📅 Reports: OFF"
-	if config.Cfg.ScheduledReportsEnabled {
-		repLabel = "📅 Reports: ON"
-	}
 	return map[string]interface{}{
 		"inline_keyboard": []interface{}{
-			[]interface{}{
-				map[string]string{"text": monLabel, "callback_data": "set:mon"},
-			},
-			[]interface{}{
-				map[string]string{"text": secLabel, "callback_data": "set:sec"},
-			},
-			[]interface{}{
-				map[string]string{"text": repLabel, "callback_data": "set:rep"},
-			},
 			[]interface{}{
 				map[string]string{"text": "◀️ Menu", "callback_data": "mn:main"},
 			},

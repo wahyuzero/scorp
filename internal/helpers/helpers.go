@@ -122,18 +122,18 @@ func TruncOutputTool(output string) string {
 }
 
 
-// SplitMessage splits text into chunks of maxLen runes, trying to break on newlines.
+// SplitMessage splits text into chunks of maxLen runes, ensuring HTML tags are properly balanced across chunks.
 func SplitMessage(text string, maxLen int) []string {
 	if len([]rune(text)) <= maxLen {
 		return []string{text}
 	}
-	var chunks []string
+	var rawChunks []string
 	var current strings.Builder
 	for _, line := range strings.Split(text, "\n") {
 		lineLen := len([]rune(line))
 		if len([]rune(current.String()))+lineLen+1 > maxLen {
 			if current.Len() > 0 {
-				chunks = append(chunks, current.String())
+				rawChunks = append(rawChunks, current.String())
 				current.Reset()
 			}
 			current.WriteString(line)
@@ -145,7 +145,44 @@ func SplitMessage(text string, maxLen int) []string {
 		}
 	}
 	if current.Len() > 0 {
-		chunks = append(chunks, current.String())
+		rawChunks = append(rawChunks, current.String())
 	}
-	return chunks
+
+	// Balance HTML tags across chunks to prevent Telegram entity parse errors
+	var balanced []string
+	var openTags []string
+	for i, chunk := range rawChunks {
+		var prefix strings.Builder
+		for _, tag := range openTags {
+			prefix.WriteString("<" + tag + ">")
+		}
+		chunkText := prefix.String() + chunk
+
+		openTags = getUnclosedTags(chunkText)
+		var suffix strings.Builder
+		for j := len(openTags) - 1; j >= 0; j-- {
+			suffix.WriteString("</" + openTags[j] + ">")
+		}
+		if i < len(rawChunks)-1 && len(openTags) > 0 {
+			chunkText += suffix.String()
+		}
+		balanced = append(balanced, chunkText)
+	}
+
+	return balanced
+}
+
+func getUnclosedTags(htmlText string) []string {
+	supported := []string{"pre", "code", "b", "i", "u", "s"}
+	var stack []string
+	for _, tag := range supported {
+		openCount := strings.Count(strings.ToLower(htmlText), "<"+tag+">")
+		closeCount := strings.Count(strings.ToLower(htmlText), "</"+tag+">")
+		if openCount > closeCount {
+			for k := 0; k < openCount-closeCount; k++ {
+				stack = append(stack, tag)
+			}
+		}
+	}
+	return stack
 }

@@ -17,6 +17,20 @@ import (
 // Anthropic API (Claude) — /v1/messages format
 // ──────────────────────────────────────────────
 
+type AnthropicProvider struct{}
+
+func (p *AnthropicProvider) Format() string {
+	return "anthropic"
+}
+
+func (p *AnthropicProvider) Call(ctx context.Context, model *ModelConfig, messages []ChatMessage) (string, error) {
+	return callAnthropic(ctx, model, messages)
+}
+
+func (p *AnthropicProvider) CallWithTools(ctx context.Context, model *ModelConfig, messages []ChatMessage) (string, []ToolCall, error) {
+	return CallAnthropicWithTools(ctx, model, messages)
+}
+
 // anthropicRequest is the request body for the Anthropic Messages API.
 type anthropicRequest struct {
 	Model     string          `json:"model"`

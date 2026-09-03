@@ -53,7 +53,7 @@ func GetOrCreateBrowserSession(chatID int64) *BrowserSession {
 	userDataDir := config.BrowserSessionPath(fmt.Sprintf("chat_%d", chatID))
 	os.MkdirAll(userDataDir, 0755)
 
-	// Create new browser context with persistent user data
+	// Create new browser context with persistent user data and ultra-low RAM flags
 	allocOpts := append(chromedp.DefaultExecAllocatorOptions[:],
 		chromedp.Flag("headless", "true"),
 		chromedp.Flag("disable-gpu", "true"),
@@ -61,6 +61,12 @@ func GetOrCreateBrowserSession(chatID int64) *BrowserSession {
 		chromedp.Flag("disable-dev-shm-usage", "true"),
 		chromedp.Flag("no-first-run", "true"),
 		chromedp.Flag("disable-extensions", "true"),
+		chromedp.Flag("single-process", "true"),
+		chromedp.Flag("no-zygote", "true"),
+		chromedp.Flag("renderer-process-limit", "1"),
+		chromedp.Flag("disable-background-networking", "true"),
+		chromedp.Flag("disable-software-rasterizer", "true"),
+		chromedp.Flag("js-flags", "--max-old-space-size=64"),
 		chromedp.UserDataDir(userDataDir),
 	)
 	allocCtx, allocCancel := chromedp.NewExecAllocator(context.Background(), allocOpts...)

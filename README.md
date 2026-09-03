@@ -1,208 +1,88 @@
-# scorp
+# 🦂 Scorp
 
-**Small agent, big tools.** A tiny Go binary that connects an LLM to your system — shell, files, browser, network, code — accessible from terminal or Telegram.
+**Small agent, big tools.** A tiny, ultra-fast Go binary that connects modern LLMs (DeepSeek V4, Gemini 2.0, Claude 3.5, OpenAI, Ollama) to your system — shell, files, web, network, code — accessible from terminal, Telegram, or embedded Web Dashboard.
 
-Not a framework, not a platform. Just one binary that runs on anything (including Android Termux & $1 VPS) and does things when you ask it to.
+Runs natively with a memory footprint of **under 15MB RAM** on Linux VPS, edge servers, and Android Termux.
 
-> 🚀 **v2.0 Roadmap & Strategy:**
-> - [AI Agent Modernization Roadmap v2.0 (Gemini, DeepSeek, Surgical Diffs, Low-RAM)](AI_AGENT_MODERNIZATION_ROADMAP.md)
-> - [Scorp vs ZeroClaw: Competitive Analysis & Growth Playbook](COMPETITIVE_ANALYSIS_ZEROCLAW.md)
-
+> 📋 **Modernization Notes & Architecture Blueprint:**
+> - [Scorp v2.0 Architecture & Upgrade Notes](MODERNIZATION_NOTES.md)
 
 ---
 
-## What it does
+## ⚡ What Makes Scorp v2.0 Special
 
-- **Agent, not chatbot** — every message goes through a tool-use loop. Ask it to check disk space, it runs `df -h`. Ask it to fix a config, it patches the file.
-- **Shell, files, code** — read/write/patch files, run commands, execute Python
-- **Browser** — headless Chrome via chromedp (navigate, click, scrape, screenshot)
-- **Network** — fetch URLs, search the web, make HTTP requests
-- **CLI + Telegram** — interactive REPL by default, optional Telegram bot for remote access
-- **Monitoring** — CPU/RAM/disk alerts, SSH login detection (toggle on/off)
-- **Multi-provider** — OpenAI, Anthropic, Gemini, Groq, DeepSeek, OpenRouter, Z.ai, Ollama, LM Studio
-- **MCP client** — connect to Model Context Protocol servers
-- **Self-update** — check GitHub releases, update with one command
-
-Some features work better than others.
+- **Agent-First, Not a Chatbot** — Every message runs through an autonomous ReAct tool loop. Ask it to fix code, and it surgically patches the exact lines.
+- **Surgical Diff Editing** (`replace_file_content`) — Replaces exact or fuzzy content chunks instead of rewriting entire files. Saves 90%+ tokens and executes in sub-seconds.
+- **Ultra-Low-RAM Web Engine** (`read_url`) — Read documentation and articles in clean Markdown using Firefox Readability (<5MB RAM), with automatic cloud offload fallback.
+- **3-Tier Autonomy & Security Sandbox** — Choose between `readonly` (safe inspection/audit), `supervised` (prompts for dangerous commands), or `yolo` (full unattended autonomy).
+- **Outbound Secret Redactor** — Automatically masks API keys, tokens, private keys, and environment secrets before tool outputs reach the LLM or chat logs.
+- **Real-Time Steering Queue** — Intercept and redirect the agent mid-run without killing the session.
+- **Standard Operating Procedures (SOP) Engine** — Reusable, declarative automation playbooks (`scorp sop run health_audit`).
+- **Micro HTTP Gateway & Dashboard** — Built-in web UI on port 8080 running on just **~1.5 MB RAM**.
+- **Model Context Protocol (MCP)** — Native Stdio and SSE/HTTP JSON-RPC 2.0 client to connect external MCP servers.
+- **Multi-Session Management** — Manage, switch, rename, and delete conversation sessions (`scorp -s <name>` or `/session`).
+- **Native Android Termux & Low-Resource VPS** — Direct Termux:API integration (WakeLock, Android notifications) and single static ARM64 binary (`make termux`).
 
 ---
 
-## Try it
+## 🚀 Quick Start (Under 60 Seconds)
 
 ```bash
 git clone https://github.com/wahyuzero/scorp.git
 cd scorp
-./install.sh
+make
+./scorp setup
 ```
 
-The installer walks you through provider setup and optional Telegram configuration.
+The interactive wizard will guide you through choosing your AI provider (Command Code, DeepSeek, Gemini, OpenAI, Claude, Ollama) and safety mode.
 
-CLI mode without Telegram:
+### Launch Interactive CLI Chat:
+```bash
+./scorp
+```
+
+### Run One-Shot Tasks:
+```bash
+./scorp "read the first 10 lines of main.go and summarize"
+```
+
+### Launch Embedded Web Dashboard (< 2MB RAM):
+```bash
+./scorp gateway --port 8080
+```
+Open `http://localhost:8080` in your phone or PC browser.
+
+---
+
+## 🛠️ CLI Slash Commands
+
+| Command | Description |
+| :--- | :--- |
+| `/help` | Show command help and usage examples |
+| `/models` | List all configured models and key status |
+| `/model <name>` | Switch active model on the fly |
+| `/mode <level>` | Switch autonomy mode (`readonly`, `supervised`, `yolo`) |
+| `/session` | List saved sessions and switch/rename/delete |
+| `/sop [run]` | List or execute automated SOP playbooks |
+| `/receipts` | View recent cryptographic SHA-256 tool execution receipts |
+| `/tools` | List all registered tools |
+| `/cost` | Display token usage and estimated spend |
+| `/clear` | Reset current session history |
+| `/exit` | Quit Scorp |
+
+---
+
+## 📱 Build for Android Termux
+
+Compile an ultra-lightweight static ARM64 binary ready to run directly on Termux without external libc dependencies:
 
 ```bash
-scorp          # interactive REPL
+make termux
 ```
+*(Produces `scorp-termux` ~16MB single binary).*
 
 ---
 
-## Configuration
+## 📄 License
 
-### .env
-
-Copy `.env.example` to `.env` and fill in what you need:
-
-```
-TELEGRAM_BOT_TOKEN=...     # optional, skip for CLI-only
-OPENAI_API_KEY=sk-...      # set only what you use
-GITHUB_REPO=wahyuzero/scorp    # for self-update checks
-```
-
-### models.json
-
-Located at `~/.scorp/models.json`. Defines which LLM models to use.
-
-**OpenAI example:**
-
-```json
-{
-  "default_model": "gpt-4o-mini",
-  "agent_model": "gpt-4o-mini",
-  "models": {
-    "gpt-4o-mini": {
-      "provider": "openai",
-      "model": "gpt-4o-mini",
-      "key_env": "OPENAI_API_KEY",
-      "base_url": "https://api.openai.com/v1",
-      "max_tokens": 4096,
-      "api": "openai"
-    }
-  },
-  "routing_rules": {
-    "agent": "gpt-4o-mini",
-    "chat": "gpt-4o-mini"
-  },
-  "fallback_on_error": ["rate_limit", "timeout", "server_error"]
-}
-```
-
-**Anthropic Claude example:**
-
-```json
-{
-  "default_model": "claude-sonnet-4-20250514",
-  "agent_model": "claude-sonnet-4-20250514",
-  "models": {
-    "claude-sonnet-4-20250514": {
-      "provider": "anthropic",
-      "model": "claude-sonnet-4-20250514",
-      "key_env": "ANTHROPIC_API_KEY",
-      "base_url": "https://api.anthropic.com",
-      "max_tokens": 4096,
-      "api": "anthropic"
-    }
-  },
-  "routing_rules": {
-    "agent": "claude-sonnet-4-20250514",
-    "chat": "claude-sonnet-4-20250514"
-  },
-  "fallback_on_error": ["rate_limit", "timeout", "server_error"]
-}
-```
-
-**Local (Ollama, no API key):**
-
-```json
-{
-  "default_model": "llama3.2",
-  "agent_model": "llama3.2",
-  "models": {
-    "llama3.2": {
-      "provider": "ollama",
-      "model": "llama3.2",
-      "key_env": "",
-      "base_url": "http://localhost:11434/v1",
-      "max_tokens": 4096,
-      "api": "openai"
-    }
-  }
-}
-```
-
----
-
-## Commands
-
-**CLI:**
-- `scorp` — start REPL
-- `scorp update` — check and install updates
-- `scorp version` — show current version
-- `scorp --cli` — force CLI mode
-
-**Telegram:**
-- `/help` — show commands
-- `/update` — check & install updates
-- `/version` — show version
-- `/model` — change AI model
-- `/start` — interactive menu
-
-Any text that doesn't start with `/` is sent to the agent with full tool access.
-
----
-
-## Self-update
-
-Set `GITHUB_REPO` in `.env` to enable update checks. Scorp checks for new GitHub releases on startup and notifies you.
-
-```
-scorp update       # CLI
-/update            # Telegram
-```
-
-The update process:
-1. Fetches latest release from GitHub API
-2. Downloads the binary matching your OS/arch
-3. Replaces the running binary (backup kept at `scorp.bak`)
-4. Restarts the service if running under systemd
-
----
-
-## Build
-
-Requires Go 1.25+ and CGO (for SQLite).
-
-```bash
-make              # production build
-make deploy       # build + install + restart service
-make VERSION=v1.0.0 deploy  # with version tag
-```
-
----
-
-## Project layout
-
-```
-scorp/
-├── main.go           # entry point
-├── cli.go            # CLI REPL
-├── telegram/         # bot transport
-├── agent/            # agent loop, prompt, chat
-├── bootstrap/        # tool registry
-├── tools/            # 48 tool implementations
-├── models/           # LLM provider config
-├── updater/          # self-update logic
-├── config/           # paths + env
-├── session/          # session DB (SQLite + FTS5)
-└── install.sh
-```
-
----
-
-## Status
-
-Personal project, developed sporadically. No guarantees of stability or support. Use at your own risk.
-
----
-
-## License
-
-MIT — see [LICENSE](LICENSE).
+MIT License.

@@ -9,7 +9,7 @@
 #   make VERSION=v1.0.0   or   make deploy VERSION=v1.0.0
 #   Defaults to git short hash if not specified.
 
-GO ?= /usr/local/go/bin/go
+GO ?= go
 BIN := scorp
 
 # Auto-detect version from git tag, or use VERSION env, or fallback to "dev"
@@ -23,6 +23,14 @@ $(BIN): *.go */*.go
 
 minimal:
 	$(GO) build -tags nobrowser $(LDFLAGS) -o $(BIN)-minimal .
+
+termux:
+	CGO_ENABLED=0 GOOS=android GOARCH=arm64 $(GO) build $(LDFLAGS) -o $(BIN)-termux .
+	@echo "Built Android ARM64 binary: $(BIN)-termux"
+
+termux-minimal:
+	CGO_ENABLED=0 GOOS=android GOARCH=arm64 $(GO) build -tags nobrowser $(LDFLAGS) -o $(BIN)-termux .
+	@echo "Built Android ARM64 minimal binary: $(BIN)-termux"
 
 debug:
 	$(GO) build -o $(BIN)-debug .

@@ -1,27 +1,23 @@
 package agent
 
 import (
-	"scorp-agent/models"
-	"scorp-agent/internal/helpers"
-	"scorp-agent/config"
-	"scorp-agent/tools"
-	"scorp-agent/rag"
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
-	"sort"
-	"io"
 	"log"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
+
+	"scorp-agent/config"
+	"scorp-agent/internal/helpers"
+	"scorp-agent/models"
+	"scorp-agent/rag"
+	"scorp-agent/registry"
+	"scorp-agent/tools"
 )
 
-// maxIterations returns the max agent iterations, configurable via SCORP_MAX_ITERATIONS env (default 12)
+// maxIterations returns the max agent iterations, configurable via SCORP_MAX_ITERATIONS env (default 25)
 func maxIterations() int {
 	const defaultMax = 25
 	if v := os.Getenv("SCORP_MAX_ITERATIONS"); v != "" {
@@ -38,232 +34,18 @@ type AgentMessage struct {
 }
 
 // ──────────────────────────────────────────────
-// MCP Tool execution
+// ReAct Agent Execution Loop
 // ──────────────────────────────────────────────
 
-// contentPart for OpenAI vision format
-type contentPart struct {
-	Type     string    `json:"type"`
-	Text     string    `json:"text,omitempty"`
-	ImageURL *imageURL `json:"image_url,omitempty"`
-}
-
-type imageURL struct {
-	URL string `json:"url"`
-}
-
-// handleUploadInAgentMode handles file/photo uploads when agent mode is active
-func HandleUploadInAgentMode(doc TGDocument) {
-	chatIDStr := fmt.Sprintf("%d", doc.ChatID)
-	touchSession(chatIDStr)
-
-	// Download the file
-	fileURL := fmt.Sprintf("https://api.telegram.org/bot%s/getFile?file_id=%s", config.Cfg.TelegramBotToken, doc.FileID)
-	resp, err := tools.HttpShort.Get(fileURL)
-	if err != nil {
-		tools.SendMessage(fmt.Sprintf("❌ Error getting file: %v", err), nil)
-		return
-	}
-	defer resp.Body.Close()
-
-	var fileResp struct {
-		OK     bool `json:"ok"`
-		Result struct {
-			FilePath string `json:"file_path"`
-		} `json:"result"`
-	}
-	json.NewDecoder(resp.Body).Decode(&fileResp)
-
-	if !fileResp.OK || fileResp.Result.FilePath == "" {
-		tools.SendMessage("❌ Could not get file path", nil)
-		return
-	}
-
-	downloadURL := fmt.Sprintf("https://api.telegram.org/file/bot%s/%s", config.Cfg.TelegramBotToken, fileResp.Result.FilePath)
-	fileResp2, err := tools.HttpLong.Get(downloadURL)
-	if err != nil {
-		tools.SendMessage(fmt.Sprintf("❌ Error downloading: %v", err), nil)
-		return
-	}
-	defer fileResp2.Body.Close()
-
-	fileData, _ := io.ReadAll(fileResp2.Body)
-
-	// Determine if it's an image
-	ext := strings.ToLower(filepath.Ext(fileResp.Result.FilePath))
-	isImage := ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".gif" || ext == ".webp"
-
-	if isImage {
-		// Send as vision message
-		b64 := base64Encode(fileData)
-		mimeType := "image/jpeg"
-		if ext == ".png" {
-			mimeType = "image/png"
-		} else if ext == ".gif" {
-			mimeType = "image/gif"
-		} else if ext == ".webp" {
-			mimeType = "image/webp"
-		}
-
-		parts := []contentPart{
-			{Type: "image_url", ImageURL: &imageURL{URL: fmt.Sprintf("data:%s;base64,%s", mimeType, b64)}},
-			{Type: "text", Text: "Analyze this image. Describe what you see."},
-		}
-
-		if doc.Caption != "" {
-			parts[1].Text = doc.Caption
-		}
-
-		// Build message with vision content
-		msgs := getSessionHistory(chatIDStr)
-		msgs = append(msgs, AgentMessage{Role: "user", Content: parts})
-		appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: parts})
-
-		msgID := tools.SendMessageGetID("🔍 <i>Analyzing image...</i>", doc.ChatID)
-
-		// Call Scorp API directly (no tool loop needed for vision)
-		chatMsgs := make([]models.ChatMessage, len(msgs))
-		for i, m := range msgs {
-			switch c := m.Content.(type) {
-			case string:
-				chatMsgs[i] = models.ChatMessage{Role: m.Role, Content: c}
-			default:
-				jsonBytes, _ := json.Marshal(c)
-				chatMsgs[i] = models.ChatMessage{Role: m.Role, Content: string(jsonBytes)}
-			}
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-		defer cancel()
-
-		reply, _, err := models.CallModelWithFallback(ctx, "agent", chatMsgs)
-		if err != nil {
-			tools.EditMessageByID(doc.ChatID, msgID, fmt.Sprintf("❌ Error: %v", err), nil)
-			return
-		}
-
-		appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: reply})
-		sendScorpReply(doc.ChatID, msgID, reply)
-	} else {
-		// Non-image file: save and inform agent
-		savePath := fmt.Sprintf("/tmp/scorp_upload_%d_%s", time.Now().Unix(), filepath.Base(fileResp.Result.FilePath))
-		os.WriteFile(savePath, fileData, 0644)
-
-		userMsg := fmt.Sprintf("User uploaded a file: %s (%d bytes, saved to %s)", filepath.Base(fileResp.Result.FilePath), len(fileData), savePath)
-		if doc.Caption != "" {
-			userMsg += "\nCaption: " + doc.Caption
-		}
-
-		RunAgentLoop(doc.ChatID, userMsg, 0)
-	}
-}
-
-// base64Encode encodes bytes to base64 string
-func base64Encode(data []byte) string {
-	return base64.StdEncoding.EncodeToString(data)
-}
-
-// toolDescription returns a human-readable description of a tool call
-func toolDescription(tc ToolCall) string {
-	switch tc.Name {
-	case "shell":
-		cmd := helpers.GetStringArg(tc.Args, "command", "")
-		if len(cmd) > 80 {
-			cmd = cmd[:80] + "..."
-		}
-		return fmt.Sprintf("🖥 shell: %s", cmd)
-	case "read_file":
-		return fmt.Sprintf("📖 read: %s", helpers.GetStringArg(tc.Args, "path", ""))
-	case "write_file":
-		return fmt.Sprintf("✏️ write: %s", helpers.GetStringArg(tc.Args, "path", ""))
-	case "list_dir":
-		return fmt.Sprintf("📂 list: %s", helpers.GetStringArg(tc.Args, "path", "."))
-	case "system_info":
-		return fmt.Sprintf("ℹ️ sysinfo: %s", helpers.GetStringArg(tc.Args, "type", "full"))
-	case "send_file":
-		return fmt.Sprintf("📤 send: %s", helpers.GetStringArg(tc.Args, "path", ""))
-	case "web_fetch":
-		return fmt.Sprintf("🌐 fetch: %s", helpers.GetStringArg(tc.Args, "url", ""))
-	case "web_search":
-		return fmt.Sprintf("🔍 search: %s", helpers.GetStringArg(tc.Args, "query", ""))
-	case "memory":
-		action := helpers.GetStringArg(tc.Args, "action", "")
-		key := helpers.GetStringArg(tc.Args, "key", "")
-		return fmt.Sprintf("🧠 memory.%s(%s)", action, key)
-	case "search_code":
-		return fmt.Sprintf("🔎 search_code: %s in %s", helpers.GetStringArg(tc.Args, "pattern", "?"), helpers.GetStringArg(tc.Args, "path", "."))
-	case "git":
-		return fmt.Sprintf("📦 git.%s (%s)", helpers.GetStringArg(tc.Args, "action", "?"), helpers.GetStringArg(tc.Args, "repo", "."))
-	case "http":
-		return fmt.Sprintf("📡 http.%s → %s", helpers.GetStringArg(tc.Args, "method", "GET"), helpers.GetStringArg(tc.Args, "url", "?"))
-	case "log":
-		return fmt.Sprintf("📋 log.%s(%s)", helpers.GetStringArg(tc.Args, "source", "?"), helpers.GetStringArg(tc.Args, "target", "?"))
-	case "sql":
-		query := helpers.GetStringArg(tc.Args, "query", "?")
-		if len(query) > 50 {
-			query = query[:47] + "..."
-		}
-		return fmt.Sprintf("🗄 sql: %s", query)
-	case "process":
-		return fmt.Sprintf("⚙️ process.%s", helpers.GetStringArg(tc.Args, "action", "?"))
-	case "browser":
-		action := helpers.GetStringArg(tc.Args, "action", "")
-		if action == "goto" {
-			return fmt.Sprintf("🌐 browser→%s", helpers.GetStringArg(tc.Args, "url", ""))
-		}
-		return fmt.Sprintf("🌐 browser.%s", action)
-	case "analyze_image":
-		return fmt.Sprintf("👁 analyze_image: %s", helpers.GetStringArg(tc.Args, "path", "?"))
-	case "mcp_tool":
-		server := helpers.GetStringArg(tc.Args, "server", "")
-		tool := helpers.GetStringArg(tc.Args, "tool", "")
-		return fmt.Sprintf("🔌 mcp: %s.%s", server, tool)
-	case "delegate":
-		task := helpers.GetStringArg(tc.Args, "task", "?")
-		if len(task) > 60 {
-			task = task[:60] + "..."
-		}
-		return fmt.Sprintf("🤖 delegate: %s", task)
-	default:
-		return fmt.Sprintf("🔧 %s", tc.Name)
-	}
-}
-
-// buildThinkingMessage builds the thinking stream display
-func buildThinkingMessage(lines []string, elapsed time.Duration, done bool) string {
-	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("🧠 <b>Agent</b> [%s]\n\n", elapsed.Round(time.Second)))
-
-	for _, line := range lines {
-		sb.WriteString(line + "\n")
-	}
-
-	if !done {
-		sb.WriteString("\n⏳ <i>working...</i>")
-	}
-
-	return sb.String()
-}
-
-// shouldUpdateThinking returns true if we should update the thinking message.
-// Batches updates: every 2 tool calls OR every 2 seconds (whichever comes first).
-func shouldUpdateThinking(toolCount int, lastUpdate time.Time) bool {
-	if toolCount%2 == 0 {
-		return true
-	}
-	if time.Since(lastUpdate) > 2*time.Second {
-		return true
-	}
-	return false
-}
-
-// runAgentLoop executes the multi-turn agent loop.
-// It loads conversation history from session, sends to Scorp, parses tool calls,
-// executes tools, and loops until final answer. History is persisted across turns.
+// RunAgentLoop executes the multi-turn agent loop for a chat ID.
 func RunAgentLoop(chatID int64, userMessage string, msgID int64) {
-	chatIDStr := fmt.Sprintf("%d", chatID)
+	RunAgentSessionLoop(fmt.Sprintf("%d", chatID), chatID, userMessage, msgID)
+}
 
-	// Create context that can be cancelled
+// RunAgentSessionLoop executes the multi-turn agent loop for a named or custom session.
+func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msgID int64) {
+	chatIDStr := sessionID
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -285,9 +67,18 @@ func RunAgentLoop(chatID int64, userMessage string, msgID int64) {
 	})
 	appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: userMessage})
 
-	// Mark session as "agent loop active" to prevent async summarization (race condition fix)
+	// Mark session as active
 	setLoopActive(chatIDStr, true)
 	defer setLoopActive(chatIDStr, false)
+
+	// In Termux environments: hold wake lock to prevent CPU sleep during multi-step runs
+	if tools.IsTermux() {
+		tools.AcquireTermuxWakeLock()
+		defer func() {
+			tools.ReleaseTermuxWakeLock()
+			tools.SendTermuxNotification("Scorp Agent", "Task execution finished")
+		}()
+	}
 
 	// ── Auto-RAG: Search indexed context for user query ──
 	if rag.VecIndex != nil && len(rag.VecIndex.Chunks) > 0 {
@@ -306,7 +97,6 @@ func RunAgentLoop(chatID int64, userMessage string, msgID int64) {
 				ragContext.WriteString(preview)
 				ragContext.WriteString("\n```\n")
 			}
-			// Inject context into system prompt (first message)
 			if len(history) > 0 && history[0].Role == "system" {
 				if sysStr, ok := history[0].Content.(string); ok {
 					history[0].Content = sysStr + ragContext.String()
@@ -315,173 +105,131 @@ func RunAgentLoop(chatID int64, userMessage string, msgID int64) {
 		}
 	}
 
-	// Create thinking display
+	// ── Compact history if getting long ──
+	history = maybeCompactHistory(chatIDStr, history)
+
+	// Send initial thinking message
+	start := time.Now()
 	if msgID == 0 {
-		msgID = tools.SendMessageGetID("🧠 <b>Agent</b>\n\n⏳ <i>processing...</i>", chatID)
+		msgID = tools.SendMessageGetID("🧠 <b>Agent</b>\n\n⏳ <i>berpikir...</i>", chatID)
 	}
 
-	// ── Typing indicator: send "typing" every 4s while agent is working ──
+	// ── Real-time typing indicator ──
 	tools.SendChatAction(chatID, "typing")
 	typingTicker := time.NewTicker(4 * time.Second)
 	go func() {
-		for range typingTicker.C {
-			tools.SendChatAction(chatID, "typing")
+		for {
+			select {
+			case <-ctx.Done():
+				typingTicker.Stop()
+				return
+			case <-typingTicker.C:
+				tools.SendChatAction(chatID, "typing")
+			}
 		}
 	}()
-	defer typingTicker.Stop()
 
-	start := time.Now()
 	var thinkingLines []string
-	var toolCount int
-	var lastThinkingUpdate = time.Now()
-	noToolRetries := 0 // consecutive iterations where model returned 0 tool calls
-	recentToolSignatures := map[string]int{}
+	toolCount := 0
+	lastThinkingUpdate := time.Now()
+	noToolRetries := 0
+	recentToolSignatures := make(map[string]int)
 
-	for iteration := 0; iteration < maxIterations(); iteration++ {
-		// Compact history if token budget exceeded
-		history = maybeCompactHistory(chatIDStr, history)
+	expectedSteps := countStepsInMessage(userMessage)
 
-		// Convert to chat messages
+	for iter := 0; iter < maxIterations(); iter++ {
+		// Convert history to ChatMessage format
 		chatMsgs := make([]models.ChatMessage, len(history))
 		for i, m := range history {
 			switch c := m.Content.(type) {
 			case string:
 				chatMsgs[i] = models.ChatMessage{Role: m.Role, Content: c}
 			default:
-				jsonBytes, _ := json.Marshal(c)
-				chatMsgs[i] = models.ChatMessage{Role: m.Role, Content: string(jsonBytes)}
+				chatMsgs[i] = models.ChatMessage{Role: m.Role, Content: fmt.Sprintf("%v", c)}
 			}
 		}
-		// Call Scorp API with full conversation + native function calling
-		log.Printf("[agent] Iteration %d: calling model (%d messages)...", iteration, len(chatMsgs))
-		reply, nativeToolCalls, modelUsed, err := models.CallModelWithToolsAndFallback(ctx, "agent", chatMsgs)
+
+		// Call model with tools and automatic fallback
+		reply, toolCalls, modelUsed, err := models.CallModelWithToolsAndFallback(ctx, "agent", chatMsgs)
 		if err != nil {
-			log.Printf("[agent] Model error: %v", err)
-			if strings.Contains(err.Error(), "token") || strings.Contains(err.Error(), "401") {
-				tools.SendMessage(
-					"🔑 <b>Token expired!</b>\n\nJalankan di server:\n<pre>scorp login</pre>", nil)
-				return
-			}
-			if models.IsRateLimitError(err) {
-				tools.EditMessageByID(chatID, msgID,
-					"⏳ <b>Model sedang rate-limited</b>\n\n"+
-						"Sudah dicoba retry dengan backoff (15s + 30s + 60s) tapi masih kena limit.\n"+
-						"Task di-pause. Kirim ulang perintah dalam beberapa menit.", nil)
-				return
-			}
-			tools.EditMessageByID(chatID, msgID, fmt.Sprintf("❌ Error: %v", err), nil)
+			errMsg := fmt.Sprintf("❌ Error calling model: %v", err)
+			tools.EditMessageByID(chatID, msgID, errMsg, nil)
 			return
 		}
 
-		_ = modelUsed
+		if iter == 0 && modelUsed != "" {
+			log.Printf("[agent] Using model: %s", modelUsed)
+		}
 
-		// Parse tool calls: native → XML tags → code-block fallback
-		toolCalls, cleanResponse := models.ParseAllToolCalls(reply, nativeToolCalls)
-		log.Printf("[agent] Model replied: %d tool calls (native=%d), response len=%d", len(toolCalls), len(nativeToolCalls), len(reply))
+		// Check if done (no tool calls)
+		if len(toolCalls) == 0 {
+			cleanReply := cleanToolCallTags(reply)
 
-		// ── Handle "0 tool calls" responses with retry logic ──
-		if len(toolCalls) == 0 && iteration < maxIterations()-1 {
-			noToolRetries++
 			shouldRetry := false
-			reason := ""
+			retryReason := ""
 
-			// Case 1: Model said it would continue but didn't call tools
-			if looksLikeContinuation(reply) {
-				shouldRetry = true
-				reason = "continuation detected"
-			}
-
-			trimmedResp := strings.TrimSpace(cleanResponse)
-
-		// Case 1b: Model returned a truly degenerate response (empty, whitespace, or 1-2 chars)
-		// Short but coherent answers like "pong", "ok", "iya", "done" are VALID and must NOT retry.
-		// Different thresholds depending on context:
-		//   - Iteration 0, no tools: only retry if <3 chars (truly empty/garbage)
-		//   - After tool calls: retry if <20 chars (expect a meaningful summary)
-		shortThreshold := 3
-		if toolCount > 0 {
-			shortThreshold = 20
-		}
-		if !shouldRetry && len(trimmedResp) < shortThreshold && noToolRetries <= 3 {
-			log.Printf("[agent] ⚠️ Degenerate response detected: %q (raw len=%d, threshold=%d)", helpers.TruncateStr(trimmedResp, 80), len(reply), shortThreshold)
-			shouldRetry = true
-			if toolCount > 0 {
-				reason = fmt.Sprintf("response too short after %d tool calls (%d chars), need summary", toolCount, len(trimmedResp))
-			} else {
-				reason = fmt.Sprintf("degenerate response (%d chars), no tools called — need proper response or tool call", len(trimmedResp))
-			}
-		}
-
-			// Case 2: Tools were called before but task seems incomplete
-			// If the agent has used tools and then suddenly stops, it likely hasn't finished.
-			// This catches cases where the model says "done" but the task isn't actually complete.
-			if !shouldRetry && toolCount > 0 && noToolRetries <= 5 {
-				// Check if user explicitly asked for multiple steps
-				if userSteps := countStepsInMessage(userMessage); userSteps >= 2 && toolCount < userSteps {
+			if noToolRetries < 5 {
+				if mentionsBrowserTask(userMessage) && !screenshotWasTaken(history) {
 					shouldRetry = true
-					reason = fmt.Sprintf("incomplete multi-step task (%d/%d steps)", toolCount, userSteps)
-				}
-				// Check if user mentioned browser/screenshot keywords but no screenshot was taken
-				// FIX: Only trigger if browser tools were actually used in this session
-				// to prevent false-positive nudges on non-browser tasks
-				if !shouldRetry && mentionsBrowserTask(userMessage) && browserToolsWereUsed(history) && !screenshotWasTaken(history) {
+					retryReason = "⚠️ INCOMPLETE TASK: The user asked for a browser task. You MUST take a screenshot (browser action=screenshot) before completing."
+				} else if looksLikeContinuation(cleanReply) {
 					shouldRetry = true
-					reason = "browser task not complete (no screenshot taken)"
+					retryReason = "⚠️ CONTINUATION DETECTED: You stated what you intend to do, but did NOT call any tools. You MUST execute the actions by calling tools NOW."
+				} else if toolCount > 0 && expectedSteps >= 2 && toolCount < expectedSteps && !looksLikeContinuation(cleanReply) {
+					shouldRetry = true
+					retryReason = fmt.Sprintf("⚠️ PARTIAL COMPLETION: The user asked for %d distinct steps, but you only executed %d tool(s).", expectedSteps, toolCount)
 				}
-			}
-
-			// Cap retries at 5 to prevent infinite loops but give complex tasks more chances
-			if shouldRetry && noToolRetries > 5 {
-				log.Printf("[agent] Max no-tool retries (%d) reached, accepting as final answer", noToolRetries)
-				shouldRetry = false
 			}
 
 			if shouldRetry {
-				log.Printf("[agent] 0 tool calls at iteration %d (%s), retry %d/5 — injecting nudge", iteration, reason, noToolRetries)
-				history = append(history, AgentMessage{Role: "assistant", Content: reply})
-				appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: reply})
-
-				// Escalating urgency
-				var reminder string
-				if noToolRetries <= 3 {
-					reminder = fmt.Sprintf("⚠️ You haven't completed the task yet (%s). You must CALL TOOLS to finish. Do NOT describe what you would do — EXECUTE the tools NOW.", reason)
-				} else {
-					reminder = fmt.Sprintf("🚨 CRITICAL: The task is NOT complete (%s). This is your LAST CHANCE. Call the necessary tools immediately or explain clearly why you cannot proceed.", reason)
-				}
-				history = append(history, AgentMessage{Role: "user", Content: reminder})
-				appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: reminder})
-
-				thinkingLines = append(thinkingLines, fmt.Sprintf("⚠️ Retry %d/5: %s", noToolRetries, reason))
+				noToolRetries++
+				log.Printf("[agent] Model responded without tool calls (retry %d/5): %s", noToolRetries, retryReason)
+				thinkingLines = append(thinkingLines, fmt.Sprintf("⚠️ Retry %d/5: %s", noToolRetries, strings.Split(retryReason, ":")[0]))
 				tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
+				history = append(history, AgentMessage{Role: "assistant", Content: reply})
+				history = append(history, AgentMessage{Role: "user", Content: retryReason})
+				appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: reply})
+				appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: retryReason})
 				continue
 			}
-		} else if len(toolCalls) > 0 {
-			noToolRetries = 0 // Reset on successful tool call
-		}
 
-		if len(toolCalls) == 0 {
-			// Final answer — no more tool calls
+			// Final answer
 			history = append(history, AgentMessage{Role: "assistant", Content: reply})
 			appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: reply})
 
-			cleanReply := extractAndSaveMemory(cleanResponse)
+			// Send final answer
 			sendScorpReply(chatID, msgID, cleanReply)
+
+			// Trigger self-review in background
 			maybeRunSelfReview(chatID, chatIDStr)
 			return
 		}
+
+		// Reset retry counter on successful tool call
+		noToolRetries = 0
 
 		// Execute tools
 		history = append(history, AgentMessage{Role: "assistant", Content: reply})
 		appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: reply})
 
 		for _, tc := range toolCalls {
+			// Real-time Steering Queue check (PicoClaw Parity)
+			if steerMsg, hasSteer := PopSteeringMessage(chatIDStr); hasSteer {
+				log.Printf("[steering] User redirected execution mid-run: %s", steerMsg)
+				thinkingLines = append(thinkingLines, fmt.Sprintf("⚡ [INTERRUPT] Steered: %s", helpers.TruncateStr(steerMsg, 50)))
+				steerTurnMsg := fmt.Sprintf("⚡ [USER INTERRUPT]: %s", steerMsg)
+				history = append(history, AgentMessage{Role: "user", Content: steerTurnMsg})
+				appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: steerTurnMsg})
+				break
+			}
+
 			toolCount++
 			desc := toolDescription(tc)
 			log.Printf("[agent] Executing tool: %s", desc)
 			thinkingLines = append(thinkingLines, desc)
 
-			// Check for dangerous commands needing confirmation
-			if tc.Name == "shell" && IsDangerousCommand(helpers.GetStringArg(tc.Args, "command", "")) {
+			// Check for dangerous commands needing confirmation (bypassed in YOLO mode)
+			if tc.Name == "shell" && config.GetAutonomyLevel() != config.AutonomyYOLO && IsDangerousCommand(helpers.GetStringArg(tc.Args, "command", "")) {
 				cmd := helpers.GetStringArg(tc.Args, "command", "")
 				if shouldUpdateThinking(toolCount, lastThinkingUpdate) {
 					tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
@@ -496,198 +244,67 @@ func RunAgentLoop(chatID int64, userMessage string, msgID int64) {
 					fmt.Sprintf("⚠️ <b>Dangerous Command</b>\n\n<pre>%s</pre>\n\nAllow execution?", helpers.EscapeHTML(cmd)),
 					chatID, confirmKeyboard())
 
-				// Store pending confirmation with full context and prompt message ID
 				StorePendingConfirmation(chatIDStr, "shell", cmd, history, promptMsgID)
 				return
 			}
 
-			// Check for repeated identical actions (browser loop detection)
+			// Check for repeated identical actions (loop prevention)
 			tcSig := toolCallSignature(tc)
 			if tcSig != "" && recentToolSignatures[tcSig] >= 2 {
-				warnMsg := fmt.Sprintf("⚠️ STOP: You already executed '%s' %d times with the same arguments. The action is NOT working — trying again will not help. Try a DIFFERENT approach: check the page state, try a different selector, or report what's happening.", desc, recentToolSignatures[tcSig])
-				log.Printf("[agent] Repeated action detected: %s (count=%d), injecting warning", tcSig, recentToolSignatures[tcSig])
+				warnMsg := fmt.Sprintf("⚠️ STOP: You already executed '%s' %d times with the same arguments. Try a DIFFERENT approach.", desc, recentToolSignatures[tcSig])
 				history = append(history, AgentMessage{Role: "user", Content: warnMsg})
-				appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: warnMsg})
-				thinkingLines = append(thinkingLines, fmt.Sprintf("  ⚠️ Repeat #%d blocked", recentToolSignatures[tcSig]))
-				// Still execute but with warning so model sees fresh feedback
+				thinkingLines = append(thinkingLines, fmt.Sprintf("  ⚠️ Repeat #%d", recentToolSignatures[tcSig]))
 			}
 			recentToolSignatures[tcSig]++
 
-			// Execute tool
-			result, _ := ExecuteTool(tc, chatID)
-			thinkingLines = append(thinkingLines, fmt.Sprintf("  → %s", helpers.TruncateStr(result, 60)))
-
-			// Update thinking display (batched)
+			// Update thinking message
 			if shouldUpdateThinking(toolCount, lastThinkingUpdate) {
 				tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
 				lastThinkingUpdate = time.Now()
 			}
+
+			// Execute tool via registry
+			result, ok := ExecuteTool(tc, chatID)
+			if !ok {
+				log.Printf("[agent] Tool %s returned error: %s", tc.Name, helpers.TruncateStr(result, 200))
+			}
+
+			// Show preview in thinking stream
+			preview := result
+			if len(preview) > 60 {
+				preview = preview[:57] + "..."
+			}
+			preview = strings.ReplaceAll(preview, "\n", "\n  • ")
+			thinkingLines = append(thinkingLines, fmt.Sprintf("     ↳ %s", preview))
 
 			// Add tool result to history
 			toolResult := fmt.Sprintf("[Tool Result: %s]\n%s", tc.Name, result)
 			history = append(history, AgentMessage{Role: "user", Content: toolResult})
 			appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: toolResult})
 		}
-		// Final update after all tools in this iteration
+
 		if toolCount > 0 {
 			tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
 			lastThinkingUpdate = time.Now()
 		}
+
+		// Tick dynamic tool discovery TTLs (PicoClaw Parity)
+		registry.TickToolTTL()
 	}
 
 	// Max iterations reached
 	tools.EditMessageByID(chatID, msgID, fmt.Sprintf("⚠️ Agent reached maximum iterations (%d). Last results have been saved to history.", maxIterations()), nil)
 }
 
-// ──────────────────────────────────────────────
-// Confirmation System
-// ──────────────────────────────────────────────
-
-type pendingConfirmation struct {
-	toolName    string
-	command     string
-	messages    []AgentMessage
-	created     time.Time
-	promptMsgID int64
+func cleanToolCallTags(reply string) string {
+	_, clean := models.ParseAllToolCalls(reply, nil)
+	return clean
 }
 
-var (
-	pendingConfirms   = make(map[string]*pendingConfirmation)
-	pendingConfirmsMu sync.Mutex
-)
-
-func StorePendingConfirmation(chatID, toolName, command string, messages []AgentMessage, promptMsgID ...int64) {
-	pendingConfirmsMu.Lock()
-	defer pendingConfirmsMu.Unlock()
-	var pMsgID int64
-	if len(promptMsgID) > 0 {
-		pMsgID = promptMsgID[0]
-	}
-	pendingConfirms[chatID] = &pendingConfirmation{
-		toolName:    toolName,
-		command:     command,
-		messages:    messages,
-		created:     time.Now(),
-		promptMsgID: pMsgID,
-	}
-}
-
-func getPendingConfirmation(chatID string) *pendingConfirmation {
-	pendingConfirmsMu.Lock()
-	defer pendingConfirmsMu.Unlock()
-	pc, ok := pendingConfirms[chatID]
-	if !ok {
-		return nil
-	}
-	// Expire after 5 minutes
-	if time.Since(pc.created) > 5*time.Minute {
-		delete(pendingConfirms, chatID)
-		return nil
-	}
-	return pc
-}
-
-func clearPendingConfirmation(chatID string) {
-	pendingConfirmsMu.Lock()
-	defer pendingConfirmsMu.Unlock()
-	delete(pendingConfirms, chatID)
-}
-
-// HasPendingConfirmation checks if there is an active pending confirmation for a chat
-func HasPendingConfirmation(chatID string) bool {
-	return getPendingConfirmation(chatID) != nil
-}
-
-// GetPendingConfirmationDetails returns details of pending confirmation
-func GetPendingConfirmationDetails(chatID string) (command string, toolName string, exists bool) {
-	pc := getPendingConfirmation(chatID)
-	if pc == nil {
-		return "", "", false
-	}
-	return pc.command, pc.toolName, true
-}
-
-func confirmKeyboard() map[string]interface{} {
-	return map[string]interface{}{
-		"inline_keyboard": [][]map[string]string{
-			{
-				{"text": "✅ Yes", "callback_data": "/confirm_yes"},
-				{"text": "❌ No", "callback_data": "/confirm_no"},
-			},
-		},
-	}
-}
-
-// HandleConfirmation processes a user's yes/no response to a pending confirmation
-func HandleConfirmation(chatID int64, confirmed bool, callbackMsgID ...int64) {
-	chatIDStr := fmt.Sprintf("%d", chatID)
-	pc := getPendingConfirmation(chatIDStr)
-
-	if pc == nil {
-		tools.SendMessage("❌ No pending confirmation found. It may have expired.", nil)
-		return
-	}
-
-	targetMsgID := pc.promptMsgID
-	if len(callbackMsgID) > 0 && callbackMsgID[0] != 0 {
-		targetMsgID = callbackMsgID[0]
-	}
-
-	if !confirmed {
-		// User rejected
-		clearPendingConfirmation(chatIDStr)
-
-		if targetMsgID != 0 {
-			tools.EditMessageByID(chatID, targetMsgID,
-				fmt.Sprintf("⚠️ <b>Dangerous Command</b>\n\n<pre>%s</pre>\n\n❌ <b>REJECTED</b>", helpers.EscapeHTML(pc.command)), nil)
-		}
-
-		if pc.messages != nil {
-			// Resume agent with rejection
-			toolResult := fmt.Sprintf("[Tool Result: %s]\nUser REJECTED the command: %s\nPlease suggest an alternative approach.", pc.toolName, pc.command)
-			pc.messages = append(pc.messages, AgentMessage{Role: "user", Content: toolResult})
-			appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: toolResult})
-
-			tools.SendMessage("❌ Command rejected. Agent will suggest alternatives...", nil)
-			resumeAgentLoop(chatID, pc.messages, 0)
-		} else {
-			tools.SendMessage("❌ Command rejected.", nil)
-		}
-		return
-	}
-
-	// User confirmed — execute the command
-	clearPendingConfirmation(chatIDStr)
-
-	if targetMsgID != 0 {
-		tools.EditMessageByID(chatID, targetMsgID,
-			fmt.Sprintf("⚠️ <b>Dangerous Command</b>\n\n<pre>%s</pre>\n\n✅ <b>APPROVED</b>", helpers.EscapeHTML(pc.command)), nil)
-	}
-
-	result, ok := tools.ExecuteShell(map[string]interface{}{"command": pc.command, "timeout": 60, "confirmed": true}, chatID)
-	status := "✅"
-	if !ok {
-		status = "❌"
-	}
-
-	if pc.messages != nil {
-		// Resume agent with result
-		toolResult := fmt.Sprintf("[Tool Result: %s]\n%s%s", pc.toolName, status, result)
-		pc.messages = append(pc.messages, AgentMessage{Role: "user", Content: toolResult})
-		appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: toolResult})
-
-		tools.SendMessage(fmt.Sprintf("%s Command executed. Continuing...", status), nil)
-		resumeAgentLoop(chatID, pc.messages, 0)
-	} else {
-		tools.SendMessage(fmt.Sprintf("%s Result:\n<pre>%s</pre>", status, helpers.EscapeHTML(helpers.TruncateStr(result, 2000))), nil)
-	}
-}
-
-// resumeAgentLoop continues the agent loop after confirmation
+// resumeAgentLoop continues the agent loop after user confirms a dangerous command
 func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 	chatIDStr := fmt.Sprintf("%d", chatID)
 
-	// Create context that can be cancelled
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -695,84 +312,73 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 		msgID = tools.SendMessageGetID("🧠 <b>Agent</b>\n\n⏳ <i>melanjutkan...</i>", chatID)
 	}
 
-	// ── Typing indicator ──
 	tools.SendChatAction(chatID, "typing")
 	typingTicker := time.NewTicker(4 * time.Second)
 	go func() {
-		for range typingTicker.C {
-			tools.SendChatAction(chatID, "typing")
+		for {
+			select {
+			case <-ctx.Done():
+				typingTicker.Stop()
+				return
+			case <-typingTicker.C:
+				tools.SendChatAction(chatID, "typing")
+			}
 		}
 	}()
-	defer typingTicker.Stop()
 
 	start := time.Now()
 	var thinkingLines []string
-	var toolCount int
-	var lastThinkingUpdate = time.Now()
+	toolCount := 0
+	lastThinkingUpdate := time.Now()
 	noToolRetries := 0
-	recentToolSignatures := map[string]int{}
+	recentToolSignatures := make(map[string]int)
 
-	// Mark session as "agent loop active" to prevent async summarization
 	setLoopActive(chatIDStr, true)
 	defer setLoopActive(chatIDStr, false)
 
-	for iteration := 0; iteration < maxIterations(); iteration++ {
+	for iter := 0; iter < maxIterations(); iter++ {
 		chatMsgs := make([]models.ChatMessage, len(messages))
 		for i, m := range messages {
 			switch c := m.Content.(type) {
 			case string:
 				chatMsgs[i] = models.ChatMessage{Role: m.Role, Content: c}
 			default:
-				jsonBytes, _ := json.Marshal(c)
-				chatMsgs[i] = models.ChatMessage{Role: m.Role, Content: string(jsonBytes)}
+				chatMsgs[i] = models.ChatMessage{Role: m.Role, Content: fmt.Sprintf("%v", c)}
 			}
 		}
 
-		reply, nativeToolCalls, _, err := models.CallModelWithToolsAndFallback(ctx, "agent", chatMsgs)
+		reply, toolCalls, _, err := models.CallModelWithToolsAndFallback(ctx, "agent", chatMsgs)
 		if err != nil {
-			tools.EditMessageByID(chatID, msgID, fmt.Sprintf("❌ Error: %v", err), nil)
+			tools.EditMessageByID(chatID, msgID, fmt.Sprintf("❌ Error calling model: %v", err), nil)
 			return
 		}
 
-		toolCalls, cleanResponse := models.ParseAllToolCalls(reply, nativeToolCalls)
-		log.Printf("[agent-continue] Model replied: %d tool calls (native=%d)", len(toolCalls), len(nativeToolCalls))
+		if len(toolCalls) == 0 {
+			cleanReply := cleanToolCallTags(reply)
 
-		// ── Handle "0 tool calls" with retry logic (same as runAgentLoop) ──
-		if len(toolCalls) == 0 && iteration < maxIterations()-1 {
-			noToolRetries++
 			shouldRetry := false
-			reason := ""
+			retryReason := ""
 
-			if looksLikeContinuation(reply) {
-				shouldRetry = true
-				reason = "continuation detected"
-			}
-			if shouldRetry && noToolRetries > 5 {
-				log.Printf("[agent-continue] Max no-tool retries (%d) reached, accepting as final answer", noToolRetries)
-				shouldRetry = false
+			if noToolRetries < 5 {
+				if looksLikeContinuation(cleanReply) {
+					shouldRetry = true
+					retryReason = "⚠️ CONTINUATION DETECTED: You stated what you intend to do, but did NOT call any tools. You MUST execute the actions by calling tools NOW."
+				}
 			}
 
 			if shouldRetry {
-				log.Printf("[agent-continue] 0 tool calls at iteration %d (%s), retry %d/5", iteration, reason, noToolRetries)
-				messages = append(messages, AgentMessage{Role: "assistant", Content: reply})
-				appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: reply})
-
-				reminder := fmt.Sprintf("⚠️ You haven't completed the task yet (%s). CALL THE APPROPRIATE TOOL(S) NOW.", reason)
-				messages = append(messages, AgentMessage{Role: "user", Content: reminder})
-				appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: reminder})
-
-				thinkingLines = append(thinkingLines, fmt.Sprintf("⚠️ Retry %d/5: %s", noToolRetries, reason))
+				noToolRetries++
+				thinkingLines = append(thinkingLines, fmt.Sprintf("⚠️ Retry %d/5: %s", noToolRetries, strings.Split(retryReason, ":")[0]))
 				tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
+				messages = append(messages, AgentMessage{Role: "assistant", Content: reply})
+				messages = append(messages, AgentMessage{Role: "user", Content: retryReason})
+				appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: reply})
+				appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: retryReason})
 				continue
 			}
-		} else if len(toolCalls) > 0 {
-			noToolRetries = 0
-		}
 
-		if len(toolCalls) == 0 {
 			messages = append(messages, AgentMessage{Role: "assistant", Content: reply})
 			appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: reply})
-			cleanReply := extractAndSaveMemory(cleanResponse)
 			sendScorpReply(chatID, msgID, cleanReply)
 			maybeRunSelfReview(chatID, chatIDStr)
 			return
@@ -782,11 +388,21 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 		appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: reply})
 
 		for _, tc := range toolCalls {
+			// Real-time Steering Queue check (PicoClaw Parity)
+			if steerMsg, hasSteer := PopSteeringMessage(chatIDStr); hasSteer {
+				log.Printf("[steering] User redirected execution mid-run: %s", steerMsg)
+				thinkingLines = append(thinkingLines, fmt.Sprintf("⚡ [INTERRUPT] Steered: %s", helpers.TruncateStr(steerMsg, 50)))
+				steerTurnMsg := fmt.Sprintf("⚡ [USER INTERRUPT]: %s", steerMsg)
+				messages = append(messages, AgentMessage{Role: "user", Content: steerTurnMsg})
+				appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: steerTurnMsg})
+				break
+			}
+
 			toolCount++
 			desc := toolDescription(tc)
 			thinkingLines = append(thinkingLines, desc)
 
-			if tc.Name == "shell" && IsDangerousCommand(helpers.GetStringArg(tc.Args, "command", "")) {
+			if tc.Name == "shell" && config.GetAutonomyLevel() != config.AutonomyYOLO && IsDangerousCommand(helpers.GetStringArg(tc.Args, "command", "")) {
 				cmd := helpers.GetStringArg(tc.Args, "command", "")
 				thinkingLines = append(thinkingLines, "⚠️ Awaiting confirmation...")
 				tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
@@ -800,192 +416,40 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 				return
 			}
 
-			// Check for repeated identical actions (browser loop detection)
 			tcSig := toolCallSignature(tc)
 			if tcSig != "" && recentToolSignatures[tcSig] >= 2 {
-				warnMsg := fmt.Sprintf("⚠️ STOP: You already executed '%s' %d times with the same arguments. The action is NOT working — trying again will not help. Try a DIFFERENT approach.", desc, recentToolSignatures[tcSig])
-				log.Printf("[agent-continue] Repeated action detected: %s (count=%d)", tcSig, recentToolSignatures[tcSig])
+				warnMsg := fmt.Sprintf("⚠️ STOP: You already executed '%s' %d times with the same arguments. Try a DIFFERENT approach.", desc, recentToolSignatures[tcSig])
 				messages = append(messages, AgentMessage{Role: "user", Content: warnMsg})
 				thinkingLines = append(thinkingLines, fmt.Sprintf("  ⚠️ Repeat #%d", recentToolSignatures[tcSig]))
 			}
 			recentToolSignatures[tcSig]++
 
-			result, _ := ExecuteTool(tc, chatID)
-			thinkingLines = append(thinkingLines, fmt.Sprintf("  → %s", helpers.TruncateStr(result, 60)))
-
-			// Update thinking display (batched)
 			if shouldUpdateThinking(toolCount, lastThinkingUpdate) {
 				tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
 				lastThinkingUpdate = time.Now()
 			}
 
+			result, _ := ExecuteTool(tc, chatID)
+			preview := result
+			if len(preview) > 60 {
+				preview = preview[:57] + "..."
+			}
+			preview = strings.ReplaceAll(preview, "\n", "\n  • ")
+			thinkingLines = append(thinkingLines, fmt.Sprintf("     ↳ %s", preview))
+
 			toolResult := fmt.Sprintf("[Tool Result: %s]\n%s", tc.Name, result)
 			messages = append(messages, AgentMessage{Role: "user", Content: toolResult})
 			appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: toolResult})
 		}
-		// Final update after all tools in this iteration
+
 		if toolCount > 0 {
 			tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
 			lastThinkingUpdate = time.Now()
 		}
+
+		// Tick dynamic tool discovery TTLs (PicoClaw Parity)
+		registry.TickToolTTL()
 	}
 
 	tools.EditMessageByID(chatID, msgID, "⚠️ Agent reached maximum iterations.", nil)
-}
-
-// looksLikeContinuation detects if the model's response indicates intent to continue
-// but didn't actually call tools (e.g., "Let me...", "I'll try...", "Mari coba...")
-func looksLikeContinuation(text string) bool {
-	lower := strings.ToLower(text)
-	patterns := []string{
-		"let me ", "i'll ", "i will ", "i'm going to ", "going to ",
-		"mar i coba", "mari coba", "saya akan ", "akan coba ", "coba ",
-		"saya perlu ", "perlu saya ", "perlu dicek", "perlu periksa", "harus ", "mari kita ",
-		"akan saya ", "akan memeriksa", "akan mengecek ", "cek dulu ", "tunggu sebentar",
-		"sekarang saya ", "sekarang kita ", "sekarang akan ", "saya buat ", "saya tulis ",
-		"buat file ", "tulis file ", "berikutnya ", "selanjutnya ", "langkah berikutnya ",
-		"akan saya buat ", "akan saya jalankan ", "now i will ", "next, ",
-		"i'll try", "let me try", "try to ", "attempt to ",
-		"next i", "then i", "now i", "continue to ",
-		"proceed to ", "follow up", "followup",
-		// Additional patterns — model says it will do something but hasn't yet
-		"i need to ", "still need to ", "first, let me",
-		"after that", "once that", "now let's",
-		"step 1", "step 2", "step 3",
-		"first,", "second,", "third,",
-		"i haven't", "not yet", "still working",
-	}
-	for _, p := range patterns {
-		if strings.Contains(lower, p) {
-			return true
-		}
-	}
-	return false
-}
-
-// countStepsInMessage estimates how many distinct steps/actions the user's message asks for.
-// Detects numbered lists (1. 2. 3.), "then" chains, and explicit multi-action words.
-func countStepsInMessage(msg string) int {
-	lower := strings.ToLower(msg)
-	count := 0
-
-	// Count numbered list items: "1)", "1.", "2)", "2.", etc.
-	for i := 1; i <= 20; i++ {
-		if strings.Contains(lower, fmt.Sprintf("%d.", i)) || strings.Contains(lower, fmt.Sprintf("%d)", i)) {
-			count++
-		}
-	}
-	if count >= 2 {
-		return count
-	}
-
-	// Count "then" / "after that" / "next" chains (EN + ID)
-	count += strings.Count(lower, " then ")
-	count += strings.Count(lower, " after that ")
-	count += strings.Count(lower, " next,")
-	count += strings.Count(lower, "\nthen ")
-	count += strings.Count(lower, "→")
-	count += strings.Count(lower, " lalu ")
-	count += strings.Count(lower, " kemudian ")
-	count += strings.Count(lower, " setelah ")
-	count += strings.Count(lower, " lalu\n")
-	count += strings.Count(lower, " kemudian\n")
-	count += strings.Count(lower, " setelah\n")
-
-	if count >= 2 {
-		return count + 1 // "do X then Y" = 2 steps minimum
-	}
-
-	return 0
-}
-
-// mentionsBrowserTask checks if the user's message references browser actions
-// like login, screenshot, scrape, or navigate — used to detect incomplete browser tasks.
-func mentionsBrowserTask(msg string) bool {
-	lower := strings.ToLower(msg)
-	keywords := []string{
-		"screenshot", "login", "log in", "sign in", "scrape",
-		"ambil gambar", "tangkap layar", "masuk", "buka web",
-		"buka halaman", "cek halaman", "cek web", "navigate",
-	}
-	for _, kw := range keywords {
-		if strings.Contains(lower, kw) {
-			return true
-		}
-	}
-	return false
-}
-
-// screenshotWasTaken checks if a browser.screenshot tool call exists in the history.
-func screenshotWasTaken(history []AgentMessage) bool {
-	for _, msg := range history {
-		content, ok := msg.Content.(string)
-		if !ok {
-			continue
-		}
-		// Tool results are stored as "[Tool Result: browser.screenshot]"
-		if strings.Contains(content, "[Tool Result: browser.screenshot]") ||
-			strings.Contains(content, "browser.screenshot") {
-			return true
-		}
-		// Also check assistant messages that contain tool call markup
-		if msg.Role == "assistant" && strings.Contains(strings.ToLower(content), "screenshot") {
-			// Only count if it's a tool call, not just text mentioning screenshot
-			if strings.Contains(content, "<tool") || strings.Contains(content, "```tool") {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// browserToolsWereUsed checks if any browser.* tool was actually called during this session.
-// Used to prevent false-positive browser completion nudges on non-browser tasks.
-func browserToolsWereUsed(history []AgentMessage) bool {
-	for _, msg := range history {
-		content, ok := msg.Content.(string)
-		if !ok {
-			continue
-		}
-		// Check for tool call markers referencing browser tools
-		browserTools := []string{
-			"[Tool Result: browser.", "browser.goto", "browser.type",
-			"browser.click", "browser.screenshot", "browser.navigate",
-			"browser.fill", "browser.scroll", "browser.evaluate",
-			"browser.session", "browser.back", "browser.forward",
-		}
-		for _, bt := range browserTools {
-			if strings.Contains(content, bt) {
-				return true
-			}
-		}
-		// Check assistant messages for browser tool call markup
-		if msg.Role == "assistant" {
-			lower := strings.ToLower(content)
-			if (strings.Contains(lower, "<tool") || strings.Contains(lower, "```tool")) &&
-				strings.Contains(lower, "browser") {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// toolCallSignature returns a string key identifying a tool call by name + args.
-// Used for detecting repeated identical actions. Returns "" for non-trackable calls.
-func toolCallSignature(tc ToolCall) string {
-	if tc.Name == "" {
-		return ""
-	}
-	// Build signature from name + sorted key args
-	sig := tc.Name
-	keys := make([]string, 0, len(tc.Args))
-	for k := range tc.Args {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	for _, k := range keys {
-		sig += "|" + k + "=" + fmt.Sprintf("%v", tc.Args[k])
-	}
-	return sig
 }

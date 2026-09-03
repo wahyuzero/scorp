@@ -17,6 +17,20 @@ import (
 // Gemini API (Google) — :generateContent format
 // ──────────────────────────────────────────────
 
+type GeminiProvider struct{}
+
+func (p *GeminiProvider) Format() string {
+	return "gemini"
+}
+
+func (p *GeminiProvider) Call(ctx context.Context, model *ModelConfig, messages []ChatMessage) (string, error) {
+	return callGemini(ctx, model, messages)
+}
+
+func (p *GeminiProvider) CallWithTools(ctx context.Context, model *ModelConfig, messages []ChatMessage) (string, []ToolCall, error) {
+	return CallGeminiWithTools(ctx, model, messages)
+}
+
 // geminiRequest is the request body for the Gemini generateContent API.
 type geminiRequest struct {
 	Contents          []geminiContent      `json:"contents"`

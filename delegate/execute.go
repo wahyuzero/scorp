@@ -152,7 +152,7 @@ func ParseDelegateParams(args map[string]interface{}) delegateTaskParams {
 
 // DefaultSubagentTools returns the standard read-only toolset.
 func DefaultSubagentTools() []string {
-	return []string{"read_file", "search_code", "system_info", "log", "web_fetch", "web_search", "list_dir", "index_search"}
+	return []string{"read_file", "search_code", "system_info", "log", "read_url", "web_fetch", "web_search", "list_dir", "index_search"}
 }
 
 // ValidateSubagentTools filters out non-existent tools and blocks dangerous tools.

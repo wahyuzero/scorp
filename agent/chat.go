@@ -353,6 +353,12 @@ func setLoopActive(chatID string, active bool) {
 	setSession(chatID, sess)
 }
 
+// IsLoopActive returns true if an agent loop is currently active for this chat
+func IsLoopActive(chatID string) bool {
+	sess := getSession(chatID)
+	return sess != nil && sess.loopActive
+}
+
 // summarizeHistory summarizes old conversation messages using the configured model
 func summarizeHistory(chatID string) {
 	sess := getSession(chatID)

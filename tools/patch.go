@@ -8,33 +8,65 @@ import (
 )
 
 // ──────────────────────────────────────────────
-// Patch Tool — Fuzzy find-and-replace file editing
+// Surgical Diff / Chunk Replacement Tool
 // ──────────────────────────────────────────────
 
+// ExecuteReplaceFileContent implements modern chunk replacement (exact or fuzzy match)
+// to perform surgical edits without rewriting entire files.
+func ExecuteReplaceFileContent(args map[string]interface{}) (string, bool) {
+	return patchReplace(args)
+}
+
+// ExecutePatch handles patch invocations (backward compatible)
 func ExecutePatch(args map[string]interface{}) (string, bool) {
 	mode := helpers.GetStringArg(args, "mode", "replace")
 
 	switch mode {
-	case "replace":
+	case "replace", "":
 		return patchReplace(args)
 	default:
 		return "Error: mode must be 'replace'", false
 	}
 }
 
-// patchReplace finds old_string in a file and replaces with new_string.
+// patchReplace finds target_content/old_string in a file and replaces with replacement_content/new_string.
 // Tries 3 matching strategies in order: exact, trim-trailing-WS, normalize-all-WS.
 func patchReplace(args map[string]interface{}) (string, bool) {
-	path := helpers.GetStringArg(args, "path", "")
-	oldStr := helpers.GetStringArg(args, "old_string", "")
-	newStr := helpers.GetStringArg(args, "new_string", "")
+	// Support both naming schemes: modern blueprint (target_file, target_content, replacement_content)
+	// and classical patch (path, old_string, new_string)
+	path := helpers.GetStringArg(args, "target_file", "")
+	if path == "" {
+		path = helpers.GetStringArg(args, "path", "")
+	}
+	if path == "" {
+		path = helpers.GetStringArg(args, "file", "")
+	}
+
+	oldStr := helpers.GetStringArg(args, "target_content", "")
+	if oldStr == "" {
+		oldStr = helpers.GetStringArg(args, "old_string", "")
+	}
+	if oldStr == "" {
+		oldStr = helpers.GetStringArg(args, "old_content", "")
+	}
+
+	newStr := helpers.GetStringArg(args, "replacement_content", "")
+	if newStr == "" {
+		newStr = helpers.GetStringArg(args, "new_string", "")
+	}
+	if newStr == "" {
+		newStr = helpers.GetStringArg(args, "new_content", "")
+	}
+
+	startLine := helpers.GetIntArg(args, "start_line", 0)
+	endLine := helpers.GetIntArg(args, "end_line", 0)
 	replaceAll := helpers.GetBoolArg(args, "replace_all", false)
 
 	if path == "" {
-		return "Error: 'path' is required", false
+		return "Error: 'target_file' (or 'path') is required", false
 	}
 	if oldStr == "" {
-		return "Error: 'old_string' is required", false
+		return "Error: 'target_content' (or 'old_string') is required", false
 	}
 
 	// Read file
@@ -44,16 +76,28 @@ func patchReplace(args map[string]interface{}) (string, bool) {
 	}
 	content := string(data)
 
-	// Try matching strategies in order of precision
+	// If startLine/endLine specified, attempt scoped replacement first
+	if startLine > 0 {
+		if scopedResult, ok, msg := scopedLineReplace(content, oldStr, newStr, startLine, endLine); ok {
+			if err := os.WriteFile(path, []byte(scopedResult), 0644); err != nil {
+				return fmt.Sprintf("Error writing file: %v", err), false
+			}
+			diff := buildDiffPreview(oldStr, newStr)
+			return fmt.Sprintf("✅ Surgically edited %s (lines %d-%d)\n\n%s", path, startLine, endLine, diff), true
+		} else if msg != "" && endLine > 0 {
+			// If line-scoped attempt explicitly failed, log but fall through to whole-file match
+		}
+	}
+
+	// Try matching strategies in order of precision across whole file
 	result, matchCount, strategy := tryMatchStrategies(content, oldStr, newStr, replaceAll)
 
 	if matchCount == 0 {
-		return fmt.Sprintf("Error: old_string not found in %s.\nTried: exact match, trimmed match, whitespace-normalized match.", path), false
+		return fmt.Sprintf("Error: target_content not found in %s.\nTried: exact match, trimmed match, whitespace-normalized match. Make sure target_content matches the file content.", path), false
 	}
 
 	if !replaceAll && matchCount > 1 {
-		// Show first 3 occurrences for context
-		return fmt.Sprintf("Error: old_string is not unique — found %d matches in %s.\nAdd more surrounding lines to make it unique, or set replace_all=true.", matchCount, path), false
+		return fmt.Sprintf("Error: target_content is not unique — found %d matches in %s.\nSpecify start_line/end_line, add more surrounding lines to make it unique, or set replace_all=true.", matchCount, path), false
 	}
 
 	// Write
@@ -66,8 +110,40 @@ func patchReplace(args map[string]interface{}) (string, bool) {
 
 	stratLabel := map[int]string{0: "exact", 1: "trim", 2: "normalize"}[strategy]
 
-	return fmt.Sprintf("✅ Patched %s (%d match, %s strategy)\n\n%s",
+	return fmt.Sprintf("✅ Surgically edited %s (%d match, %s strategy)\n\n%s",
 		path, matchCount, stratLabel, diff), true
+}
+
+// scopedLineReplace replaces oldStr with newStr within specific 1-based line bounds
+func scopedLineReplace(content, oldStr, newStr string, startLine, endLine int) (string, bool, string) {
+	lines := splitLines(content)
+	totalLines := len(lines)
+	if startLine < 1 || startLine > totalLines {
+		return "", false, "start_line out of bounds"
+	}
+	if endLine < startLine || endLine > totalLines {
+		endLine = totalLines
+	}
+
+	// Extract lines within range (0-indexed)
+	prefix := lines[:startLine-1]
+	window := lines[startLine-1 : endLine]
+	suffix := lines[endLine:]
+
+	windowContent := strings.Join(window, "\n")
+	res, count, _ := tryMatchStrategies(windowContent, oldStr, newStr, false)
+	if count == 1 {
+		var finalLines []string
+		if len(prefix) > 0 {
+			finalLines = append(finalLines, prefix...)
+		}
+		finalLines = append(finalLines, res)
+		if len(suffix) > 0 {
+			finalLines = append(finalLines, suffix...)
+		}
+		return strings.Join(finalLines, "\n"), true, ""
+	}
+	return "", false, "no unique match within line scope"
 }
 
 // tryMatchStrategies tries 3 strategies, returns first that matches.

@@ -24,6 +24,20 @@ import (
 // High-efficiency, cost-optimized gateway with prompt caching & streaming
 // ──────────────────────────────────────────────
 
+type CommandCodeProvider struct{}
+
+func (p *CommandCodeProvider) Format() string {
+	return "command-code"
+}
+
+func (p *CommandCodeProvider) Call(ctx context.Context, model *ModelConfig, messages []ChatMessage) (string, error) {
+	return CallCommandCode(ctx, model, messages)
+}
+
+func (p *CommandCodeProvider) CallWithTools(ctx context.Context, model *ModelConfig, messages []ChatMessage) (string, []ToolCall, error) {
+	return CallCommandCodeWithTools(ctx, model, messages)
+}
+
 const (
 	CommandCodeGenerateURL = "https://api.commandcode.ai/alpha/generate"
 	CommandCodeVersion     = "1.39.2"

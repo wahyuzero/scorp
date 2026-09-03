@@ -1,88 +1,57 @@
 package agent
 
 import (
+	"encoding/json"
+	"fmt"
+	"scorp-agent/config"
 	"scorp-agent/mcp"
 	"scorp-agent/models"
+	"scorp-agent/registry"
 	"scorp-agent/skills"
 	"scorp-agent/tools"
-	"scorp-agent/registry"
-	"fmt"
 	"strings"
 )
 
 // ──────────────────────────────────────────────
-// Tool Definitions & System Prompt
+// Tool Definitions & System Prompt (with Prompt Caching)
 // ──────────────────────────────────────────────
 
-// getAgentSystemPrompt returns the system prompt, dynamically including MCP tools
-func getAgentSystemPrompt() string {
-	prompt := `You are Scorp Agent — an intelligent AI assistant running as an autonomous agent.
+// staticSystemPrefix provides a constant, byte-stable system prompt prefix.
+// Modern LLMs (Gemini, Claude 3.5, DeepSeek V3) cache this prefix, saving 75-90% of token costs.
+const staticSystemPrefix = `You are Scorp Agent (v2.0) — an intelligent, ultra-fast, and lightweight AI coding & automation agent.
 
 ## IDENTITY
-You are a versatile AI agent capable of handling a wide variety of tasks: programming, research, system administration, data analysis, automation, and much more.
-You are available via Telegram, always ready to help.
-Communication style: direct, efficient, no fluff. Respond in the same language as the user.
+You are a versatile AI agent built for programming, deep research, system administration, automation, and DevOps.
+You run natively with ultra-low memory footprint on Linux VPS, Termux Android, and edge devices.
+Communication style: direct, efficient, technically precise, no fluff. Respond in the same language as the user.
+
+## FILE EDITING & CODING (CRITICAL)
+- When modifying existing files, ALWAYS use 'replace_file_content' (or 'patch') to perform surgical diffs.
+- DO NOT rewrite whole files with 'write_file' if only editing parts of the file.
+- Use 'write_file' ONLY when creating brand new files or complete rewrites.
+- Chunk replacement saves massive tokens, avoids token limits, and executes in sub-seconds.
+
+## WEB BROWSING & RESEARCH (ULTRA-LOW RAM)
+- For reading documentation, articles, GitHub files, API specs, and websites, ALWAYS prefer 'read_url'.
+- 'read_url' uses the Zero-RAM reader engine (<5MB RAM) and outputs clean Markdown.
+- Use the heavy 'browser' tool ONLY when you genuinely need to click UI buttons, fill interactive forms, or take graphical screenshots.
 
 ## MULTI-STEP TASKS (CRITICAL)
 When a user asks you to check, run, fix, search, or monitor something — you MUST call the appropriate tool.
 NEVER just describe what you would do. Actually DO it by calling tools.
 
-Most tasks REQUIRE multiple tool calls in sequence. Do NOT stop after one tool call unless the task is truly complete.
-- Need to search → call search tool → analyze results → call another tool → repeat
-- If command output suggests next steps → execute them
-- Continue calling tools until you have a COMPLETE answer for the user.
-
-After receiving tool results, analyze them and decide: continue with more tools OR give final answer.
+Most tasks REQUIRE multiple tool calls in sequence. Do NOT stop after one tool call unless the task is truly complete:
+1. Search / inspect first (search_code, list_dir, read_file).
+2. Make surgical modifications (replace_file_content).
+3. Verify changes with tests or build commands (shell).
+4. Continue calling tools until you have verified results and a COMPLETE answer.
 
 ## FORBIDDEN
 - NEVER substitute plausible-looking fabricated output for results you couldn't actually produce.
 - Reporting a blocker honestly is always better than inventing a result.
 - For dangerous commands (rm -rf /, mkfs, dd, DROP TABLE, systemctl stop scorp-agent, etc.), ask for confirmation first.
 
-## MEMORY & TOOLS
-- You have persistent memory. Save important facts using the memory tool.
-- Memory is auto-injected into this prompt each turn.
-- You can call multiple tools in one response.
-- Always use tools when asked to perform system tasks — don't guess or make up information.
-
-## AGENTON TASKS (CRITICAL)
-When the user asks you to work on AgentOn tasks at agenton.me:
-- ALWAYS use the http tool directly (shell/curl is OK too)
-- ALWAYS use Authorization: Bearer header with the API key provided
-- NEVER write shell scripts or files — use http tool or direct curl commands
-- If you hit an error, report it clearly and try a different approach
-- Complete ALL steps before responding. Do not stop after one step.
-
-## SKILLS
-You have a skill system for reusable procedures. Use the skill_manage tool to manage skills.
-`
-
-	// Add MCP tool descriptions if available
-	mcpToolList := mcp.GetMCPTools()
-	if len(mcpToolList) > 0 {
-		var mcpDesc strings.Builder
-		for _, t := range mcpToolList {
-			mcpDesc.WriteString(fmt.Sprintf("- %s.%s: %s\n", t.ServerName, t.Name, t.Description))
-		}
-		prompt += "\n### Available MCP Tools\n" + mcpDesc.String() + "\n"
-	}
-
-	// Add skill context
-	skillDesc := skills.GetPromptForMessage("")
-	if skillDesc != "" {
-		prompt += "\n### Skills\n" + skillDesc + "\n"
-	}
-
-	// Add memory summary (auto-injected)
-	memSummary := tools.GetMemorySummary()
-	if memSummary != "" {
-		prompt += "\n### Memory (Auto-injected)\n" + memSummary + "\n"
-	}
-
-	prompt += `
-## BROWSER WORKFLOW (CRITICAL — read this carefully)
-When using the browser tool, follow these rules STRICTLY:
-
+## BROWSER WORKFLOW (When using headless browser)
 ### Navigation
 1. browser goto → browser snapshot (to see interactive elements)
 2. Always snapshot after goto — NEVER type or click blind
@@ -92,38 +61,56 @@ When using the browser tool, follow these rules STRICTLY:
 2. After filling, READ the submit button info from the result
 3. browser click the submit button that was reported
 
-### After EVERY click — analyze the result!
-The click result tells you:
-- "URL: X → Y" — did the URL change? If yes, you navigated somewhere new
-- "⚠️ URL unchanged" — login may have FAILED, check the page text for errors
-- "📋 Elements:" — what interactive elements are now available
-- "📄 Page text:" — what the page says after clicking
-
-### Screenshot
-- TAKE EXACTLY ONE SCREENSHOT at the VERY END of the browser task
-- Do NOT screenshot after every action — only when the task is COMPLETE
-- browser action=screenshot
-- If you were asked to screenshot something, the task is NOT done until you call screenshot ONCE
-
 ### Loop Prevention
-- If you type the same thing and click the same button TWICE with no change, STOP
-- The URL did NOT change after your click → login FAILED or page didn't respond
-- Do NOT repeat the same action — try a different approach or report the failure
-- Check the page text for error messages after each click
+- If you type the same thing and click the same button TWICE with no change, STOP.
+- The URL did NOT change after your click → login FAILED or page didn't respond.
+- Do NOT repeat the same action — try a different approach or report the failure.
+- Take EXACTLY ONE screenshot at the very end of browser tasks if requested.
 `
 
-	return prompt
+// getAgentSystemPrompt returns the complete system prompt.
+// The layout is ordered: Static Prefix -> Repository Map -> Tools -> Dynamic Context
+// to maximize prefix prompt caching hits.
+func getAgentSystemPrompt() string {
+	var sb strings.Builder
+
+	// 1. Static Prefix (Fixed & constant)
+	sb.WriteString(staticSystemPrefix)
+
+	// 2. Repository Map Prefix (Cached workspace overview)
+	repoMap := GetRepoMap()
+	if repoMap != "" {
+		sb.WriteString("\n## WORKSPACE STRUCTURE\n" + repoMap + "\n")
+	}
+
+	// 3. MCP Tools List (if any connected)
+	mcpToolList := mcp.GetMCPTools()
+	if len(mcpToolList) > 0 {
+		sb.WriteString("\n## AVAILABLE MCP TOOLS\n")
+		for _, t := range mcpToolList {
+			sb.WriteString(fmt.Sprintf("- %s.%s: %s\n", t.ServerName, t.Name, t.Description))
+		}
+	}
+
+	// 4. Dynamic Context (Skills & Memory at tail to keep prefix stable)
+	skillDesc := skills.GetPromptForMessage("")
+	if skillDesc != "" {
+		sb.WriteString("\n## ACTIVE SKILLS\n" + skillDesc + "\n")
+	}
+
+	memSummary := tools.GetMemorySummary()
+	if memSummary != "" {
+		sb.WriteString("\n## PERSISTENT MEMORY\n" + memSummary + "\n")
+	}
+
+	return sb.String()
 }
 
-// ──────────────────────────────────────────────
-// Tool Call Parser
-// ──────────────────────────────────────────────
-
-// ToolCall type is now in models package
+// ToolCall type alias
 type ToolCall = models.ToolCall
 
 // ──────────────────────────────────────────────
-// Dangerous Command Detection
+// Dangerous Command Filtering
 // ──────────────────────────────────────────────
 
 var dangerousPatterns []string
@@ -135,7 +122,7 @@ func init() {
 		"kill -9", "killall", "pkill",
 		"systemctl stop", "systemctl disable",
 		"apt remove", "apt purge", "pip uninstall",
-		"docker rm", "docker rmi", "docker prune",
+		"docker rm", "docker rmi",
 		"docker-compose down", "docker compose down",
 		"> /dev/", "chmod 777",
 	}
@@ -161,8 +148,41 @@ func IsDangerousCommand(cmd string) bool {
 
 const maxToolOutput = 3000
 
-// executeTool runs a tool via the registry
+// ExecuteTool runs a tool via the registry with autonomy & sandbox enforcement
 func ExecuteTool(tc ToolCall, chatID int64) (string, bool) {
-	return registry.ExecuteToolByName(tc.Name, tc.Args, chatID)
+	// 1. Check Autonomy Level permission (ReadOnly mode restrictions)
+	if allowed, reason := config.IsToolAllowed(tc.Name); !allowed {
+		return "⚠️ " + reason, false
+	}
+
+	// 2. Check Sandbox Path Restrictions
+	for _, key := range []string{"path", "target_file", "file"} {
+		if pathVal, ok := tc.Args[key].(string); ok && pathVal != "" {
+			if restricted, reason := config.IsPathRestricted(pathVal); restricted {
+				return "🛡️ " + reason, false
+			}
+		}
+	}
+
+	// 3. Execute Tool
+	out, ok := registry.ExecuteToolByName(tc.Name, tc.Args, chatID)
+
+	// 4. Outbound Secret Redaction (PicoClaw Parity: prevent API key leakage)
+	out = tools.RedactSecrets(out)
+
+	// 5. Record Cryptographic Receipt (ZeroClaw Parity)
+	tools.RecordToolReceipt(tc.Name, tc.Args, out, ok)
+
+	return out, ok
 }
 
+// FormatToolResult formats a tool result for the conversation
+func FormatToolResult(tc ToolCall, result string, ok bool) string {
+	status := "SUCCESS"
+	if !ok {
+		status = "FAILED"
+	}
+
+	argsJSON, _ := json.Marshal(tc.Args)
+	return fmt.Sprintf("[%s] %s(%s)\n%s", status, tc.Name, string(argsJSON), result)
+}

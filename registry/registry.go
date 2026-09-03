@@ -26,7 +26,7 @@ type ToolDef struct {
 	Name           string                 `json:"name"`
 	Description    string                 `json:"description"`
 	Arguments      map[string]ArgDef      `json:"arguments"`
-	Execute        func(map[string]interface{}, int64) (string, bool)
+	Execute        func(map[string]interface{}, int64) (string, bool) `json:"-"`
 	Native         bool                   `json:"native"`       // available via native function calling
 	Category       string                 `json:"category"`     // shell, system, browser, mcp, vision, etc.
 	Deferred       bool                   `json:"deferred"`     // if true, not sent to LLM schema (use tool_search + tool_call)
@@ -124,7 +124,7 @@ func GenerateNativeToolsSchema() []ToolSchema {
 	cachedNativeOnce.Do(func() {
 		var tools []ToolSchema
 		for _, def := range toolRegistry {
-			if !def.Native || def.Deferred {
+			if !IsToolActive(def) {
 				continue
 			}
 			// If the tool has a raw JSON Schema (MCP tools), use it directly

@@ -122,6 +122,16 @@ func ExecuteToolSearch(args map[string]interface{}, chatID int64) (string, bool)
 		sb.WriteString("\n")
 	}
 
+	// Dynamically activate top discovered tools into native schema with TTL=3 (PicoClaw Parity)
+	if registry.IsDynamicModeEnabled() {
+		for i, m := range matches {
+			if i >= 5 {
+				break
+			}
+			registry.ActivateToolWithTTL(m.def.Name, 3)
+		}
+	}
+
 	return sb.String(), true
 }
 
@@ -143,6 +153,11 @@ func ExecuteToolCall(args map[string]interface{}, chatID int64) (string, bool) {
 	if !ok {
 		// If no arguments provided, use empty map
 		argsObj = make(map[string]interface{})
+	}
+
+	// In dynamic mode, activate tool into native schema with TTL=3
+	if registry.IsDynamicModeEnabled() {
+		registry.ActivateToolWithTTL(toolName, 3)
 	}
 
 	// Execute the tool
