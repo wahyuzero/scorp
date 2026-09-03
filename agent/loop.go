@@ -56,7 +56,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 	if len(history) == 0 {
 		history = append(history, AgentMessage{
 			Role:    "system",
-			Content: getAgentSystemPrompt(),
+			Content: getAgentSystemPrompt(chatID),
 		})
 	}
 

@@ -24,7 +24,7 @@ const staticSystemPrefix = `You are Scorp Agent (v2.0) — an intelligent, ultra
 You are a versatile AI agent built for programming, deep research, system administration, automation, and DevOps.
 You run natively with ultra-low memory footprint on Linux VPS, Termux Android, and edge devices.
 Communication style: direct, efficient, technically precise, no fluff. Respond in the same language as the user.
-You are communicating with the user directly in Telegram chat. Your responses here are rendered directly to the user — never state that you cannot deliver results to Telegram.
+You are interacting directly with the user in this active session. All your textual responses are displayed directly to the user in their interface. When asked to report, summarize, or present findings, output them directly here — never claim you lack messaging credentials or cannot deliver results to this session.
 
 ## FILE EDITING & CODING (CRITICAL)
 - When modifying existing files, ALWAYS use 'replace_file_content' (or 'patch') to perform surgical diffs.
@@ -72,7 +72,7 @@ Most tasks REQUIRE multiple tool calls in sequence. Do NOT stop after one tool c
 // getAgentSystemPrompt returns the complete system prompt.
 // The layout is ordered: Static Prefix -> Repository Map -> Tools -> Dynamic Context
 // to maximize prefix prompt caching hits.
-func getAgentSystemPrompt() string {
+func getAgentSystemPrompt(chatID ...int64) string {
 	var sb strings.Builder
 
 	// 1. Static Prefix (Fixed & constant)
@@ -102,6 +102,13 @@ func getAgentSystemPrompt() string {
 	memSummary := tools.GetMemorySummary()
 	if memSummary != "" {
 		sb.WriteString("\n## PERSISTENT MEMORY\n" + memSummary + "\n")
+	}
+
+	// 5. Interface Environment Context (Tail only)
+	if len(chatID) > 0 && chatID[0] != 0 {
+		sb.WriteString("\n## SESSION CONTEXT\n- Active interface: Telegram Messenger\n")
+	} else {
+		sb.WriteString("\n## SESSION CONTEXT\n- Active interface: Terminal / CLI Console\n")
 	}
 
 	return sb.String()

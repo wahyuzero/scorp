@@ -6,9 +6,9 @@
     "semantic_hash": "8fcb4af612cb7e6317bea9242986ab5a"
   },
   "agent/chat.go": {
-    "mtime": 1788464150.976338,
-    "seen": 1788464280.4144044,
-    "ast_hash": "b8dd6954b82ace537083ed071ef93552",
+    "mtime": 1788478523.0049953,
+    "seen": 1788478568.4030106,
+    "ast_hash": "574a052a89b3cc43f6f89f7cf7fa8cf4",
     "semantic_hash": ""
   },
   "agent/compaction.go": {
@@ -42,9 +42,9 @@
     "semantic_hash": "1d0689142e6534b3a325baf38f0332ca"
   },
   "agent/prompt.go": {
-    "mtime": 1788459710.8496103,
-    "seen": 1788459888.3526347,
-    "ast_hash": "35055b60f80f393903557113f2a168c3",
+    "mtime": 1788478530.3095539,
+    "seen": 1788478568.4030313,
+    "ast_hash": "ea0a64978b5a5a7ef7a8f669721f252b",
     "semantic_hash": ""
   },
   "agent/prompt_test.go": {
@@ -564,9 +564,9 @@
     "semantic_hash": "06582b311a2d32a56b36293ceba355ca"
   },
   "tools/git.go": {
-    "mtime": 1788464250.089124,
-    "seen": 1788464280.4146874,
-    "ast_hash": "587df6b4dd7a22e4e0007dcfcffd4f9e",
+    "mtime": 1788478519.4067209,
+    "seen": 1788478568.4032707,
+    "ast_hash": "d40f12738199d9798fc34a96c2398628",
     "semantic_hash": ""
   },
   "tools/http.go": {
@@ -630,10 +630,10 @@
     "semantic_hash": "73eea20509e6a928dad5b71bac675e85"
   },
   "tools/search.go": {
-    "mtime": 1788454397.735094,
-    "seen": 1788456167.4335272,
-    "ast_hash": "6a37db5ec8e67b7a3bfee5412a4c373f",
-    "semantic_hash": "6a37db5ec8e67b7a3bfee5412a4c373f"
+    "mtime": 1788478515.2654054,
+    "seen": 1788478568.403311,
+    "ast_hash": "74dad220648c544ae1aa0063ef1b33c5",
+    "semantic_hash": ""
   },
   "tools/todo.go": {
     "mtime": 1788454397.7351313,
@@ -918,9 +918,9 @@
     "semantic_hash": ""
   },
   "agent/continuation.go": {
-    "mtime": 1788476307.6286838,
-    "seen": 1788476605.7894027,
-    "ast_hash": "ed6d53f355d9d26c671f82f4652cc925",
+    "mtime": 1788478527.593346,
+    "seen": 1788478568.4030237,
+    "ast_hash": "b9e5ff1583a7fc9079810b35ff62158e",
     "semantic_hash": ""
   },
   "agent/thinking.go": {
