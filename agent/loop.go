@@ -175,7 +175,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 				} else if looksLikeContinuation(cleanReply) {
 					shouldRetry = true
 					retryReason = "⚠️ CONTINUATION DETECTED: You stated what you intend to do, but did NOT call any tools. You MUST execute the actions by calling tools NOW."
-				} else if toolCount > 0 && expectedSteps >= 2 && toolCount < expectedSteps && !looksLikeContinuation(cleanReply) {
+				} else if toolCount > 0 && expectedSteps >= 2 && toolCount < expectedSteps && !looksLikeContinuation(cleanReply) && !hasCompletionIndicators(cleanReply) {
 					shouldRetry = true
 					retryReason = fmt.Sprintf("⚠️ PARTIAL COMPLETION: The user asked for %d distinct steps, but you only executed %d tool(s).", expectedSteps, toolCount)
 				}
