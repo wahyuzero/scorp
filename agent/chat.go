@@ -747,12 +747,23 @@ func safeIndex(slice []string, i int) string {
 	return ""
 }
 
-// convertInlineMarkdown converts inline markdown: **bold**, *italic*, `code`
+// convertInlineMarkdown converts inline markdown: `code`, **bold**, *italic*
 func convertInlineMarkdown(line string) string {
-	// Bold: **text** → <b>text</b>
+	// 1. Protect inline code spans first so asterisks/markdown inside them are not touched
+	var codeSpans []string
+	line = codeRe.ReplaceAllStringFunc(line, func(match string) string {
+		sub := codeRe.FindStringSubmatch(match)
+		if len(sub) > 1 {
+			codeSpans = append(codeSpans, helpers.EscapeHTML(sub[1]))
+			return fmt.Sprintf("%%CODESPAN_%d%%", len(codeSpans)-1)
+		}
+		return match
+	})
+
+	// 2. Bold: **text** → <b>text</b>
 	line = boldRe.ReplaceAllString(line, "<b>$1</b>")
 
-	// Italic: *text* → <i>text</i> (but not ** which was already handled)
+	// 3. Italic: *text* → <i>text</i> (avoid solitary asterisks or cron patterns)
 	for {
 		loc := italicRe.FindStringIndex(line)
 		if loc == nil {
@@ -762,12 +773,18 @@ func convertInlineMarkdown(line string) string {
 		if len(match) < 2 {
 			break
 		}
+		if strings.Contains(match[1], "/") {
+			break
+		}
 		old := "*" + match[1] + "*"
 		line = strings.Replace(line, old, "<i>"+match[1]+"</i>", 1)
 	}
 
-	// Inline code: `text` → <code>text</code>
-	line = codeRe.ReplaceAllString(line, "<code>$1</code>")
+	// 4. Restore protected inline code spans
+	for idx, code := range codeSpans {
+		placeholder := fmt.Sprintf("%%CODESPAN_%d%%", idx)
+		line = strings.Replace(line, placeholder, "<code>"+code+"</code>", 1)
+	}
 
 	return line
 }

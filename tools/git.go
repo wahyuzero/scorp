@@ -50,6 +50,24 @@ func ExecuteGit(args map[string]interface{}, chatID int64) (string, bool) {
 
 	var cmd *exec.Cmd
 
+	// If complex compound arguments were passed for safe read-only operations, pass directly
+	if len(fields) > 1 {
+		subCmd := fields[0]
+		if subCmd == "log" || subCmd == "status" || subCmd == "diff" || subCmd == "show" || subCmd == "branch" || subCmd == "remote" {
+			gitArgs := append([]string{"-C", repo}, fields...)
+			cmd = exec.CommandContext(ctx, "git", gitArgs...)
+			output, err := cmd.CombinedOutput()
+			result := string(output)
+			if ctx.Err() == context.DeadlineExceeded {
+				return fmt.Sprintf("Git command timed out after %ds", timeout), false
+			}
+			if err != nil {
+				return fmt.Sprintf("Git command failed: %v\n%s", err, helpers.TruncOutput(result, helpers.MaxToolOutput)), false
+			}
+			return helpers.TruncOutput(result, helpers.MaxToolOutput), true
+		}
+	}
+
 	switch action {
 	case "status":
 		cmd = exec.CommandContext(ctx, "git", "-C", repo, "status", "--short", "--branch")

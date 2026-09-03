@@ -11,8 +11,34 @@ import (
 // but didn't actually call tools (preventing premature stopping).
 // ──────────────────────────────────────────────
 
-// hasCompletionIndicators detects if the model has explicitly finished the task.
+// hasForwardIntent detects if the model states intent to do a future action right now
+func hasForwardIntent(text string) bool {
+	lower := strings.ToLower(text)
+	forwardPatterns := []string{
+		"terakhir, saya ", "terakhir saya ",
+		"sekarang saya ", "sekarang kita ", "sekarang akan ", "sekarang jalankan", "sekarang compile",
+		"selanjutnya, saya ", "selanjutnya saya ", "selanjutnya akan ",
+		"langkah berikutnya", "tahap berikutnya", "tahap selanjutnya",
+		"akan saya buat", "akan saya jalankan", "akan saya hapus", "akan saya bersihkan",
+		"saya bersihkan ", "saya buat file", "saya hapus file", "saya jalankan ",
+		"saya buat laporan", "saya susun ulang", "saya perbaiki",
+		"let me ", "now i will ", "now i'll ", "next, i will ", "next i will ",
+		"i will now ", "i will next ",
+	}
+	for _, p := range forwardPatterns {
+		if strings.Contains(lower, p) {
+			return true
+		}
+	}
+	return false
+}
+
+// hasCompletionIndicators detects if the model has explicitly finished the task without outstanding intent.
 func hasCompletionIndicators(text string) bool {
+	if hasForwardIntent(text) {
+		return false
+	}
+
 	lower := strings.ToLower(text)
 	indicators := []string{
 		"selesai", "berhasil", "terverifikasi", "sudah dihapus", "sudah dibuat",
@@ -30,6 +56,9 @@ func hasCompletionIndicators(text string) bool {
 // looksLikeContinuation detects if the model's response indicates intent to continue
 // but didn't actually call tools (e.g., "Let me...", "I'll try...", "Mari coba...")
 func looksLikeContinuation(text string) bool {
+	if hasForwardIntent(text) {
+		return true
+	}
 	if hasCompletionIndicators(text) {
 		return false
 	}
