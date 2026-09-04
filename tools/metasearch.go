@@ -711,6 +711,73 @@ func (e *TavilySearchEngine) Search(ctx context.Context, query string, limit int
 	return results, nil
 }
 
+// ── 8. Google Custom Search JSON API Engine (Official Google Results) ──
+
+type GoogleCSEEngine struct {
+	apiKey string
+	cx     string
+	client *http.Client
+}
+
+func NewGoogleCSEEngine(apiKey, cx string) *GoogleCSEEngine {
+	return &GoogleCSEEngine{
+		apiKey: apiKey,
+		cx:     cx,
+		client: &http.Client{Timeout: 4 * time.Second},
+	}
+}
+
+func (e *GoogleCSEEngine) Name() string { return "Google" }
+
+func (e *GoogleCSEEngine) Search(ctx context.Context, query string, limit int) ([]SearchResult, error) {
+	if e.apiKey == "" || e.cx == "" {
+		return nil, nil
+	}
+
+	searchURL := fmt.Sprintf("https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s&num=%d",
+		e.apiKey, e.cx, url.QueryEscape(query), limit)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", searchURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := e.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
+	}
+
+	var data struct {
+		Items []struct {
+			Title   string `json:"title"`
+			Link    string `json:"link"`
+			Snippet string `json:"snippet"`
+		} `json:"items"`
+	}
+
+	if err := json.NewDecoder(io.LimitReader(resp.Body, 512*1024)).Decode(&data); err != nil {
+		return nil, err
+	}
+
+	var results []SearchResult
+	for _, item := range data.Items {
+		results = append(results, SearchResult{
+			Title:   item.Title,
+			URL:     item.Link,
+			Snippet: item.Snippet,
+			Engine:  "Google",
+			Score:   1.3,
+		})
+	}
+
+	return results, nil
+}
+
 // ──────────────────────────────────────────────
 // MetaSearch Aggregator & Deduplicator
 // ──────────────────────────────────────────────
@@ -748,6 +815,19 @@ func NewDefaultMetaSearchAggregator() *MetaSearchAggregator {
 	}
 	if braveKey := os.Getenv("BRAVE_API_KEY"); braveKey != "" {
 		agg.RegisterEngine(NewBraveSearchEngine(braveKey))
+	}
+
+	// Google Custom Search API hook
+	googleKey := os.Getenv("GOOGLE_SEARCH_API_KEY")
+	if googleKey == "" {
+		googleKey = os.Getenv("GOOGLE_API_KEY")
+	}
+	googleCX := os.Getenv("GOOGLE_SEARCH_CX")
+	if googleCX == "" {
+		googleCX = os.Getenv("GOOGLE_CX")
+	}
+	if googleKey != "" && googleCX != "" {
+		agg.RegisterEngine(NewGoogleCSEEngine(googleKey, googleCX))
 	}
 
 	// 2. Built-in zero-dependency free engines (always active)

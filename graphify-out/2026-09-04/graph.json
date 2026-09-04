@@ -8116,19 +8116,19 @@
       "node_kind": "heading",
       "norm_label": "\ud83c\udfaf 3. posisi & rekomendasi pilihan",
       "source_file": "docs/COMPARISON_SCORP_PICOCLAW_ZEROCLAW.md",
-      "source_location": "L54"
+      "source_location": "L59"
     },
     {
-      "id": "docs_comparison_scorp_picoclaw_zeroclaw_4_roadmap_pengembangan_scorp_next_upgrades",
-      "label": "\ud83d\ude80 4. Roadmap Pengembangan Scorp (Next Upgrades)",
+      "id": "docs_comparison_scorp_picoclaw_zeroclaw_4_status_implementasi_fitur_baru_scorp_completed",
+      "label": "\ud83d\ude80 4. Status Implementasi Fitur Baru Scorp (Completed)",
       "_origin": "ast",
       "community": 32,
       "community_name": "\ud83e\udd82 Scorp",
       "file_type": "document",
       "node_kind": "heading",
-      "norm_label": "\ud83d\ude80 4. roadmap pengembangan scorp (next upgrades)",
+      "norm_label": "\ud83d\ude80 4. status implementasi fitur baru scorp (completed)",
       "source_file": "docs/COMPARISON_SCORP_PICOCLAW_ZEROCLAW.md",
-      "source_location": "L70"
+      "source_location": "L75"
     },
     {
       "id": "docs_comparison_scorp_picoclaw_zeroclaw_komparasi_arsitektur_scorp_vs_picoclaw_vs_zeroclaw",
@@ -8155,14 +8155,14 @@
       "source_location": "L37"
     },
     {
-      "id": "docs_comparison_scorp_picoclaw_zeroclaw_scorp_local_first_parsing_vs_cloud_fallback",
-      "label": "\ud83e\udd82 Scorp (Local-First Parsing vs Cloud Fallback)",
+      "id": "docs_comparison_scorp_picoclaw_zeroclaw_scorp_the_native_embedded_metasearch_winner",
+      "label": "\ud83e\udd82 Scorp (The Native Embedded Metasearch Winner)",
       "_origin": "ast",
       "community": 32,
       "community_name": "\ud83e\udd82 Scorp",
       "file_type": "document",
       "node_kind": "heading",
-      "norm_label": "\ud83e\udd82 scorp (local-first parsing vs cloud fallback)",
+      "norm_label": "\ud83e\udd82 scorp (the native embedded metasearch winner)",
       "source_file": "docs/COMPARISON_SCORP_PICOCLAW_ZEROCLAW.md",
       "source_location": "L42"
     },
@@ -40402,7 +40402,7 @@
     },
     {
       "source": "docs_comparison_scorp_picoclaw_zeroclaw_2_analisis_kemampuan_web_search_trik_pihak_ketiga",
-      "target": "docs_comparison_scorp_picoclaw_zeroclaw_scorp_local_first_parsing_vs_cloud_fallback",
+      "target": "docs_comparison_scorp_picoclaw_zeroclaw_scorp_the_native_embedded_metasearch_winner",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -40430,7 +40430,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/COMPARISON_SCORP_PICOCLAW_ZEROCLAW.md",
-      "source_location": "L54",
+      "source_location": "L59",
       "weight": 1.0
     },
     {
@@ -40446,13 +40446,13 @@
     },
     {
       "source": "docs_comparison_scorp_picoclaw_zeroclaw_komparasi_arsitektur_scorp_vs_picoclaw_vs_zeroclaw",
-      "target": "docs_comparison_scorp_picoclaw_zeroclaw_4_roadmap_pengembangan_scorp_next_upgrades",
+      "target": "docs_comparison_scorp_picoclaw_zeroclaw_4_status_implementasi_fitur_baru_scorp_completed",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/COMPARISON_SCORP_PICOCLAW_ZEROCLAW.md",
-      "source_location": "L70",
+      "source_location": "L75",
       "weight": 1.0
     },
     {
@@ -53256,5 +53256,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "3c213ddff3a854f0b5f2b3449b1b4d7f96720cf3"
+  "built_at_commit": "9f7e046bb36f0ec9dc2e4ee217640114f10acb7c"
 }
