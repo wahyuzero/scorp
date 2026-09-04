@@ -57,7 +57,7 @@ func hasForwardIntent(text string) bool {
 		"akan saya buat", "akan saya jalankan", "akan saya hapus", "akan saya bersihkan",
 		"akan menghapus", "akan membersihkan", "akan membuat", "akan menjalankan",
 		"akan membaca", "akan menulis", "akan menguji",
-		"saya tulis ", "saya buatkan ", "saya jalankan ", "saya hapus ",
+		"saya tulis ", "saya buat ", "saya buatkan ", "saya jalankan ", "saya hapus ", "saya baca ",
 		"now deleting", "now removing", "now running", "now executing", "now cleaning", "now creating",
 		"deleting the file", "removing the file", "creating the file", "running the script",
 		"i will now ", "now i will ", "now i'll ", "next, i will ", "let me execute",
