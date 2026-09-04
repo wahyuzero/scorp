@@ -44,6 +44,13 @@ var providerCatalog = map[string][]CatalogEntry{
 		{"xiaomi/mimo-v2.5", 16384, false, "mimo"},
 		{"Qwen/Qwen3.8-Flash", 16384, false, "qwen-flash"},
 	},
+	"opencode": {
+		{"big-pickle", 32000, false, "big-pickle"},
+		{"mimo-v2.5-free", 32000, false, "mimo-free"},
+		{"ling-3.0-flash-fin-free", 32768, false, "ling-fin-free"},
+		{"laguna-s-2.1-free", 32000, false, "laguna-free"},
+		{"muse-spark-1.2-contributor-free", 131072, false, "muse-spark-free"},
+	},
 	"openai": {
 		{"gpt-4o", 16384, true, "gpt4o"},
 		{"gpt-4o-mini", 16384, false, "gpt4o-mini"},

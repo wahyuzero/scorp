@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"os/exec"
 	"strings"
 
 	"scorp-agent/config"
@@ -37,6 +38,18 @@ var ProviderRegistry = map[string]ProviderPreset{
 		BaseURL:     "https://api.commandcode.ai",
 		API:         "command-code",
 		DisplayName: "Command Code (CLI Gateway)",
+	},
+	"opencode": {
+		KeyEnvs:     []string{"OPENCODE_API_KEY", "OPENCODE_ZEN_API_KEY"},
+		BaseURL:     "https://opencode.ai/zen/v1",
+		API:         "openai",
+		DisplayName: "OpenCode Zen (Free AI Gateway)",
+	},
+	"opencode-zen": {
+		KeyEnvs:     []string{"OPENCODE_API_KEY", "OPENCODE_ZEN_API_KEY"},
+		BaseURL:     "https://opencode.ai/zen/v1",
+		API:         "openai",
+		DisplayName: "OpenCode Zen (Free AI Gateway)",
 	},
 	"openai": {
 		KeyEnvs:     []string{"OPENAI_API_KEY"},
@@ -179,6 +192,32 @@ func ResolveAPIKey(cfg *ModelConfig) string {
 		}
 	}
 
+	// Tier 6: local auth fallback for opencode (~/.local/share/opencode/opencode.db)
+	if cfg.Provider == "opencode" || cfg.Provider == "opencode-zen" {
+		if key := resolveOpenCodeKeyFromDisk(); key != "" {
+			return key
+		}
+	}
+
+	return ""
+}
+
+// resolveOpenCodeKeyFromDisk checks local opencode SQLite database for OpenCode Zen key
+func resolveOpenCodeKeyFromDisk() string {
+	home := config.HomeDir()
+	dbPath := home + "/.local/share/opencode/opencode.db"
+	if _, err := os.Stat(dbPath); err != nil {
+		return ""
+	}
+	out, err := exec.Command("sqlite3", dbPath, "SELECT value FROM credential WHERE integration_id = 'opencode' LIMIT 1;").Output()
+	if err == nil && len(out) > 0 {
+		var cred struct {
+			Key string `json:"key"`
+		}
+		if err := json.Unmarshal(out, &cred); err == nil && cred.Key != "" {
+			return cred.Key
+		}
+	}
 	return ""
 }
 

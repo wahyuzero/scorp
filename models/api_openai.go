@@ -73,6 +73,8 @@ func CallOpenAI(ctx context.Context, model *ModelConfig, messages []ChatMessage)
 	if model.Provider == "openrouter" {
 		req.Header.Set("HTTP-Referer", "https://scorp-agent.local")
 		req.Header.Set("X-Title", "ScorpAgent")
+	} else if model.Provider == "opencode" || model.Provider == "opencode-zen" {
+		req.Header.Set("User-Agent", "opencode/1.0.0")
 	}
 
 	// Use per-provider transport pool
@@ -151,6 +153,8 @@ func CallOpenAIWithTools(ctx context.Context, model *ModelConfig, messages []Cha
 	if model.Provider == "openrouter" {
 		httpReq.Header.Set("HTTP-Referer", "https://scorp-agent.local")
 		httpReq.Header.Set("X-Title", "ScorpAgent")
+	} else if model.Provider == "opencode" || model.Provider == "opencode-zen" {
+		httpReq.Header.Set("User-Agent", "opencode/1.0.0")
 	}
 
 	resp, err := GetAIClient(model.BaseURL).Do(httpReq)

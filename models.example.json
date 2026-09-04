@@ -9,8 +9,8 @@
     "complex": "deepseek/deepseek-v4-pro"
   },
   "fallback_models": [
-    "z-ai/glm-5.3-flash",
-    "meta/muse-spark-1.2-contributor",
+    "opencode/big-pickle",
+    "opencode/mimo-v2.5-free",
     "poolside/laguna-s-2.1-free"
   ],
   "fallback_on_error": [
@@ -68,6 +68,30 @@
       "base_url": "https://api.commandcode.ai",
       "max_tokens": 16384,
       "api": "command-code"
+    },
+    "opencode/big-pickle": {
+      "provider": "opencode",
+      "model": "big-pickle",
+      "key_env": "OPENCODE_API_KEY",
+      "base_url": "https://opencode.ai/zen/v1",
+      "max_tokens": 32000,
+      "api": "openai"
+    },
+    "opencode/mimo-v2.5-free": {
+      "provider": "opencode",
+      "model": "mimo-v2.5-free",
+      "key_env": "OPENCODE_API_KEY",
+      "base_url": "https://opencode.ai/zen/v1",
+      "max_tokens": 32000,
+      "api": "openai"
+    },
+    "opencode/ling-3.0-flash-fin-free": {
+      "provider": "opencode",
+      "model": "ling-3.0-flash-fin-free",
+      "key_env": "OPENCODE_API_KEY",
+      "base_url": "https://opencode.ai/zen/v1",
+      "max_tokens": 32768,
+      "api": "openai"
     }
   }
 }

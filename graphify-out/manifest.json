@@ -312,9 +312,9 @@
     "semantic_hash": "13d73368678f57e032b4399e29805c37"
   },
   "models.example.json": {
-    "mtime": 1788464171.6466076,
-    "seen": 1788464280.414566,
-    "ast_hash": "9b00c00cf6e7a9c58ae7558869afb451",
+    "mtime": 1788480262.2243237,
+    "seen": 1788480380.7905629,
+    "ast_hash": "225a7b5ffd69f03b370d4726e4d98f2c",
     "semantic_hash": ""
   },
   "models/api_anthropic.go": {
@@ -348,28 +348,28 @@
     "semantic_hash": "4ebf6cc034dfd0004cf491d8c20bdadf"
   },
   "models/cost_router.go": {
-    "mtime": 1788455665.2656865,
-    "seen": 1788456167.4334564,
-    "ast_hash": "49792e3ef63b0faf64bb18eb21999bde",
-    "semantic_hash": "49792e3ef63b0faf64bb18eb21999bde"
+    "mtime": 1788480254.154632,
+    "seen": 1788480380.79058,
+    "ast_hash": "3804dcc8da8df8e43def997241d97bf4",
+    "semantic_hash": ""
   },
   "models/model_catalog.go": {
-    "mtime": 1788454990.2640543,
-    "seen": 1788456167.4334576,
-    "ast_hash": "59ac1113a4c9944d6ec383769622c05d",
-    "semantic_hash": "59ac1113a4c9944d6ec383769622c05d"
+    "mtime": 1788480250.9286666,
+    "seen": 1788480380.7905817,
+    "ast_hash": "a2d6f65bf25e2714f3a14dd772b832c5",
+    "semantic_hash": ""
   },
   "models/model_router.go": {
-    "mtime": 1788460462.4629223,
-    "seen": 1788460551.4710763,
-    "ast_hash": "963c1edd6c07b53befdcae52effd38ca",
+    "mtime": 1788480245.1477315,
+    "seen": 1788480380.7905838,
+    "ast_hash": "b3a64056c5643d16d1c6027d59bd5879",
     "semantic_hash": ""
   },
   "models/providers.go": {
-    "mtime": 1788455038.7950673,
-    "seen": 1788456167.4334605,
-    "ast_hash": "cd286a3fe7805600680ccf57dbd8b9ba",
-    "semantic_hash": "cd286a3fe7805600680ccf57dbd8b9ba"
+    "mtime": 1788480278.5534098,
+    "seen": 1788480380.7905874,
+    "ast_hash": "21cc92140f7b2247391c231cdde95927",
+    "semantic_hash": ""
   },
   "models/tools.go": {
     "mtime": 1788460478.4159336,
@@ -894,9 +894,9 @@
     "semantic_hash": ""
   },
   "models/api_openai.go": {
-    "mtime": 1788460447.5799117,
-    "seen": 1788460551.4710655,
-    "ast_hash": "0ad49fff0c6bf350a74546a1e486d3f7",
+    "mtime": 1788480240.7967832,
+    "seen": 1788480380.7905738,
+    "ast_hash": "440c5dc6f6930b4af8362f759388a4b9",
     "semantic_hash": ""
   },
   "models/api_openai_test.go": {

@@ -315,9 +315,12 @@ type ChatResponse struct {
 		FinishReason string `json:"finish_reason"`
 	} `json:"choices"`
 	Usage struct {
-		PromptTokens     int `json:"prompt_tokens"`
-		CompletionTokens int `json:"completion_tokens"`
-		TotalTokens      int `json:"total_tokens"`
+		PromptTokens        int `json:"prompt_tokens"`
+		CompletionTokens    int `json:"completion_tokens"`
+		TotalTokens         int `json:"total_tokens"`
+		PromptTokensDetails *struct {
+			CachedTokens int `json:"cached_tokens"`
+		} `json:"prompt_tokens_details,omitempty"`
 	} `json:"usage"`
 	Error *struct {
 		Message string `json:"message"`
@@ -416,6 +419,8 @@ func CallModelStream(ctx context.Context, model *ModelConfig, messages []ChatMes
 	if model.Provider == "openrouter" {
 		req.Header.Set("HTTP-Referer", "https://scorp-agent.local")
 		req.Header.Set("X-Title", "ScorpAgent")
+	} else if model.Provider == "opencode" || model.Provider == "opencode-zen" {
+		req.Header.Set("User-Agent", "opencode/1.0.0")
 	}
 
 	client := GetAIClient(model.BaseURL)
