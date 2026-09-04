@@ -918,9 +918,9 @@
     "semantic_hash": ""
   },
   "agent/continuation.go": {
-    "mtime": 1788482347.30414,
-    "seen": 1788482385.2579322,
-    "ast_hash": "a48d438ea31e9b3d810c69b875f4279c",
+    "mtime": 1788535774.5297062,
+    "seen": 1788536059.44301,
+    "ast_hash": "d613101c41e9af06ba24de61489c80cd",
     "semantic_hash": ""
   },
   "agent/thinking.go": {

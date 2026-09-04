@@ -17,14 +17,19 @@ func hasForwardIntent(text string) bool {
 	forwardPatterns := []string{
 		"terakhir, saya ", "terakhir saya ",
 		"sekarang saya ", "sekarang kita ", "sekarang akan ", "sekarang jalankan", "sekarang compile",
+		"sekarang hapus", "sekarang buat", "sekarang bersihkan",
 		"selanjutnya, saya ", "selanjutnya saya ", "selanjutnya akan ",
 		"langkah berikutnya", "tahap berikutnya", "tahap selanjutnya",
 		"akan saya buat", "akan saya jalankan", "akan saya hapus", "akan saya bersihkan",
+		"akan menghapus", "akan membersihkan", "akan membuat", "akan menjalankan",
+		"akan mencoba", "akan mengecek", "akan membaca", "akan menulis",
 		"saya bersihkan ", "saya buat file", "saya hapus file", "saya jalankan ",
 		"saya buat laporan", "saya susun ulang", "saya perbaiki",
 		"biarkan saya ", "izinkan saya ", "biar saya ", "akan saya verifikasi",
 		"let me ", "now i will ", "now i'll ", "next, i will ", "next i will ",
 		"i will now ", "i will next ",
+		"now deleting", "now removing", "now running", "now executing", "now cleaning", "now creating",
+		"deleting the file", "removing the file", "creating the file", "running the script",
 	}
 	for _, p := range forwardPatterns {
 		if strings.Contains(lower, p) {
@@ -113,8 +118,10 @@ func countStepsInMessage(msg string) int {
 	count += strings.Count(lower, " lalu\n")
 	count += strings.Count(lower, " kemudian\n")
 	count += strings.Count(lower, " setelah\n")
+	count += strings.Count(lower, ", lalu ")
+	count += strings.Count(lower, ", kemudian ")
 
-	if count >= 2 {
+	if count >= 1 {
 		return count + 1
 	}
 
