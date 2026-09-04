@@ -112,7 +112,6 @@ func EscapeHTML(s string) string {
 	return r.Replace(s)
 }
 
-
 // MaxToolOutput is the maximum length for tool output before truncation
 const MaxToolOutput = 3000
 
@@ -120,7 +119,6 @@ const MaxToolOutput = 3000
 func TruncOutputTool(output string) string {
 	return TruncateStr(output, MaxToolOutput)
 }
-
 
 // SplitMessage splits text into chunks of maxLen runes, ensuring HTML tags are properly balanced across chunks.
 func SplitMessage(text string, maxLen int) []string {

@@ -20,9 +20,9 @@ type LLMProvider interface {
 }
 
 var (
-	providersMu       sync.RWMutex
-	providerAdapters  = make(map[string]LLMProvider)
-	defaultOpenAI     = &OpenAIProvider{}
+	providersMu      sync.RWMutex
+	providerAdapters = make(map[string]LLMProvider)
+	defaultOpenAI    = &OpenAIProvider{}
 )
 
 func init() {

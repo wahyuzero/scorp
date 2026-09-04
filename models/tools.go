@@ -24,8 +24,6 @@ func CallModelWithTools(ctx context.Context, model *ModelConfig, messages []Chat
 	return provider.CallWithTools(ctx, model, messages)
 }
 
-
-
 // IsRateLimitError checks if an error indicates rate limiting (429/402)
 func IsRateLimitError(err error) bool {
 	if err == nil {
@@ -39,8 +37,6 @@ func IsRateLimitError(err error) bool {
 		strings.Contains(msg, "quota") ||
 		strings.Contains(msg, "suspicious activity")
 }
-
-
 
 // CallModelWithToolsAndFallback tries with tools first, falls back to plain models.CallModel.
 // On rate-limit errors (429/402), retries with exponential backoff before giving up.
@@ -127,8 +123,6 @@ func CallModelWithToolsAndFallback(ctx context.Context, taskType string, message
 			}
 			modelLastErr = err
 
-
-
 			if !IsRateLimitError(err) {
 				// Non-rate-limit error — try plain call, then continue to next fallback
 				log.Printf("[models] Model %s with tools failed: %v, trying plain", label, err)
@@ -186,13 +180,12 @@ func CallModelWithToolsAndFallback(ctx context.Context, taskType string, message
 	return "", nil, "", fmt.Errorf("all models failed (primary: %s): %w", primaryLabel, lastErr)
 }
 
-
-
 // ──────────────────────────────────────────────
 // Code-Block Fallback Parser
 // ──────────────────────────────────────────────
 
 var codeBlockRe = regexp.MustCompile("(?s)`{3}(?:shell|bash|sh)?\\s*\\n(.*?)`{3}")
+
 func ParseCodeBlockFallback(text string) ([]ToolCall, string) {
 	matches := codeBlockRe.FindAllStringSubmatch(text, -1)
 	if len(matches) == 0 {
@@ -247,8 +240,6 @@ func ParseAllToolCalls(text string, nativeCalls []ToolCall) ([]ToolCall, string)
 	return nil, text
 }
 
-
-
 // ──────────────────────────────────────────────
 // Tool Call Parser (XML format)
 // ──────────────────────────────────────────────
@@ -277,4 +268,3 @@ func ParseToolCalls(text string) ([]ToolCall, string) {
 
 	return calls, strings.TrimSpace(cleanText)
 }
-

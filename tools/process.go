@@ -1,10 +1,10 @@
 package tools
 
 import (
-	"scorp-agent/internal/helpers"
 	"context"
 	"fmt"
 	"os/exec"
+	"scorp-agent/internal/helpers"
 	"strings"
 	"time"
 )

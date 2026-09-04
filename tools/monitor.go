@@ -1,11 +1,9 @@
+//go:build !nobrowser
 // +build !nobrowser
 
 package tools
 
 import (
-	"scorp-agent/internal/helpers"
-	"scorp-agent/rag"
-	"scorp-agent/config"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -13,12 +11,16 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"scorp-agent/config"
+	"scorp-agent/internal/helpers"
+	"scorp-agent/rag"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/chromedp/chromedp"
 )
+
 // ──────────────────────────────────────────────
 // Browser Monitor — Scheduled scraping with change detection
 // ──────────────────────────────────────────────

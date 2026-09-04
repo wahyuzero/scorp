@@ -1,9 +1,9 @@
 package metrics
 
 import (
-	"scorp-agent/config"
 	"log"
 	"net/http"
+	"scorp-agent/config"
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"

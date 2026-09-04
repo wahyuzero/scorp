@@ -1,8 +1,6 @@
 package mcp
 
 import (
-	"scorp-agent/registry"
-	"scorp-agent/internal/helpers"
 	"bufio"
 	"context"
 	"encoding/json"
@@ -11,11 +9,14 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"scorp-agent/internal/helpers"
+	"scorp-agent/registry"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 )
+
 // MCPConfig is the top-level mcp.json structure
 type MCPConfig struct {
 	MCPServers map[string]MCPServerConfig `json:"mcpServers"`
@@ -25,7 +26,7 @@ type MCPConfig struct {
 
 // MCPServerModeConfig configures scorp-agent as an MCP server
 type MCPServerModeConfig struct {
-	Enabled     bool     `json:"enabled"`
+	Enabled      bool     `json:"enabled"`
 	ExposedTools []string `json:"exposed_tools"` // list of tool names to expose
 }
 
@@ -250,7 +251,9 @@ func sanitizeMCPName(s string) string {
 
 // registerMCPToolsAsNative registers each discovered MCP tool as an individual
 // first-class native tool in the registry, with the naming convention:
-//   mcp_{server_name}_{tool_name}
+//
+//	mcp_{server_name}_{tool_name}
+//
 // Hyphens and dots in names are replaced with underscores.
 // The LLM can then call these tools directly without a generic dispatcher.
 func registerMCPToolsAsNative() {

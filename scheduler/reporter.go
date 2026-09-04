@@ -1,8 +1,8 @@
 package scheduler
 
 import (
-	"scorp-agent/collectors"
 	"fmt"
+	"scorp-agent/collectors"
 	"sort"
 	"strings"
 	"time"

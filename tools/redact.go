@@ -17,13 +17,13 @@ var secretRegexes = []*regexp.Regexp{
 	regexp.MustCompile(`(?s)-----BEGIN[ A-Z0-9_-]*PRIVATE KEY-----.*?-----END[ A-Z0-9_-]*PRIVATE KEY-----`),
 
 	// Provider Specific Tokens
-	regexp.MustCompile(`\b(sk-[a-zA-Z0-9_-]{20,})\b`),          // OpenAI, Groq, Anthropic
-	regexp.MustCompile(`\b(user_[a-zA-Z0-9_-]{40,})\b`),        // Command Code tokens
-	regexp.MustCompile(`\b(gh[pousr]_[A-Za-z0-9_]{36,})\b`),     // GitHub tokens
-	regexp.MustCompile(`\b(github_pat_[A-Za-z0-9_]{60,})\b`),   // GitHub fine-grained PAT
-	regexp.MustCompile(`\b(AIza[0-9A-Za-z-_]{35})\b`),          // Google / Gemini API Keys
-	regexp.MustCompile(`\b(glpat-[0-9a-zA-Z_-]{20,})\b`),       // GitLab PAT
-	regexp.MustCompile(`\b(xox[baprs]-[0-9a-zA-Z]{10,48})\b`),  // Slack tokens
+	regexp.MustCompile(`\b(sk-[a-zA-Z0-9_-]{20,})\b`),         // OpenAI, Groq, Anthropic
+	regexp.MustCompile(`\b(user_[a-zA-Z0-9_-]{40,})\b`),       // Command Code tokens
+	regexp.MustCompile(`\b(gh[pousr]_[A-Za-z0-9_]{36,})\b`),   // GitHub tokens
+	regexp.MustCompile(`\b(github_pat_[A-Za-z0-9_]{60,})\b`),  // GitHub fine-grained PAT
+	regexp.MustCompile(`\b(AIza[0-9A-Za-z-_]{35})\b`),         // Google / Gemini API Keys
+	regexp.MustCompile(`\b(glpat-[0-9a-zA-Z_-]{20,})\b`),      // GitLab PAT
+	regexp.MustCompile(`\b(xox[baprs]-[0-9a-zA-Z]{10,48})\b`), // Slack tokens
 
 	// HTTP Authorization Headers
 	regexp.MustCompile(`(?i)(authorization:\s*bearer\s+)([a-zA-Z0-9_.-]{20,})`),

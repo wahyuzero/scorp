@@ -1,13 +1,13 @@
 package scheduler
 
 import (
-	"scorp-agent/config"
-	"scorp-agent/internal/helpers"
 	"context"
 	"fmt"
 	"log"
 	"os/exec"
 	"regexp"
+	"scorp-agent/config"
+	"scorp-agent/internal/helpers"
 	"strconv"
 	"strings"
 	"sync"
@@ -21,9 +21,9 @@ import (
 type ScheduledTask struct {
 	ID         string    `json:"id"`
 	Name       string    `json:"name"`
-	Type       string    `json:"type"`       // "agent", "shell", "script"
-	Prompt     string    `json:"prompt"`     // agent prompt or shell command
-	Schedule   string    `json:"schedule"`   // "every 5m", "0 9 * * *"
+	Type       string    `json:"type"`     // "agent", "shell", "script"
+	Prompt     string    `json:"prompt"`   // agent prompt or shell command
+	Schedule   string    `json:"schedule"` // "every 5m", "0 9 * * *"
 	NextRun    time.Time `json:"next_run"`
 	LastRun    time.Time `json:"last_run"`
 	LastResult string    `json:"last_result"`

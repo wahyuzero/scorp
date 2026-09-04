@@ -1,8 +1,6 @@
 package models
 
 import (
-	"scorp-agent/internal/helpers"
-	"scorp-agent/registry"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -10,6 +8,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"scorp-agent/internal/helpers"
+	"scorp-agent/registry"
 	"strings"
 )
 
@@ -48,10 +48,10 @@ type anthropicTool struct {
 
 type anthropicResponse struct {
 	Content []struct {
-		Type  string `json:"type"`
-		Text  string `json:"text,omitempty"`
-		ID    string `json:"id,omitempty"`
-		Name  string `json:"name,omitempty"`
+		Type  string          `json:"type"`
+		Text  string          `json:"text,omitempty"`
+		ID    string          `json:"id,omitempty"`
+		Name  string          `json:"name,omitempty"`
 		Input json.RawMessage `json:"input,omitempty"`
 	} `json:"content"`
 	StopReason string `json:"stop_reason"`

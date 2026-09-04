@@ -1,7 +1,6 @@
 package telegram
 
 import (
-	"scorp-agent/config"
 	"archive/zip"
 	"bytes"
 	"fmt"
@@ -10,6 +9,7 @@ import (
 	"mime/multipart"
 	"os"
 	"path/filepath"
+	"scorp-agent/config"
 	"sort"
 	"strings"
 	"sync"
@@ -319,22 +319,22 @@ func SendFolderAsZip(chatID string, folderPath string) bool {
 	}
 
 	// Split
-		parts := SplitFile(zipPath, partSize, tmpDir)
-		SendMessage(fmt.Sprintf("📦 <b>%s.zip</b> = %s\nSplit into %d parts ~20MB...", folderName, HumanSize(zipSize), len(parts)), nil)
+	parts := SplitFile(zipPath, partSize, tmpDir)
+	SendMessage(fmt.Sprintf("📦 <b>%s.zip</b> = %s\nSplit into %d parts ~20MB...", folderName, HumanSize(zipSize), len(parts)), nil)
 
-		for i, partPath := range parts {
-			pInfo, _ := os.Stat(partPath)
-			caption := fmt.Sprintf("📦 Part %d/%d — %s", i+1, len(parts), HumanSize(pInfo.Size()))
-			if !SendDocument(chatID, partPath, caption) {
-				SendMessage(fmt.Sprintf("❌ Failed to send part %d", i+1), nil)
-				return false
-			}
-			time.Sleep(1 * time.Second)
+	for i, partPath := range parts {
+		pInfo, _ := os.Stat(partPath)
+		caption := fmt.Sprintf("📦 Part %d/%d — %s", i+1, len(parts), HumanSize(pInfo.Size()))
+		if !SendDocument(chatID, partPath, caption) {
+			SendMessage(fmt.Sprintf("❌ Failed to send part %d", i+1), nil)
+			return false
 		}
+		time.Sleep(1 * time.Second)
+	}
 
-		SendMessage(fmt.Sprintf("✅ <b>%s.zip</b> sent %d parts\n📏 Total: %s\n\n💡 Combine:\n<code>cat %s.zip.part* > %s.zip</code>", folderName, len(parts), HumanSize(zipSize), folderName, folderName), nil)
-		return true
-		}
+	SendMessage(fmt.Sprintf("✅ <b>%s.zip</b> sent %d parts\n📏 Total: %s\n\n💡 Combine:\n<code>cat %s.zip.part* > %s.zip</code>", folderName, len(parts), HumanSize(zipSize), folderName, folderName), nil)
+	return true
+}
 
 func createZip(folderPath, zipPath string) error {
 	f, err := os.Create(zipPath)

@@ -204,7 +204,7 @@ func TestLiveWebSearch(t *testing.T) {
 		t.Skip("skipping live network test in short mode")
 	}
 	out, ok := ExecuteWebSearch(map[string]interface{}{
-		"query": "eBPF Linux observability tools",
+		"query":       "eBPF Linux observability tools",
 		"num_results": 5,
 	})
 	if !ok {

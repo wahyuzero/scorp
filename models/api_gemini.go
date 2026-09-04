@@ -1,8 +1,6 @@
 package models
 
 import (
-	"scorp-agent/internal/helpers"
-	"scorp-agent/registry"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -10,6 +8,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"scorp-agent/internal/helpers"
+	"scorp-agent/registry"
 	"strings"
 )
 
@@ -33,10 +33,10 @@ func (p *GeminiProvider) CallWithTools(ctx context.Context, model *ModelConfig, 
 
 // geminiRequest is the request body for the Gemini generateContent API.
 type geminiRequest struct {
-	Contents          []geminiContent      `json:"contents"`
-	SystemInstruction *geminiContent       `json:"systemInstruction,omitempty"`
-	Tools             []geminiToolSet      `json:"tools,omitempty"`
-	GenerationConfig  *geminiGenConfig     `json:"generationConfig,omitempty"`
+	Contents          []geminiContent  `json:"contents"`
+	SystemInstruction *geminiContent   `json:"systemInstruction,omitempty"`
+	Tools             []geminiToolSet  `json:"tools,omitempty"`
+	GenerationConfig  *geminiGenConfig `json:"generationConfig,omitempty"`
 }
 
 type geminiContent struct {
@@ -45,8 +45,8 @@ type geminiContent struct {
 }
 
 type geminiPart struct {
-	Text         string                 `json:"text,omitempty"`
-	FunctionCall *geminiFunctionCall    `json:"functionCall,omitempty"`
+	Text         string              `json:"text,omitempty"`
+	FunctionCall *geminiFunctionCall `json:"functionCall,omitempty"`
 }
 
 type geminiFunctionCall struct {

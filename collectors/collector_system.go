@@ -1,12 +1,12 @@
 package collectors
 
 import (
-	"scorp-agent/config"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"scorp-agent/config"
 	"strconv"
 	"strings"
 	"sync"

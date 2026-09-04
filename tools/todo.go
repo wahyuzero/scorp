@@ -1,8 +1,8 @@
 package tools
 
 import (
-	"scorp-agent/internal/helpers"
 	"fmt"
+	"scorp-agent/internal/helpers"
 	"strings"
 	"sync"
 )
@@ -19,9 +19,9 @@ type TodoItem struct {
 
 // In-memory todo list (single user = single list is fine)
 var (
-	todoList   []TodoItem
-	todoMu     sync.Mutex
-	todoIDSeq  int
+	todoList  []TodoItem
+	todoMu    sync.Mutex
+	todoIDSeq int
 )
 
 // executeTodo handles the "todo" tool.
@@ -136,10 +136,10 @@ func formatTodoListLocked() string {
 	sb.WriteString("📋 <b>Todo List</b>\n\n")
 
 	statusIcon := map[string]string{
-		"pending":      "🔲",
-		"in_progress":  "🔄",
-		"completed":    "✅",
-		"cancelled":    "❌",
+		"pending":     "🔲",
+		"in_progress": "🔄",
+		"completed":   "✅",
+		"cancelled":   "❌",
 	}
 
 	for i, item := range todoList {

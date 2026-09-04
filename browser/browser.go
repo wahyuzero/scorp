@@ -1,10 +1,11 @@
+//go:build !nobrowser
 // +build !nobrowser
 
 package browser
 
 import (
-	"scorp-agent/internal/helpers"
 	"fmt"
+	"scorp-agent/internal/helpers"
 )
 
 // ──────────────────────────────────────────────
@@ -68,4 +69,3 @@ func ExecuteBrowser(args map[string]interface{}, chatID int64) (string, bool) {
 		return fmt.Sprintf("Unknown browser action: %s (use goto, screenshot, click, type, evaluate, scroll, extract, snapshot, console, reset, list)", action), false
 	}
 }
-

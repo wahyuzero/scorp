@@ -14,10 +14,10 @@ import (
 
 // CatalogEntry defines a single model in a provider's catalog
 type CatalogEntry struct {
-	ModelID    string // API model identifier
-	MaxTokens  int    // max output tokens
-	Premium    bool   // true = high-capability, expensive
-	Alias      string // suggested friendly name (optional)
+	ModelID   string // API model identifier
+	MaxTokens int    // max output tokens
+	Premium   bool   // true = high-capability, expensive
+	Alias     string // suggested friendly name (optional)
 }
 
 // providerCatalog holds the model catalog for each provider.

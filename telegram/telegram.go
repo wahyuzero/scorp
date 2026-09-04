@@ -1,10 +1,6 @@
 package telegram
 
 import (
-	"scorp-agent/agent"
-	"scorp-agent/config"
-	"scorp-agent/internal/helpers"
-	"scorp-agent/tools"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -13,23 +9,26 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"scorp-agent/agent"
+	"scorp-agent/config"
+	"scorp-agent/internal/helpers"
+	"scorp-agent/tools"
 	"strings"
 	"time"
 )
-
 
 // HandleAction callback — set from main.go to avoid import cycle
 var HandleAction func(action string, chatID int64, messageID int64, callbackID string)
 
 var (
-	TgBase         string
-	TgFileBase     string
-	HttpClient     *http.Client // existing — 15s, for Telegram API calls
-	HttpShort      *http.Client // 15s timeout — general API calls, web tools
-	HttpLong       *http.Client // 5min timeout — AI model calls, large file ops
-	HttpPoll       *http.Client // 35s timeout — Telegram long polling
-	HttpLongAI     *http.Client // 5min timeout — dedicated for AI model calls
-	LastUpdateID   int64
+	TgBase       string
+	TgFileBase   string
+	HttpClient   *http.Client // existing — 15s, for Telegram API calls
+	HttpShort    *http.Client // 15s timeout — general API calls, web tools
+	HttpLong     *http.Client // 5min timeout — AI model calls, large file ops
+	HttpPoll     *http.Client // 35s timeout — Telegram long polling
+	HttpLongAI   *http.Client // 5min timeout — dedicated for AI model calls
+	LastUpdateID int64
 )
 
 // Separate transports to avoid head-of-line blocking
@@ -466,8 +465,8 @@ func PollUpdates() ([]TGCommand, []TGCallback, []agent.TGDocument, []tools.TGInl
 				} `json:"message"`
 			} `json:"callback_query"`
 			InlineQuery *struct {
-				ID     string `json:"id"`
-				From   struct {
+				ID   string `json:"id"`
+				From struct {
 					ID int64 `json:"id"`
 				} `json:"from"`
 				Query  string `json:"query"`
@@ -559,27 +558,27 @@ func PollUpdates() ([]TGCommand, []TGCallback, []agent.TGDocument, []tools.TGInl
 		}
 
 		if u.InlineQuery != nil {
-				inlineQueries = append(inlineQueries, tools.TGInlineQuery{
-					ID:     u.InlineQuery.ID,
-					Query:  u.InlineQuery.Query,
-					UserID: u.InlineQuery.From.ID,
-					Offset: u.InlineQuery.Offset,
-				})
-			}
+			inlineQueries = append(inlineQueries, tools.TGInlineQuery{
+				ID:     u.InlineQuery.ID,
+				Query:  u.InlineQuery.Query,
+				UserID: u.InlineQuery.From.ID,
+				Offset: u.InlineQuery.Offset,
+			})
+		}
 	}
 
 	return commands, callbacks, documents, inlineQueries
-	}
+}
 
-	// Helpers
-	// ──────────────────────────────────────────────
+// Helpers
+// ──────────────────────────────────────────────
 
-	type TgResponse struct {
-		OK          bool   `json:"ok"`
-		Description string `json:"description"`
-	}
+type TgResponse struct {
+	OK          bool   `json:"ok"`
+	Description string `json:"description"`
+}
 
-	func TgPost(method string, payload map[string]interface{}) (*TgResponse, error) {
+func TgPost(method string, payload map[string]interface{}) (*TgResponse, error) {
 	data, _ := json.Marshal(payload)
 	resp, err := HttpClient.Post(TgBase+method, "application/json", bytes.NewReader(data))
 	if err != nil {
@@ -603,8 +602,8 @@ var webhookServer *http.Server
 // setWebhook registers the webhook URL with Telegram
 func SetWebhook(url string) error {
 	payload := map[string]interface{}{
-		"url":             url,
-		"allowed_updates": []string{"message", "callback_query"},
+		"url":                  url,
+		"allowed_updates":      []string{"message", "callback_query"},
 		"drop_pending_updates": true,
 	}
 	resp, err := TgPost("setWebhook", payload)
@@ -675,9 +674,9 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 			} `json:"message"`
 		} `json:"callback_query"`
 		InlineQuery *struct {
-			ID     string `json:"id"`
-			Query  string `json:"query"`
-			From   struct {
+			ID    string `json:"id"`
+			Query string `json:"query"`
+			From  struct {
 				ID int64 `json:"id"`
 			} `json:"from"`
 			Offset string `json:"offset"`
@@ -698,10 +697,10 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 		} else if len(update.Message.Photo) > 0 || update.Message.Document != nil {
 			// Handle file/photo upload
 			doc := agent.TGDocument{
-				ChatID:   chatID,
-				MsgID:    update.Message.MessageID,
-				Caption:  update.Message.Caption,
-				IsPhoto:  len(update.Message.Photo) > 0,
+				ChatID:  chatID,
+				MsgID:   update.Message.MessageID,
+				Caption: update.Message.Caption,
+				IsPhoto: len(update.Message.Photo) > 0,
 			}
 			if update.Message.Document != nil {
 				doc.FileID = update.Message.Document.FileID

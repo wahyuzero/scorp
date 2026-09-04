@@ -1,10 +1,10 @@
 package agent
 
 import (
-	"scorp-agent/models"
-	"scorp-agent/internal/helpers"
 	"encoding/json"
 	"os"
+	"scorp-agent/internal/helpers"
+	"scorp-agent/models"
 	"strings"
 	"testing"
 	"time"
@@ -138,10 +138,10 @@ func TestGetStringSliceArg(t *testing.T) {
 	}
 
 	tests := []struct {
-		name       string
-		key        string
-		want       []string
-		wantNil    bool
+		name    string
+		key     string
+		want    []string
+		wantNil bool
 	}{
 		{"string slice", "slice", []string{"a", "b", "c"}, false},
 		{"mixed slice filters non-strings", "mixed", []string{"a", "b"}, false},
@@ -206,9 +206,9 @@ func TestGetInt64Arg(t *testing.T) {
 
 func TestIsDangerousCommand(t *testing.T) {
 	tests := []struct {
-		name     string
-		cmd      string
-		want     bool
+		name string
+		cmd  string
+		want bool
 	}{
 		{"rm -rf /", "rm -rf /", true},
 		{"rm -rf /*", "rm -rf /*", true},
@@ -278,10 +278,10 @@ func TestTruncOutput(t *testing.T) {
 
 func TestParseToolCalls(t *testing.T) {
 	tests := []struct {
-		name       string
-		input      string
-		wantCalls  int
-		wantClean  string
+		name      string
+		input     string
+		wantCalls int
+		wantClean string
 	}{
 		{"no tool calls", "hello world", 0, "hello world"},
 		{"single tool call", `start <tool_call>{"name": "shell", "args": {"command": "ls"}}</tool_call> end`, 1, "start  end"},

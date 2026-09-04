@@ -1,3 +1,4 @@
+//go:build !nobrowser
 // +build !nobrowser
 
 package bootstrap
@@ -18,8 +19,8 @@ func init() {
 		Arguments: map[string]registry.ArgDef{
 			"source": {Type: "string", Description: "Path to a .json script file"},
 			"inline": {Type: "string", Description: "JSON string defining the script inline"},
-			},
-		})
+		},
+	})
 	// ── Script List ──
 	registry.RegisterTool(registry.ToolDef{
 		Name:        "script_list",

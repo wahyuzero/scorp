@@ -360,9 +360,9 @@
     "semantic_hash": ""
   },
   "models/model_router.go": {
-    "mtime": 1788483236.9085023,
-    "seen": 1788483451.1867154,
-    "ast_hash": "29b9c32be2c66a99b738beb3478d13e6",
+    "mtime": 1788483746.2067354,
+    "seen": 1788483794.4078636,
+    "ast_hash": "fb7f88c7cc3516e0d73acec5e77ac5c6",
     "semantic_hash": ""
   },
   "models/providers.go": {
@@ -648,9 +648,9 @@
     "semantic_hash": "58a559a35dd38319724ac0c6bf828b7b"
   },
   "tools/vision.go": {
-    "mtime": 1788483282.9250836,
-    "seen": 1788483451.1868582,
-    "ast_hash": "41ab7ef0cf6cd488a689a1ba146171c9",
+    "mtime": 1788483724.5327141,
+    "seen": 1788483794.4080048,
+    "ast_hash": "4676e5d7f2f7a53951266241ed8608f5",
     "semantic_hash": ""
   },
   "tools/web.go": {

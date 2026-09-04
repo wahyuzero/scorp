@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package collectors
@@ -20,8 +21,8 @@ import (
 
 // Background CPU sampler using /proc/stat
 var (
-	nativeCPUPercent   float64
-	nativeCPUMu        sync.RWMutex
+	nativeCPUPercent float64
+	nativeCPUMu      sync.RWMutex
 )
 
 func StartCPUSampler(done <-chan struct{}) {

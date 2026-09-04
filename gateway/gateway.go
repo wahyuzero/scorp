@@ -71,12 +71,12 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 	runtime.ReadMemStats(&m)
 
 	status := map[string]interface{}{
-		"status":      "online",
-		"version":     "v2.0-modern",
-		"uptime":      time.Since(gatewayStartTime).Round(time.Second).String(),
-		"autonomy":    config.GetAutonomyLevel(),
+		"status":       "online",
+		"version":      "v2.0-modern",
+		"uptime":       time.Since(gatewayStartTime).Round(time.Second).String(),
+		"autonomy":     config.GetAutonomyLevel(),
 		"ram_alloc_mb": float64(m.Alloc) / (1024 * 1024),
-		"goroutines":  runtime.NumGoroutine(),
+		"goroutines":   runtime.NumGoroutine(),
 		"models_count": len(models.ModelCfg.Models),
 		"active_model": models.ModelCfg.AgentModel,
 	}

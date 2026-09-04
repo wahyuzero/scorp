@@ -1,7 +1,6 @@
 package tools
 
 import (
-	"scorp-agent/internal/helpers"
 	"bytes"
 	"context"
 	"crypto/tls"
@@ -10,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"scorp-agent/internal/helpers"
 	"strings"
 	"time"
 )

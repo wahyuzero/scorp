@@ -1,11 +1,11 @@
 package tools
 
 import (
-	"scorp-agent/internal/helpers"
-	"scorp-agent/collectors"
 	"fmt"
 	"log"
 	"os/exec"
+	"scorp-agent/collectors"
+	"scorp-agent/internal/helpers"
 	"strings"
 )
 

@@ -1,12 +1,6 @@
 package agent
 
 import (
-	"scorp-agent/tools"
-	"scorp-agent/models"
-	"scorp-agent/internal/helpers"
-	"scorp-agent/registry"
-	"scorp-agent/collectors"
-	"scorp-agent/config"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -14,6 +8,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"scorp-agent/collectors"
+	"scorp-agent/config"
+	"scorp-agent/internal/helpers"
+	"scorp-agent/models"
+	"scorp-agent/registry"
+	"scorp-agent/tools"
 	"strings"
 	"sync"
 	"time"
@@ -36,9 +36,9 @@ type AutonomousAction struct {
 
 // AutonomousDecision is the parsed LLM response.
 type AutonomousDecision struct {
-	Analysis string              `json:"analysis"`
-	Actions  []AutonomousAction  `json:"actions"`
-	Notify   bool                `json:"notify"`
+	Analysis string             `json:"analysis"`
+	Actions  []AutonomousAction `json:"actions"`
+	Notify   bool               `json:"notify"`
 }
 
 // AutonomousLogEntry records a single executed action for audit.
@@ -152,24 +152,24 @@ func AppendAutoLog(entry AutonomousLogEntry) {
 // ──────────────────────────────────────────────
 
 type AutonomousContext struct {
-	Timestamp   string `json:"timestamp"`
-	CPU         float64 `json:"cpu"`
-	RAM         float64 `json:"ram"`
-	Disk        float64 `json:"disk"`
-	Load1       float64 `json:"load1"`
-	SwapUsedMB  float64 `json:"swap_mb"`
-	Uptime      string `json:"uptime"`
+	Timestamp  string  `json:"timestamp"`
+	CPU        float64 `json:"cpu"`
+	RAM        float64 `json:"ram"`
+	Disk       float64 `json:"disk"`
+	Load1      float64 `json:"load1"`
+	SwapUsedMB float64 `json:"swap_mb"`
+	Uptime     string  `json:"uptime"`
 
-	ContainerCount   int      `json:"container_count"`
-	UnhealthyCount   int      `json:"unhealthy_count"`
-	UnhealthyNames   []string `json:"unhealthy_names"`
+	ContainerCount    int      `json:"container_count"`
+	UnhealthyCount    int      `json:"unhealthy_count"`
+	UnhealthyNames    []string `json:"unhealthy_names"`
 	HighCPUContainers []string `json:"high_cpu_containers"`
 
-	Fail2banBanned  int      `json:"fail2ban_banned"`
-	RecentSSHFailed int      `json:"ssh_failed"`
+	Fail2banBanned  int `json:"fail2ban_banned"`
+	RecentSSHFailed int `json:"ssh_failed"`
 
-	RecentAlerts    []string `json:"recent_alerts"`
-	LastActions     []string `json:"last_actions"`
+	RecentAlerts []string `json:"recent_alerts"`
+	LastActions  []string `json:"last_actions"`
 }
 
 func gatherContext() AutonomousContext {

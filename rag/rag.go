@@ -20,19 +20,19 @@ import (
 
 // RAGChunk represents a piece of indexed text.
 type RAGChunk struct {
-	ID       string    `json:"id"`
-	Source   string    `json:"source"`   // file path or URL
-	Content  string    `json:"content"`  // text content
-	 TF map[string]float64 `json:"tf"` // term frequencies
-	Created  time.Time `json:"created"`
+	ID      string             `json:"id"`
+	Source  string             `json:"source"`  // file path or URL
+	Content string             `json:"content"` // text content
+	TF      map[string]float64 `json:"tf"`      // term frequencies
+	Created time.Time          `json:"created"`
 }
 
 // RAGIndex is the in-memory TF-IDF index.
 type RAGIndex struct {
 	mu        sync.RWMutex
 	Chunks    map[string]*RAGChunk `json:"chunks"`
-	DF        map[string]int       `json:"df"`     // document frequency per term
-	IndexPath string               `json:"-"`      // disk persistence path
+	DF        map[string]int       `json:"df"` // document frequency per term
+	IndexPath string               `json:"-"`  // disk persistence path
 	dirty     bool
 }
 
@@ -141,8 +141,8 @@ func (idx *RAGIndex) addChunk(source, content string) string {
 
 // search performs TF-IDF cosine similarity search.
 func (idx *RAGIndex) search(query string, topK int) []struct {
-	Chunk   *RAGChunk
-	Score   float64
+	Chunk *RAGChunk
+	Score float64
 } {
 	idx.mu.RLock()
 	defer idx.mu.RUnlock()

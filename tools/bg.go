@@ -16,7 +16,7 @@ import (
 
 type BGProcess struct {
 	ID        string
-	SessionID string      // Session that owns this process
+	SessionID string // Session that owns this process
 	Cmd       *exec.Cmd
 	Stdin     io.WriteCloser
 	Stdout    *bytes.Buffer

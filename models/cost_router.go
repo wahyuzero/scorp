@@ -1,10 +1,10 @@
 package models
 
 import (
-	"scorp-agent/internal/helpers"
-	"scorp-agent/config"
 	"fmt"
 	"log"
+	"scorp-agent/config"
+	"scorp-agent/internal/helpers"
 	"strings"
 	"sync"
 	"time"
@@ -26,20 +26,20 @@ type ModelCost struct {
 
 // CostConfig holds cost-aware routing settings.
 type CostConfig struct {
-	DailyBudgetUSD float64                `json:"daily_budget_usd"` // 0 = unlimited
-	ModelCosts     map[string]ModelCost   `json:"model_costs"`
-	OffPeakModel   string                 `json:"offpeak_model"`   // cheaper model for off-peak
-	OffPeakStart   int                    `json:"offpeak_start"`   // hour 0-23 (e.g., 22)
-	OffPeakEnd     int                    `json:"offpeak_end"`     // hour 0-23 (e.g., 7)
-	Enabled        bool                   `json:"enabled"`
+	DailyBudgetUSD float64              `json:"daily_budget_usd"` // 0 = unlimited
+	ModelCosts     map[string]ModelCost `json:"model_costs"`
+	OffPeakModel   string               `json:"offpeak_model"` // cheaper model for off-peak
+	OffPeakStart   int                  `json:"offpeak_start"` // hour 0-23 (e.g., 22)
+	OffPeakEnd     int                  `json:"offpeak_end"`   // hour 0-23 (e.g., 7)
+	Enabled        bool                 `json:"enabled"`
 }
 
 // CostTracker accumulates daily cost.
 type CostTracker struct {
-	mu         sync.Mutex
-	Date       string  `json:"date"`        // "2026-06-17"
-	TotalUSD   float64 `json:"total_usd"`
-	PerModel   map[string]float64 `json:"per_model"`
+	mu       sync.Mutex
+	Date     string             `json:"date"` // "2026-06-17"
+	TotalUSD float64            `json:"total_usd"`
+	PerModel map[string]float64 `json:"per_model"`
 }
 
 var (
@@ -61,24 +61,24 @@ func defaultCostConfig() *CostConfig {
 		OffPeakEnd:     7,
 		Enabled:        true,
 		ModelCosts: map[string]ModelCost{
-			"deepseek/deepseek-v4-flash":       {InputPer1M: 0.22, OutputPer1M: 0.66, CacheReadPer1M: 0.022},
-			"deepseek/deepseek-v4-pro":         {InputPer1M: 0.66, OutputPer1M: 1.98, CacheReadPer1M: 0.066},
-			"poolside/laguna-s-2.1-free":       {InputPer1M: 0.0, OutputPer1M: 0.0, CacheReadPer1M: 0.0},
-			"big-pickle":                       {InputPer1M: 0.0, OutputPer1M: 0.0, CacheReadPer1M: 0.0},
-			"mimo-v2.5-free":                   {InputPer1M: 0.0, OutputPer1M: 0.0, CacheReadPer1M: 0.0},
-			"ling-3.0-flash-fin-free":          {InputPer1M: 0.0, OutputPer1M: 0.0, CacheReadPer1M: 0.0},
-			"gpt-5.6-luna":                     {InputPer1M: 0.20, OutputPer1M: 1.20, CacheReadPer1M: 0.020},
-			"meta/muse-spark-1.2-contributor":  {InputPer1M: 0.10, OutputPer1M: 0.20, CacheReadPer1M: 0.010},
-			"z-ai/glm-5.3-flash":               {InputPer1M: 0.15, OutputPer1M: 0.50, CacheReadPer1M: 0.015},
-			"xiaomi/mimo-v2.5":                 {InputPer1M: 0.14, OutputPer1M: 0.28, CacheReadPer1M: 0.014},
-			"Qwen/Qwen3.8-Flash":               {InputPer1M: 0.16, OutputPer1M: 0.47, CacheReadPer1M: 0.016},
-			"glm-4-flash":                      {InputPer1M: 0.0, OutputPer1M: 0.0, CacheReadPer1M: 0.0},
-			"deepseek-chat":                    {InputPer1M: 0.14, OutputPer1M: 0.28, CacheReadPer1M: 0.014},
-			"deepseek-coder":                   {InputPer1M: 0.14, OutputPer1M: 0.28, CacheReadPer1M: 0.014},
-			"groq-llama-70b":                   {InputPer1M: 0.59, OutputPer1M: 0.79, CacheReadPer1M: 0.059},
-			"gemini-flash":                     {InputPer1M: 0.075, OutputPer1M: 0.30, CacheReadPer1M: 0.0},
-			"glm-4.6":                          {InputPer1M: 0.60, OutputPer1M: 2.20, CacheReadPer1M: 0.060},
-			"glm-5.2":                          {InputPer1M: 0.50, OutputPer1M: 2.00, CacheReadPer1M: 0.050},
+			"deepseek/deepseek-v4-flash":      {InputPer1M: 0.22, OutputPer1M: 0.66, CacheReadPer1M: 0.022},
+			"deepseek/deepseek-v4-pro":        {InputPer1M: 0.66, OutputPer1M: 1.98, CacheReadPer1M: 0.066},
+			"poolside/laguna-s-2.1-free":      {InputPer1M: 0.0, OutputPer1M: 0.0, CacheReadPer1M: 0.0},
+			"big-pickle":                      {InputPer1M: 0.0, OutputPer1M: 0.0, CacheReadPer1M: 0.0},
+			"mimo-v2.5-free":                  {InputPer1M: 0.0, OutputPer1M: 0.0, CacheReadPer1M: 0.0},
+			"ling-3.0-flash-fin-free":         {InputPer1M: 0.0, OutputPer1M: 0.0, CacheReadPer1M: 0.0},
+			"gpt-5.6-luna":                    {InputPer1M: 0.20, OutputPer1M: 1.20, CacheReadPer1M: 0.020},
+			"meta/muse-spark-1.2-contributor": {InputPer1M: 0.10, OutputPer1M: 0.20, CacheReadPer1M: 0.010},
+			"z-ai/glm-5.3-flash":              {InputPer1M: 0.15, OutputPer1M: 0.50, CacheReadPer1M: 0.015},
+			"xiaomi/mimo-v2.5":                {InputPer1M: 0.14, OutputPer1M: 0.28, CacheReadPer1M: 0.014},
+			"Qwen/Qwen3.8-Flash":              {InputPer1M: 0.16, OutputPer1M: 0.47, CacheReadPer1M: 0.016},
+			"glm-4-flash":                     {InputPer1M: 0.0, OutputPer1M: 0.0, CacheReadPer1M: 0.0},
+			"deepseek-chat":                   {InputPer1M: 0.14, OutputPer1M: 0.28, CacheReadPer1M: 0.014},
+			"deepseek-coder":                  {InputPer1M: 0.14, OutputPer1M: 0.28, CacheReadPer1M: 0.014},
+			"groq-llama-70b":                  {InputPer1M: 0.59, OutputPer1M: 0.79, CacheReadPer1M: 0.059},
+			"gemini-flash":                    {InputPer1M: 0.075, OutputPer1M: 0.30, CacheReadPer1M: 0.0},
+			"glm-4.6":                         {InputPer1M: 0.60, OutputPer1M: 2.20, CacheReadPer1M: 0.060},
+			"glm-5.2":                         {InputPer1M: 0.50, OutputPer1M: 2.00, CacheReadPer1M: 0.050},
 		},
 	}
 }

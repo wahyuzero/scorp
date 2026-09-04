@@ -1,7 +1,6 @@
 package delegate
 
 import (
-	"scorp-agent/config"
 	"bufio"
 	"context"
 	"encoding/json"
@@ -9,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os/exec"
+	"scorp-agent/config"
 	"strings"
 	"sync"
 	"time"
@@ -53,13 +53,13 @@ type ACPInitializeParams struct {
 
 // ACPMessageNewParams for the "message/new" method.
 type ACPMessageNewParams struct {
-	SessionID string        `json:"sessionId,omitempty"`
+	SessionID string         `json:"sessionId,omitempty"`
 	Message   ACPUserMessage `json:"message"`
 }
 
 type ACPUserMessage struct {
-	Role    string        `json:"role"`
-	Parts   []ACPMessagePart `json:"parts"`
+	Role  string           `json:"role"`
+	Parts []ACPMessagePart `json:"parts"`
 }
 
 type ACPMessagePart struct {
@@ -69,15 +69,15 @@ type ACPMessagePart struct {
 
 // ACPSession holds a connected subprocess session.
 type ACPSession struct {
-	cmd      *exec.Cmd
-	stdin    io.WriteCloser
-	stdout   io.ReadCloser
-	stderr   io.ReadCloser
-	mu       sync.Mutex
-	nextID   int
-	pending  map[int]chan *ACPResponse
+	cmd       *exec.Cmd
+	stdin     io.WriteCloser
+	stdout    io.ReadCloser
+	stderr    io.ReadCloser
+	mu        sync.Mutex
+	nextID    int
+	pending   map[int]chan *ACPResponse
 	sessionID string
-	done     chan struct{}
+	done      chan struct{}
 }
 
 // launchACP starts the external CLI subprocess.
@@ -234,7 +234,7 @@ func (s *ACPSession) initialize() error {
 
 	// Send initialized notification (no response expected)
 	s.mu.Lock()
-notifData, _ := json.Marshal(ACPRequest{
+	notifData, _ := json.Marshal(ACPRequest{
 		JSONRPC: "2.0",
 		Method:  "notifications/initialized",
 	})
@@ -452,8 +452,8 @@ func runOpenCodeCLI(params delegateTaskParams, subagentID string, start time.Tim
 
 // knownACPCommands maps CLI names to their binary paths.
 var knownACPCommands = map[string]string{
-	"claude":  "claude",
-	"codex":   "codex",
+	"claude":   "claude",
+	"codex":    "codex",
 	"opencode": "opencode",
 }
 

@@ -1,11 +1,11 @@
 package skills
 
 import (
-	"scorp-agent/config"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"scorp-agent/config"
 	"strings"
 	"sync"
 )
@@ -15,13 +15,13 @@ import (
 // ──────────────────────────────────────────────
 
 type Skill struct {
-	Name              string   `json:"name"`
-	Emoji             string   `json:"emoji"`
-	Description       string   `json:"description"`
-	Category          string   `json:"category"`
-	Prompt            string   `json:"prompt"`
-	Examples          []string `json:"examples"`
-	AutoLoadKeywords  []string `json:"auto_load_keywords"`
+	Name             string   `json:"name"`
+	Emoji            string   `json:"emoji"`
+	Description      string   `json:"description"`
+	Category         string   `json:"category"`
+	Prompt           string   `json:"prompt"`
+	Examples         []string `json:"examples"`
+	AutoLoadKeywords []string `json:"auto_load_keywords"`
 }
 
 var (

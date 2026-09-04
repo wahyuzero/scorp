@@ -16,12 +16,12 @@ import (
 
 // ProviderPreset defines a built-in provider with known endpoint + env vars.
 type ProviderPreset struct {
-	KeyEnvs       []string // env var names to try in order (first non-empty wins)
-	BaseURL       string   // default API endpoint
-	API           string   // "openai" | "anthropic" | "gemini"
-	NoAuth        bool     // true for local providers (ollama)
-	ExtraHeaders  bool     // true for openrouter (HTTP-Referer, X-Title)
-	DisplayName   string   // human-readable name
+	KeyEnvs      []string // env var names to try in order (first non-empty wins)
+	BaseURL      string   // default API endpoint
+	API          string   // "openai" | "anthropic" | "gemini"
+	NoAuth       bool     // true for local providers (ollama)
+	ExtraHeaders bool     // true for openrouter (HTTP-Referer, X-Title)
+	DisplayName  string   // human-readable name
 }
 
 // providerRegistry is the built-in provider registry.

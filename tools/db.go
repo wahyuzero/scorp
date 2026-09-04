@@ -1,13 +1,13 @@
 package tools
 
 import (
-	"scorp-agent/internal/helpers"
-	"scorp-agent/config"
 	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"os"
+	"scorp-agent/config"
+	"scorp-agent/internal/helpers"
 	"strings"
 	"time"
 )

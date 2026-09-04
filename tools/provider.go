@@ -1,12 +1,12 @@
 package tools
 
 import (
-	"scorp-agent/models"
-	"scorp-agent/internal/helpers"
 	"context"
 	"fmt"
 	"log"
 	"os"
+	"scorp-agent/internal/helpers"
+	"scorp-agent/models"
 	"strings"
 	"time"
 )
@@ -142,24 +142,24 @@ func providerAddInteractive(providerName string) string {
 	// Determine model ID from preset defaults or ask user
 	// For now, we'll use common model IDs per provider
 	commonModels := map[string][]string{
-		"openai":     {"gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"},
-		"deepseek":   {"deepseek-chat", "deepseek-coder"},
-		"groq":       {"llama-3.1-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"},
-		"gemini":     {"gemini-1.5-pro", "gemini-1.5-flash", "gemini-2.0-flash-exp"},
-		"anthropic":  {"claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"},
-		"openrouter": {"openrouter/auto", "anthropic/claude-3.5-sonnet", "google/gemini-pro-1.5"},
-		"zai":        {"glm-4.5", "glm-4-flash", "glm-4-air"},
-		"kimi":       {"moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k"},
-		"minimax":    {"abab6.5s-chat-chat", "abab6.5-chat-32k"},
-		"ollama":     {"llama3.1", "llama3.2", "qwen2.5", "mistral"},
-		"lmstudio":   {"(any model loaded in LM Studio)"},
-		"copilot":    {"gpt-4o", "gpt-4o-mini", "o1-preview", "o1-mini"},
-		"nvidia":     {"nemotron-3-ultra", "nemotron-3-ultra-128k"},
+		"openai":      {"gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"},
+		"deepseek":    {"deepseek-chat", "deepseek-coder"},
+		"groq":        {"llama-3.1-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"},
+		"gemini":      {"gemini-1.5-pro", "gemini-1.5-flash", "gemini-2.0-flash-exp"},
+		"anthropic":   {"claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"},
+		"openrouter":  {"openrouter/auto", "anthropic/claude-3.5-sonnet", "google/gemini-pro-1.5"},
+		"zai":         {"glm-4.5", "glm-4-flash", "glm-4-air"},
+		"kimi":        {"moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k"},
+		"minimax":     {"abab6.5s-chat-chat", "abab6.5-chat-32k"},
+		"ollama":      {"llama3.1", "llama3.2", "qwen2.5", "mistral"},
+		"lmstudio":    {"(any model loaded in LM Studio)"},
+		"copilot":     {"gpt-4o", "gpt-4o-mini", "o1-preview", "o1-mini"},
+		"nvidia":      {"nemotron-3-ultra", "nemotron-3-ultra-128k"},
 		"huggingface": {"meta-llama/llama-3.1-70b-instruct", "microsoft/phi-3.5-mini"},
-		"mistral":    {"mistral-large-latest", "mistral-small-latest", "pixtral-large-latest"},
-		"cohere":     {"command-r-plus", "command-r", "command-r7b-128k"},
-		"together":   {"meta-llama/Llama-3.1-70B-Instruct", "mistralai/Mixtral-8x7B-Instruct-v0.1"},
-		"fireworks":  {"accounts/fireworks/models/llama-v3p1-70b-instruct"},
+		"mistral":     {"mistral-large-latest", "mistral-small-latest", "pixtral-large-latest"},
+		"cohere":      {"command-r-plus", "command-r", "command-r7b-128k"},
+		"together":    {"meta-llama/Llama-3.1-70B-Instruct", "mistralai/Mixtral-8x7B-Instruct-v0.1"},
+		"fireworks":   {"accounts/fireworks/models/llama-v3p1-70b-instruct"},
 	}
 
 	suggested := commonModels[providerName]

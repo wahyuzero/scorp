@@ -91,7 +91,7 @@ func TestCollectorNative_NativeTopProcessStruct(t *testing.T) {
 func TestCollectorNative_CollectSystem_Structure(t *testing.T) {
 	// This will read actual system info - just verify structure
 	d := CollectSystem()
-	
+
 	if d.CPUCount <= 0 {
 		t.Errorf("CPUCount should be > 0, got %d", d.CPUCount)
 	}
@@ -104,34 +104,34 @@ func TestCollectorNative_CollectSystem_Structure(t *testing.T) {
 	if d.Uptime == "" {
 		t.Error("Uptime should not be empty")
 	}
-	
+
 	// TopProcesses should have at most 5 entries
 	if len(d.TopProcesses) > 5 {
 		t.Errorf("TopProcesses has %d entries, want <=5", len(d.TopProcesses))
 	}
-	
+
 	for _, p := range d.TopProcesses {
 		if p.PID <= 0 {
 			t.Errorf("TopProcess invalid PID: %d", p.PID)
 		}
 	}
-	
+
 	t.Logf("System: CPU=%d cores, RAM=%.2fGB, Disk=%.2fGB, Uptime=%s, TopProcs=%d",
 		d.CPUCount, d.RAMTotalGB, d.DiskTotalGB, d.Uptime, len(d.TopProcesses))
 }
 
 func TestCollectorNative_StartCPUSampler_DoesNotBlock(t *testing.T) {
 	done := make(chan struct{})
-	
+
 	// Start sampler
 	go StartCPUSampler(done)
-	
+
 	// Give it a moment to run
 	time.Sleep(100 * time.Millisecond)
-	
+
 	// Stop it
 	close(done)
-	
+
 	// Should return quickly
 	select {
 	case <-time.After(1 * time.Second):
@@ -143,13 +143,13 @@ func TestCollectorNative_StartCPUSampler_DoesNotBlock(t *testing.T) {
 
 func TestCollectorNative_StartDockerStatsSampler_DoesNotBlock(t *testing.T) {
 	done := make(chan struct{})
-	
+
 	go StartDockerStatsSampler(done)
-	
+
 	time.Sleep(100 * time.Millisecond)
-	
+
 	close(done)
-	
+
 	select {
 	case <-time.After(1 * time.Second):
 		t.Error("StartDockerStatsSampler did not stop after closing done channel")

@@ -1,10 +1,10 @@
 package tools
 
 import (
-	"scorp-agent/internal/helpers"
-	"scorp-agent/config"
 	"fmt"
 	"log"
+	"scorp-agent/config"
+	"scorp-agent/internal/helpers"
 	"strings"
 	"sync"
 )
@@ -14,10 +14,10 @@ import (
 var memoryFilePathResolved = config.MemoryFilePath() // resolved once at init
 
 var (
-	memCache     map[string]string
-	memCacheMu   sync.RWMutex
-	memLoaded    bool
-	persistMu    sync.Mutex // serializes disk writes to prevent race
+	memCache   map[string]string
+	memCacheMu sync.RWMutex
+	memLoaded  bool
+	persistMu  sync.Mutex // serializes disk writes to prevent race
 )
 
 // initMemoryCache loads memory.json into in-process cache at startup

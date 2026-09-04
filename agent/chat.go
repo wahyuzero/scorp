@@ -1,17 +1,17 @@
 package agent
 
 import (
-	"scorp-agent/models"
-	"scorp-agent/tools"
-	"scorp-agent/internal/helpers"
-	"scorp-agent/config"
-	"scorp-agent/session"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"regexp"
+	"scorp-agent/config"
+	"scorp-agent/internal/helpers"
+	"scorp-agent/models"
+	"scorp-agent/session"
+	"scorp-agent/tools"
 	"strings"
 	"sync"
 	"time"
@@ -297,8 +297,8 @@ func appendSessionHistory(chatID string, msgs ...AgentMessage) {
 
 // historyDirty tracks sessions needing a disk save
 var (
-	historyDirty   = make(map[string]bool)
-	historyDirtyMu sync.Mutex
+	historyDirty    = make(map[string]bool)
+	historyDirtyMu  sync.Mutex
 	historySaveChan = make(chan string, 64) // channel for async disk persistence
 )
 

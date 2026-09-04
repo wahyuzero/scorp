@@ -51,10 +51,10 @@ type commandCodePayload struct {
 }
 
 type commandCodeParams struct {
-	Model           string             `json:"model"`
-	Messages        []commandCodeMsg   `json:"messages"`
-	Tools           []commandCodeTool  `json:"tools,omitempty"`
-	ReasoningEffort string             `json:"reasoningEffort,omitempty"`
+	Model           string            `json:"model"`
+	Messages        []commandCodeMsg  `json:"messages"`
+	Tools           []commandCodeTool `json:"tools,omitempty"`
+	ReasoningEffort string            `json:"reasoningEffort,omitempty"`
 }
 
 type commandCodeTool struct {

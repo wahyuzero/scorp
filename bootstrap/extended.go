@@ -1,15 +1,14 @@
 package bootstrap
 
-
 import (
+	"scorp-agent/config"
 	"scorp-agent/delegate"
 	"scorp-agent/mcp"
+	"scorp-agent/rag"
+	"scorp-agent/registry"
+	"scorp-agent/session"
 	"scorp-agent/skills"
 	"scorp-agent/tools"
-	"scorp-agent/registry"
-	"scorp-agent/config"
-	"scorp-agent/session"
-	"scorp-agent/rag"
 )
 
 // init() — register remaining tools (web, git, docker, mcp, vision, browser)
@@ -75,7 +74,7 @@ func init() {
 		Description: "Run git commands",
 		Category:    "code",
 		Native:      true,
-		Execute: tools.ExecuteGit,
+		Execute:     tools.ExecuteGit,
 		Arguments: map[string]registry.ArgDef{
 			"action":  {Type: "string", Description: "Git action: status, log, diff, commit, branch, stash, pull, push, show, remote", Required: true},
 			"command": {Type: "string", Description: "Alias for action (e.g. 'status', 'log')"},
@@ -105,7 +104,7 @@ func init() {
 		Description: "Execute SQL query (MySQL/PostgreSQL)",
 		Category:    "database",
 		Native:      true,
-		Execute: tools.ExecuteSQL,
+		Execute:     tools.ExecuteSQL,
 		Arguments: map[string]registry.ArgDef{
 			"query":    {Type: "string", Description: "SQL query", Required: true},
 			"database": {Type: "string", Description: "Database name"},
@@ -118,7 +117,7 @@ func init() {
 		Description: "Manage processes: list, kill, info",
 		Category:    "system",
 		Native:      true,
-		Execute: tools.ExecuteProcess,
+		Execute:     tools.ExecuteProcess,
 		Arguments: map[string]registry.ArgDef{
 			"action": {Type: "string", Description: "list, kill, or info", Required: true, Enum: []string{"list", "kill", "info"}},
 			"pid":    {Type: "integer", Description: "Process ID (for kill/info)"},
@@ -184,7 +183,7 @@ func init() {
 			return tools.ExecuteAnalyzeImage(args)
 		},
 		Arguments: map[string]registry.ArgDef{
-			"path":    {Type: "string", Description: "Image file path", Required: true},
+			"path":     {Type: "string", Description: "Image file path", Required: true},
 			"question": {Type: "string", Description: "What to analyze", Default: "Describe this image"},
 		},
 	})
@@ -244,8 +243,8 @@ func init() {
 			return rag.RagIndexSearch(args)
 		},
 		Arguments: map[string]registry.ArgDef{
-			"query":  {Type: "string", Description: "Natural language search query", Required: true},
-			"top_k":  {Type: "integer", Description: "Max results (default 5)"},
+			"query": {Type: "string", Description: "Natural language search query", Required: true},
+			"top_k": {Type: "integer", Description: "Max results (default 5)"},
 		},
 	})
 	registry.RegisterTool(registry.ToolDef{
@@ -282,19 +281,19 @@ func init() {
 			return tools.ExecuteCompose(args)
 		},
 		Arguments: map[string]registry.ArgDef{
-			"action":       {Type: "string", Description: "Action: up, down, restart, logs, ps, pull, config, validate", Required: true},
-			"project":      {Type: "string", Description: "Project directory (default: current)"},
-			"file":         {Type: "string", Description: "Compose file path (optional)"},
-			"detach":       {Type: "boolean", Description: "Run in detached mode (default: true, for up)"},
-			"rebuild":      {Type: "boolean", Description: "Rebuild images (for up)"},
-			"services":     {Type: "string", Description: "Service names (space-separated, for restart/logs/pull)"},
-			"tail":         {Type: "integer", Description: "Lines to show (for logs, default 50)"},
-			"follow":       {Type: "boolean", Description: "Follow logs (for logs)"},
-			"timeout":      {Type: "integer", Description: "Stop timeout in seconds (for restart, default 10)"},
-			"volumes":      {Type: "boolean", Description: "Remove named volumes (for down, requires confirm=true)"},
+			"action":         {Type: "string", Description: "Action: up, down, restart, logs, ps, pull, config, validate", Required: true},
+			"project":        {Type: "string", Description: "Project directory (default: current)"},
+			"file":           {Type: "string", Description: "Compose file path (optional)"},
+			"detach":         {Type: "boolean", Description: "Run in detached mode (default: true, for up)"},
+			"rebuild":        {Type: "boolean", Description: "Rebuild images (for up)"},
+			"services":       {Type: "string", Description: "Service names (space-separated, for restart/logs/pull)"},
+			"tail":           {Type: "integer", Description: "Lines to show (for logs, default 50)"},
+			"follow":         {Type: "boolean", Description: "Follow logs (for logs)"},
+			"timeout":        {Type: "integer", Description: "Stop timeout in seconds (for restart, default 10)"},
+			"volumes":        {Type: "boolean", Description: "Remove named volumes (for down, requires confirm=true)"},
 			"remove_orphans": {Type: "boolean", Description: "Remove orphan containers (for down, default true)"},
-			"all":          {Type: "boolean", Description: "Show all containers including stopped (for ps)"},
-			"confirm":      {Type: "boolean", Description: "Must be true for destructive actions (down)"},
+			"all":            {Type: "boolean", Description: "Show all containers including stopped (for ps)"},
+			"confirm":        {Type: "boolean", Description: "Must be true for destructive actions (down)"},
 		},
 	})
 	// ── MCP Management ──
@@ -341,11 +340,11 @@ func init() {
 			return tools.ExecutePatch(args)
 		},
 		Arguments: map[string]registry.ArgDef{
-			"mode":         {Type: "string", Description: "Mode: replace (default)", Default: "replace", Enum: []string{"replace"}},
-			"path":         {Type: "string", Description: "File path to edit", Required: true},
-			"old_string":   {Type: "string", Description: "Text to find and replace", Required: true},
-			"new_string":   {Type: "string", Description: "Replacement text", Required: true},
-			"replace_all":  {Type: "boolean", Description: "Replace all occurrences (default: false)"},
+			"mode":        {Type: "string", Description: "Mode: replace (default)", Default: "replace", Enum: []string{"replace"}},
+			"path":        {Type: "string", Description: "File path to edit", Required: true},
+			"old_string":  {Type: "string", Description: "Text to find and replace", Required: true},
+			"new_string":  {Type: "string", Description: "Replacement text", Required: true},
+			"replace_all": {Type: "boolean", Description: "Replace all occurrences (default: false)"},
 		},
 	})
 
@@ -458,9 +457,9 @@ func init() {
 			return rag.RagVecIngest(args)
 		},
 		Arguments: map[string]registry.ArgDef{
-			"path": {Type: "string", Description: "File or directory path to ingest", Required: true},
+			"path":       {Type: "string", Description: "File or directory path to ingest", Required: true},
 			"chunk_size": {Type: "integer", Description: "Max chars per chunk (default 1000)"},
-			"overlap": {Type: "integer", Description: "Overlap chars between chunks (default 200)"},
+			"overlap":    {Type: "integer", Description: "Overlap chars between chunks (default 200)"},
 		},
 	})
 	registry.RegisterTool(registry.ToolDef{
@@ -472,9 +471,9 @@ func init() {
 			return rag.RagVecSearch(args)
 		},
 		Arguments: map[string]registry.ArgDef{
-			"query": {Type: "string", Description: "Search query", Required: true},
-			"top_k": {Type: "integer", Description: "Max results (default 5, max 50)"},
-			"hybrid": {Type: "boolean", Description: "Combine with TF-IDF scores (default true)"},
+			"query":         {Type: "string", Description: "Search query", Required: true},
+			"top_k":         {Type: "integer", Description: "Max results (default 5, max 50)"},
+			"hybrid":        {Type: "boolean", Description: "Combine with TF-IDF scores (default true)"},
 			"vector_weight": {Type: "number", Description: "Weight for vector score in hybrid (0-1, default 0.7)"},
 		},
 	})

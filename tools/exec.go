@@ -1,13 +1,13 @@
 package tools
 
 import (
-	"scorp-agent/internal/helpers"
-	"scorp-agent/config"
 	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"scorp-agent/config"
+	"scorp-agent/internal/helpers"
 	"strings"
 	"time"
 )
@@ -47,10 +47,10 @@ func needsShellExecution(command string) bool {
 	// These must appear OUTSIDE of quotes
 	inSingleQuote := false
 	inDoubleQuote := false
-	
+
 	for i := 0; i < len(command); i++ {
 		c := command[i]
-		
+
 		// Handle quotes
 		if c == '\'' && !inDoubleQuote {
 			inSingleQuote = !inSingleQuote
@@ -60,22 +60,21 @@ func needsShellExecution(command string) bool {
 			inDoubleQuote = !inDoubleQuote
 			continue
 		}
-		
+
 		// Skip if inside quotes
 		if inSingleQuote || inDoubleQuote {
 			continue
 		}
-		
+
 		// Shell metacharacters that require shell execution
 		switch c {
 		case '|', '&', ';', '<', '>', '$', '`', '*', '?', '[', ']', '{', '}', '\\':
 			return true
 		}
 	}
-	
+
 	return false
 }
-
 
 // ── Shell Executor ──
 
@@ -104,7 +103,7 @@ func ExecuteShell(args map[string]interface{}, chatID int64) (string, bool) {
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "bash", "-c", command)
-	
+
 	output, err := cmd.CombinedOutput()
 	result := string(output)
 

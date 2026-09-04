@@ -167,7 +167,7 @@ func CallOpenAIWithTools(ctx context.Context, model *ModelConfig, messages []Cha
 		"max_tokens":  maxTokens,
 		"temperature": 0.7,
 		"tools":       registry.GenerateNativeToolsSchema(),
-		"tool_choice":  "auto",
+		"tool_choice": "auto",
 	}
 
 	jsonData, err := json.Marshal(reqBody)

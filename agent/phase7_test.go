@@ -1,9 +1,9 @@
 package agent
 
 import (
-	"scorp-agent/config"
 	"os"
 	"path/filepath"
+	"scorp-agent/config"
 	"testing"
 	"time"
 )

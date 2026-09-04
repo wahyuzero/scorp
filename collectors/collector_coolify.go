@@ -1,11 +1,11 @@
 package collectors
 
 import (
-	"scorp-agent/config"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"scorp-agent/config"
 	"strings"
 	"sync"
 )

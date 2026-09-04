@@ -356,9 +356,9 @@ func TestEstimateTokens(t *testing.T) {
 
 func TestEstimateHistoryTokens(t *testing.T) {
 	history := []AgentMessage{
-		{Role: "system", Content: "You are helpful."},     // 16 chars → 4 tokens + 4 overhead = 8
-		{Role: "user", Content: makeToolResult(100)},      // 100 chars → 25 tokens + 4 = 29
-		{Role: "assistant", Content: "OK got it."},        // 10 chars → 2 tokens + 4 = 6
+		{Role: "system", Content: "You are helpful."}, // 16 chars → 4 tokens + 4 overhead = 8
+		{Role: "user", Content: makeToolResult(100)},  // 100 chars → 25 tokens + 4 = 29
+		{Role: "assistant", Content: "OK got it."},    // 10 chars → 2 tokens + 4 = 6
 	}
 
 	tokens := estimateHistoryTokens(history)

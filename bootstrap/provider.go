@@ -5,7 +5,6 @@ import (
 	"scorp-agent/tools"
 )
 
-
 // Registry entry for provider tools
 func init() {
 	// ── Provider Management (Phase 2) ──

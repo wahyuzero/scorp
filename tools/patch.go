@@ -1,9 +1,9 @@
 package tools
 
 import (
-	"scorp-agent/internal/helpers"
 	"fmt"
 	"os"
+	"scorp-agent/internal/helpers"
 	"strings"
 )
 

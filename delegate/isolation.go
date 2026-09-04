@@ -30,8 +30,8 @@ type SubagentIsolation struct {
 }
 
 var (
-	subagentIsolations   = make(map[string]*SubagentIsolation)
-	subagentIsolationMu  sync.RWMutex
+	subagentIsolations  = make(map[string]*SubagentIsolation)
+	subagentIsolationMu sync.RWMutex
 )
 
 // defaultIsolation returns a safe default isolation context.
@@ -129,12 +129,12 @@ func (iso *SubagentIsolation) truncateOutput(output string) string {
 
 // Tools that subagents should NEVER modify (global state mutations)
 var subagentBlockedTools = map[string]bool{
-	"schedule":    true, // don't let subagents create/modify cron jobs
-	"vault":       true, // don't let subagents modify credential vault
-	"monitor":     true, // don't let subagents modify monitoring targets
-	"autonomous":  true, // don't let subagents toggle autonomous mode
-	"models":      true, // don't let subagents modify model config
-	"ragvec_add":  true, // don't let subagents pollute RAG index
+	"schedule":      true, // don't let subagents create/modify cron jobs
+	"vault":         true, // don't let subagents modify credential vault
+	"monitor":       true, // don't let subagents modify monitoring targets
+	"autonomous":    true, // don't let subagents toggle autonomous mode
+	"models":        true, // don't let subagents modify model config
+	"ragvec_add":    true, // don't let subagents pollute RAG index
 	"ragvec_remove": true,
 }
 

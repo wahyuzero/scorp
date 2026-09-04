@@ -1,9 +1,9 @@
 package tools
 
 import (
+	"fmt"
 	"scorp-agent/internal/helpers"
 	"scorp-agent/registry"
-	"fmt"
 	"sort"
 	"strings"
 )

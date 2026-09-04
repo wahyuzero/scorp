@@ -1,14 +1,14 @@
 package testutil
 
 import (
-	"scorp-agent/agent"
-	"scorp-agent/registry"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
 	"os"
+	"scorp-agent/agent"
+	"scorp-agent/registry"
 	"sync"
 )
 

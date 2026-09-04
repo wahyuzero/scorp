@@ -1,15 +1,16 @@
+//go:build !nobrowser
 // +build !nobrowser
 
 package browser
 
 import (
-	"scorp-agent/internal/helpers"
-	"scorp-agent/config"
 	"context"
 	"fmt"
 	"log"
 	"os"
 	"regexp"
+	"scorp-agent/config"
+	"scorp-agent/internal/helpers"
 	"strings"
 	"sync"
 	"time"
@@ -24,11 +25,11 @@ var whitespaceRe = regexp.MustCompile(`\s+`)
 // ──────────────────────────────────────────────
 
 type BrowserSession struct {
-	Ctx       context.Context
-	Cancel    context.CancelFunc
-	ChatID    int64
-	Created   time.Time
-	LastUsed  time.Time
+	Ctx        context.Context
+	Cancel     context.CancelFunc
+	ChatID     int64
+	Created    time.Time
+	LastUsed   time.Time
 	CurrentURL string
 }
 

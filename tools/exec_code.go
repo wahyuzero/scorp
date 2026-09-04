@@ -1,8 +1,6 @@
 package tools
 
 import (
-	"scorp-agent/registry"
-	"scorp-agent/models"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -11,6 +9,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"scorp-agent/models"
+	"scorp-agent/registry"
 	"strings"
 	"time"
 )

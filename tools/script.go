@@ -1,16 +1,17 @@
+//go:build !nobrowser
 // +build !nobrowser
 
 package tools
 
 import (
-	"scorp-agent/browser"
-	"scorp-agent/internal/helpers"
-	"scorp-agent/config"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"scorp-agent/browser"
+	"scorp-agent/config"
+	"scorp-agent/internal/helpers"
 	"strings"
 	"time"
 

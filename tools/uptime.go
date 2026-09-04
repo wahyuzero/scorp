@@ -1,10 +1,10 @@
 package tools
 
 import (
-	"scorp-agent/internal/helpers"
 	"fmt"
 	"log"
 	"net/http"
+	"scorp-agent/internal/helpers"
 	"strings"
 	"sync"
 	"time"
@@ -17,8 +17,8 @@ import (
 type UptimeTarget struct {
 	Name    string
 	URL     string
-	Status  int  // expected HTTP status code (0 = any 2xx)
-	Timeout int  // seconds
+	Status  int // expected HTTP status code (0 = any 2xx)
+	Timeout int // seconds
 }
 
 type UptimeResult struct {

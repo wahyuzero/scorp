@@ -147,7 +147,7 @@ func CheckForUpdate() (*Release, error) {
 // FindAssetForArch finds the release asset matching the current OS/arch.
 // Naming convention: scorp_{os}_{arch} or scorp-{os}-{arch}
 func FindAssetForArch(rel *Release) *Asset {
-	goos := runtime.GOOS   // "linux", "darwin"
+	goos := runtime.GOOS     // "linux", "darwin"
 	goarch := runtime.GOARCH // "arm64", "amd64"
 
 	for i, a := range rel.Assets {

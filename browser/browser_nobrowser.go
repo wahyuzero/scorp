@@ -1,3 +1,4 @@
+//go:build nobrowser
 // +build nobrowser
 
 package browser

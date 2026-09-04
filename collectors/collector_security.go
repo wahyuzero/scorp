@@ -1,13 +1,13 @@
 package collectors
 
 import (
-	"scorp-agent/config"
 	"bufio"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"regexp"
+	"scorp-agent/config"
 	"strings"
 	"sync"
 	"time"
@@ -152,15 +152,15 @@ func CheckBruteForce() []BruteForceAlert {
 // ──────────────────────────────────────────────
 
 var (
-	sshAcceptRe   = regexp.MustCompile(`Accepted\s+(\w+)\s+for\s+(\w+)\s+from\s+([\d.]+)\s+port\s+(\d+)`)
-	sshFailedRe   = regexp.MustCompile(`from\s+([\d.]+)`)
-	sshUserRe     = regexp.MustCompile(`for\s+(?:invalid user\s+)?(\w+)`)
-	invalidUserRe = regexp.MustCompile(`Invalid user\s+(\S+)\s+from\s+([\d.]+)`)
-	timeRe        = regexp.MustCompile(`(\d{4}-\d{2}-\d{2}T[\d:]+)`)
-	fail2banBannedRe  = regexp.MustCompile(`Currently banned:\s*(\d+)`)
-	fail2banTotalRe   = regexp.MustCompile(`Total banned:\s*(\d+)`)
-	fail2banFailedRe  = regexp.MustCompile(`Currently failed:\s*(\d+)`)
-	acceptRe          = regexp.MustCompile(`Accepted\s+\w+\s+for\s+(\w+)\s+from\s+([\d.]+)`)
+	sshAcceptRe      = regexp.MustCompile(`Accepted\s+(\w+)\s+for\s+(\w+)\s+from\s+([\d.]+)\s+port\s+(\d+)`)
+	sshFailedRe      = regexp.MustCompile(`from\s+([\d.]+)`)
+	sshUserRe        = regexp.MustCompile(`for\s+(?:invalid user\s+)?(\w+)`)
+	invalidUserRe    = regexp.MustCompile(`Invalid user\s+(\S+)\s+from\s+([\d.]+)`)
+	timeRe           = regexp.MustCompile(`(\d{4}-\d{2}-\d{2}T[\d:]+)`)
+	fail2banBannedRe = regexp.MustCompile(`Currently banned:\s*(\d+)`)
+	fail2banTotalRe  = regexp.MustCompile(`Total banned:\s*(\d+)`)
+	fail2banFailedRe = regexp.MustCompile(`Currently failed:\s*(\d+)`)
+	acceptRe         = regexp.MustCompile(`Accepted\s+\w+\s+for\s+(\w+)\s+from\s+([\d.]+)`)
 )
 
 func WatchJournal(done <-chan struct{}) {

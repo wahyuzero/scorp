@@ -8,8 +8,8 @@ import (
 func TestExecuteTermuxAPI_Simulation(t *testing.T) {
 	// Test simulation behavior when running outside Android Termux
 	res, ok := ExecuteTermuxAPI(map[string]interface{}{
-		"action": "notification",
-		"title":  "Test",
+		"action":  "notification",
+		"title":   "Test",
 		"content": "Hello",
 	})
 	if !ok {

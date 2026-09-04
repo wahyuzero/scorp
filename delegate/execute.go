@@ -1,10 +1,10 @@
 package delegate
 
 import (
-	"scorp-agent/internal/helpers"
-	"scorp-agent/registry"
 	"fmt"
 	"log"
+	"scorp-agent/internal/helpers"
+	"scorp-agent/registry"
 	"strings"
 	"sync"
 	"time"
@@ -57,11 +57,11 @@ func roleToTaskType(role SubagentRole) string {
 
 // delegateTaskParams defines the input for a single subagent task.
 type delegateTaskParams struct {
-	Task      string   `json:"task"`       // What the subagent should do
-	Context   string   `json:"context"`    // Background info / constraints
-	Tools     []string `json:"tools"`      // Allowed tools (empty = read-only default)
-	MaxIters  int      `json:"max_iters"`  // Max iterations (default 10, max 20)
-	ReturnRaw bool     `json:"return_raw"` // Return raw results instead of formatted
+	Task       string   `json:"task"`        // What the subagent should do
+	Context    string   `json:"context"`     // Background info / constraints
+	Tools      []string `json:"tools"`       // Allowed tools (empty = read-only default)
+	MaxIters   int      `json:"max_iters"`   // Max iterations (default 10, max 20)
+	ReturnRaw  bool     `json:"return_raw"`  // Return raw results instead of formatted
 	Role       string   `json:"role"`        // auto/coding/research/cheap (model routing)
 	Model      string   `json:"model"`       // Explicit model name override
 	ACPCommand string   `json:"acp_command"` // External CLI binary (e.g., "claude", "codex")
@@ -70,16 +70,16 @@ type delegateTaskParams struct {
 
 // delegateResult is the result of a subagent execution
 type delegateResult struct {
-	SubagentID  string
-	Task        string
-	Role        string
-	ModelUsed   string
-	Status      string // "completed", "failed", "timeout"
-	Result      string
-	ToolsUsed   []string
-	Iterations  int
-	Duration    time.Duration
-	Error       string
+	SubagentID string
+	Task       string
+	Role       string
+	ModelUsed  string
+	Status     string // "completed", "failed", "timeout"
+	Result     string
+	ToolsUsed  []string
+	Iterations int
+	Duration   time.Duration
+	Error      string
 }
 
 // ──────────────────────────────────────────────

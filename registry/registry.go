@@ -14,23 +14,23 @@ import (
 
 // ArgDef describes a tool argument
 type ArgDef struct {
-	Type        string   `json:"type"`          // string, integer, boolean, object, array
-	Description string   `json:"description"`   // human-readable description
-	Required    bool     `json:"required"`      // whether this arg is required
+	Type        string   `json:"type"`        // string, integer, boolean, object, array
+	Description string   `json:"description"` // human-readable description
+	Required    bool     `json:"required"`    // whether this arg is required
 	Default     any      `json:"default,omitempty"`
 	Enum        []string `json:"enum,omitempty"` // allowed values (for string)
 }
 
 // ToolDef describes a tool for the registry
 type ToolDef struct {
-	Name           string                 `json:"name"`
-	Description    string                 `json:"description"`
-	Arguments      map[string]ArgDef      `json:"arguments"`
+	Name           string                                             `json:"name"`
+	Description    string                                             `json:"description"`
+	Arguments      map[string]ArgDef                                  `json:"arguments"`
 	Execute        func(map[string]interface{}, int64) (string, bool) `json:"-"`
-	Native         bool                   `json:"native"`       // available via native function calling
-	Category       string                 `json:"category"`     // shell, system, browser, mcp, vision, etc.
-	Deferred       bool                   `json:"deferred"`     // if true, not sent to LLM schema (use tool_search + tool_call)
-	RawInputSchema map[string]interface{} `json:"-"`            // raw JSON Schema (for MCP tools); overrides Arguments in native schema
+	Native         bool                                               `json:"native"`   // available via native function calling
+	Category       string                                             `json:"category"` // shell, system, browser, mcp, vision, etc.
+	Deferred       bool                                               `json:"deferred"` // if true, not sent to LLM schema (use tool_search + tool_call)
+	RawInputSchema map[string]interface{}                             `json:"-"`        // raw JSON Schema (for MCP tools); overrides Arguments in native schema
 }
 
 // ToolSchema represents a tool definition for LLM API function calling

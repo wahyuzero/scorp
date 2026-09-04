@@ -1,12 +1,12 @@
 package delegate
 
 import (
-	"scorp-agent/models"
-	"scorp-agent/registry"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
+	"scorp-agent/models"
+	"scorp-agent/registry"
 	"time"
 )
 

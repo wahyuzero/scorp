@@ -1,9 +1,9 @@
 package tools
 
 import (
-	"scorp-agent/registry"
 	"fmt"
 	"log"
+	"scorp-agent/registry"
 	"strings"
 	"sync"
 	"time"

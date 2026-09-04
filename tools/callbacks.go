@@ -36,37 +36,37 @@ var (
 
 // Agent session/history callbacks
 var (
-	GetOrCreateSession   func(chatID string) *ChatSession
-	GetSessionHistory    func(chatID string) []AgentMessage
-	AppendSessionHistory func(chatID string, msgs ...AgentMessage)
-	LoadHistoryFromDisk  func(chatID string) []AgentMessage
-	SaveHistoryToDisk    func(chatID string, msgs []AgentMessage)
-	ScheduleHistorySave  func(chatID string)
-	EnterAgentMode       func(chatID string)
-	ExitAgentMode        func(chatID string) bool
-	IsUserActive         func() bool
-	FlushPendingMessages func()
-	SummarizeHistory     func(chatID string)
-	ClearChatSession     func(chatID string)
-	HistoryFilePath      func(chatID string) string
+	GetOrCreateSession     func(chatID string) *ChatSession
+	GetSessionHistory      func(chatID string) []AgentMessage
+	AppendSessionHistory   func(chatID string, msgs ...AgentMessage)
+	LoadHistoryFromDisk    func(chatID string) []AgentMessage
+	SaveHistoryToDisk      func(chatID string, msgs []AgentMessage)
+	ScheduleHistorySave    func(chatID string)
+	EnterAgentMode         func(chatID string)
+	ExitAgentMode          func(chatID string) bool
+	IsUserActive           func() bool
+	FlushPendingMessages   func()
+	SummarizeHistory       func(chatID string)
+	ClearChatSession       func(chatID string)
+	HistoryFilePath        func(chatID string) string
 	MarkdownToTelegramHTML func(md string) string
-	RunAgentLoop         func(chatID int64, userMessage string, msgID int64)
-	ScorpChat            func(chatID, userMessage string) (string, error)
-	ScorpChatMultiTurn   func(messages []AgentMessage) (string, error)
-	SendScorpReply       func(chatID int64, msgID int64, reply string)
-	SendMessageSmart     func(text string, keyboard map[string]interface{})
-	SendFile             func(chatID, filePath string) bool
-	MainMenuKeyboard     func() map[string]interface{}
+	RunAgentLoop           func(chatID int64, userMessage string, msgID int64)
+	ScorpChat              func(chatID, userMessage string) (string, error)
+	ScorpChatMultiTurn     func(messages []AgentMessage) (string, error)
+	SendScorpReply         func(chatID int64, msgID int64, reply string)
+	SendMessageSmart       func(text string, keyboard map[string]interface{})
+	SendFile               func(chatID, filePath string) bool
+	MainMenuKeyboard       func() map[string]interface{}
 )
 
 // Autonomous callbacks
 var (
-	AutoConfig         *AutonomousConfig
-	AutoMu             *sync.Mutex
-	AutoLog            *[]AutonomousLogEntry
-	AutoKillFile       string
-	AutoCycleNum       *int
-	RunAutonomousCycle func()
+	AutoConfig           *AutonomousConfig
+	AutoMu               *sync.Mutex
+	AutoLog              *[]AutonomousLogEntry
+	AutoKillFile         string
+	AutoCycleNum         *int
+	RunAutonomousCycle   func()
 	SaveAutonomousConfig func()
 	SetKillSwitch        func(bool)
 )
@@ -118,26 +118,26 @@ type ChatSession struct {
 
 // AutonomousConfig mirrors the struct in autonomous.go
 type AutonomousConfig struct {
-	Enabled        bool
-	Interval       time.Duration
-	ApprovalLevel  string
-	MaxActions     int
-	KillSwitch     bool
-	LastCycle      time.Time
-	TotalCycles    int
-	TotalActions   int
+	Enabled       bool
+	Interval      time.Duration
+	ApprovalLevel string
+	MaxActions    int
+	KillSwitch    bool
+	LastCycle     time.Time
+	TotalCycles   int
+	TotalActions  int
 }
 
 // AutonomousLogEntry mirrors the struct in autonomous.go
 type AutonomousLogEntry struct {
-	Timestamp  time.Time
-	Cycle      int
-	Analysis   string
-	Tool       string
-	Args       map[string]interface{}
-	Reason     string
-	Risk       string
-	Result     string
-	Success    bool
-	Approved   bool
+	Timestamp time.Time
+	Cycle     int
+	Analysis  string
+	Tool      string
+	Args      map[string]interface{}
+	Reason    string
+	Risk      string
+	Result    string
+	Success   bool
+	Approved  bool
 }

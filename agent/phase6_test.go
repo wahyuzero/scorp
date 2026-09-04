@@ -4,12 +4,12 @@
 package agent
 
 import (
-	"scorp-agent/browser"
-	"scorp-agent/config"
-	"scorp-agent/tools"
 	"encoding/json"
 	"fmt"
 	"os"
+	"scorp-agent/browser"
+	"scorp-agent/config"
+	"scorp-agent/tools"
 	"testing"
 )
 

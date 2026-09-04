@@ -1,10 +1,9 @@
 package bootstrap
 
 import (
-	"scorp-agent/tools"
 	"scorp-agent/registry"
+	"scorp-agent/tools"
 )
-
 
 // init() runs before main() — register all tools
 func init() {
@@ -14,7 +13,7 @@ func init() {
 		Description: "Jalankan shell command. Mengembalikan stdout+stderr. Gunakan timeout untuk command lama.",
 		Category:    "shell",
 		Native:      true,
-		Execute: tools.ExecuteShell,
+		Execute:     tools.ExecuteShell,
 		Arguments: map[string]registry.ArgDef{
 			"command": {Type: "string", Description: "The shell command to execute", Required: true},
 			"timeout": {Type: "integer", Description: "Timeout in seconds", Default: 30},
@@ -25,7 +24,7 @@ func init() {
 		Description: "Send a file to the user via Telegram",
 		Category:    "other",
 		Native:      false,
-		Execute: tools.ExecuteSendFile,
+		Execute:     tools.ExecuteSendFile,
 		Arguments: map[string]registry.ArgDef{
 			"path": {Type: "string", Description: "File path", Required: true},
 		},

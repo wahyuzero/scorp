@@ -5,6 +5,7 @@ type ToolCall struct {
 	Name string                 `json:"name"`
 	Args map[string]interface{} `json:"args"`
 }
+
 var UpdateEnvFile func(key, value string)
 
 // CustomProvider stored in models.json under "custom_providers"

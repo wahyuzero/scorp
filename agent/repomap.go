@@ -16,10 +16,10 @@ import (
 // ──────────────────────────────────────────────
 
 var (
-	repoMapCache    string
+	repoMapCache     string
 	repoMapCacheTime time.Time
-	repoMapMu       sync.Mutex
-	repoMapTTL      = 45 * time.Second
+	repoMapMu        sync.Mutex
+	repoMapTTL       = 45 * time.Second
 )
 
 var ignoredDirs = map[string]bool{
@@ -38,19 +38,19 @@ var ignoredDirs = map[string]bool{
 }
 
 var ignoredExts = map[string]bool{
-	".exe": true,
-	".bin": true,
-	".so":  true,
+	".exe":   true,
+	".bin":   true,
+	".so":    true,
 	".dylib": true,
-	".png": true,
-	".jpg": true,
-	".jpeg": true,
-	".gif": true,
-	".ico": true,
-	".pdf": true,
-	".zip": true,
-	".tar": true,
-	".gz":  true,
+	".png":   true,
+	".jpg":   true,
+	".jpeg":  true,
+	".gif":   true,
+	".ico":   true,
+	".pdf":   true,
+	".zip":   true,
+	".tar":   true,
+	".gz":    true,
 }
 
 // GetRepoMap returns a cached compact directory layout of the current working directory.

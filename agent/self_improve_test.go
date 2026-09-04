@@ -1,9 +1,9 @@
 package agent
 
 import (
+	"fmt"
 	"scorp-agent/models"
 	"scorp-agent/tools"
-	"fmt"
 	"testing"
 	"time"
 )
@@ -72,7 +72,7 @@ func TestSelfReviewCadence(t *testing.T) {
 		turns := reviewTurnCount[123]
 		reviewMu.Unlock()
 
-		shouldTrigger := (turns % reviewCadenceTurns == 0)
+		shouldTrigger := (turns%reviewCadenceTurns == 0)
 		if i == 5 {
 			if !shouldTrigger {
 				t.Errorf("Turn 5 should trigger review")

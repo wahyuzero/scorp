@@ -12,25 +12,25 @@ import (
 
 // Config holds all configuration values.
 type Config struct {
-	TelegramBotToken string
-	TelegramChatID   string
+	TelegramBotToken   string
+	TelegramChatID     string
 	TelegramWebhookURL string // optional: if set, use webhook mode instead of polling
 
 	CoolifyAPIURL   string
 	CoolifyAPIToken string
 
-	CPUThreshold   float64
-	RAMThreshold   float64
-	DiskThreshold  float64
-	LoadThreshold  float64
+	CPUThreshold    float64
+	RAMThreshold    float64
+	DiskThreshold   float64
+	LoadThreshold   float64
 	SwapThresholdMB float64
 
 	AlertCooldown  int // seconds
 	ReportInterval int // seconds
 
 	// Monitoring toggles (agent-first: monitoring is optional)
-	MonitoringEnabled     bool // Resource alerts (CPU/RAM/disk) every 30s
-	SecurityAlertsEnabled bool // Real-time SSH login/fail alerts
+	MonitoringEnabled       bool // Resource alerts (CPU/RAM/disk) every 30s
+	SecurityAlertsEnabled   bool // Real-time SSH login/fail alerts
 	ScheduledReportsEnabled bool // Periodic full status reports
 
 	RcloneGDriveMount  string
@@ -44,7 +44,7 @@ var Cfg Config
 
 func LoadConfig() error {
 	// Load .env files (ignore errors — env vars may be set directly)
-	godotenv.Load(ScorpPath(".env"))                        // ~/.scorp/.env (base config)
+	godotenv.Load(ScorpPath(".env"))                         // ~/.scorp/.env (base config)
 	godotenv.Load(filepath.Join(HomeDir(), "scorp", ".env")) // ~/scorp/.env (deployment config)
 	godotenv.Load()                                          // .env in CWD (local overrides)
 

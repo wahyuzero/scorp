@@ -1,12 +1,12 @@
 package mcp
 
 import (
-	"scorp-agent/internal/helpers"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
+	"scorp-agent/internal/helpers"
 	"strings"
 )
 

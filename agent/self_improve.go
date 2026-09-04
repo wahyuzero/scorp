@@ -16,13 +16,13 @@ package agent
 //   - recover() on panic — never crashes the process
 
 import (
-	"scorp-agent/models"
-	"scorp-agent/tools"
-	"scorp-agent/internal/helpers"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
+	"scorp-agent/internal/helpers"
+	"scorp-agent/models"
+	"scorp-agent/tools"
 	"strings"
 	"sync"
 	"time"
