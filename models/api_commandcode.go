@@ -252,7 +252,7 @@ func buildCommandCodePayload(model *ModelConfig, messages []ChatMessage, tools [
 	isGit := false
 	currentBranch := "main"
 	gitStatus := ""
-	var recentCommits []string
+	recentCommits := []string{}
 
 	if out, err := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD").Output(); err == nil {
 		b := strings.TrimSpace(string(out))
