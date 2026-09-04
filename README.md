@@ -4,8 +4,9 @@
 
 Runs natively with a memory footprint of **under 15MB RAM** on Linux VPS, edge servers, and Android Termux.
 
-> 📋 **Modernization Notes & Architecture Blueprint:**
+> 📋 **Modernization Notes & Comparisons:**
 > - [Scorp v2.0 Architecture & Upgrade Notes](MODERNIZATION_NOTES.md)
+> - [Head-to-Head Comparison: Scorp vs PicoClaw vs ZeroClaw](docs/COMPARISON_SCORP_PICOCLAW_ZEROCLAW.md)
 
 ---
 
