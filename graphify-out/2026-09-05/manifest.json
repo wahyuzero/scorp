@@ -24,9 +24,9 @@
     "semantic_hash": ""
   },
   "agent/loop.go": {
-    "mtime": 1788536490.4387553,
-    "seen": 1788536700.6618876,
-    "ast_hash": "a7c32c4ebe75a1d6539dd784b7562c5b",
+    "mtime": 1788542771.9441092,
+    "seen": 1788542837.4716642,
+    "ast_hash": "2f051d183c013b5b56e9d1f6327ae8c8",
     "semantic_hash": ""
   },
   "agent/phase6_test.go": {
@@ -516,9 +516,9 @@
     "semantic_hash": ""
   },
   "tools/callbacks.go": {
-    "mtime": 1788485109.8421535,
-    "seen": 1788485134.5621173,
-    "ast_hash": "4b2e9aa9acc0f7fea3f36f2cade1eb2a",
+    "mtime": 1788542768.6141012,
+    "seen": 1788542837.471964,
+    "ast_hash": "36fd75d89a800485b26cabea7373e1f4",
     "semantic_hash": ""
   },
   "tools/clarify.go": {
@@ -918,9 +918,9 @@
     "semantic_hash": ""
   },
   "agent/continuation.go": {
-    "mtime": 1788540216.99654,
-    "seen": 1788540688.6572235,
-    "ast_hash": "f4099d3404ad99b8410530c40b511252",
+    "mtime": 1788542090.4143987,
+    "seen": 1788542837.4716609,
+    "ast_hash": "39c21484c4f19840ed00c66c9c1603a5",
     "semantic_hash": ""
   },
   "agent/thinking.go": {
@@ -1062,9 +1062,15 @@
     "semantic_hash": ""
   },
   "telegram/session_ui.go": {
-    "mtime": 1788541825.7756834,
-    "seen": 1788541875.8225305,
-    "ast_hash": "b7f6f7e51da161b27955382a81f85ee2",
+    "mtime": 1788542806.4511852,
+    "seen": 1788542837.4719422,
+    "ast_hash": "c9bbb917d455d9ad61c150d97993f07d",
+    "semantic_hash": ""
+  },
+  "agent/session_title.go": {
+    "mtime": 1788542748.803053,
+    "seen": 1788542837.4716942,
+    "ast_hash": "481390c4e813b007668ad89c24ba2fa2",
     "semantic_hash": ""
   }
 }

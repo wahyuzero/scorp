@@ -1,22 +1,22 @@
 # Graph Report - scorp  (2026-09-05)
 
 ## Corpus Check
-- 176 files · ~118,586 words
+- 177 files · ~119,112 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1392 nodes · 3411 edges · 58 communities (48 shown, 2 thin omitted)
-- Extraction: 87% EXTRACTED · 13% INFERRED · 0% AMBIGUOUS · INFERRED: 445 edges (avg confidence: 0.85)
+- 1397 nodes · 3422 edges · 69 communities (58 shown, 3 thin omitted)
+- Extraction: 87% EXTRACTED · 13% INFERRED · 0% AMBIGUOUS · INFERRED: 448 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `b85bf168`
+- Built from commit: `5140b62a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- context.Context
-- HomeDir
+- ToolCall
+- files.go
 - testing.T
 - chat.go
 - ScorpPath
@@ -33,14 +33,14 @@
 - session_search_fts5.go
 - HandleTelegramAction
 - StartDaemon
-- GetAllTools
-- MCPServer
+- ResolveAPIKey
+- TruncateStr
 - checker.go
 - startCLI
 - install.sh
-- LoadMCPConfig
+- CallModelWithFallback
 - scorp-agent
-- setSession
+- getSession
 - 🦂 Scorp
 - skills.go
 - RegisterTool
@@ -48,12 +48,12 @@
 - compaction_test.go
 - renderStatusFooter
 - prompt_test.go
-- .listenSSEStream
+- context.Context
 - RenameSession
 - GetStringArg
-- serviceBridgeRequests
+- TestPhase6_AllTools
 - RunAgentSessionLoop
-- TestRegisterPlugin
+- browser_session.go
 - clarify.go
 - LoadConfig
 - session_ui.go
@@ -61,16 +61,27 @@
 - GetProvider
 - estimateHistoryTokens
 - TestSteeringQueue
-- CleanupSessionsLoop
+- HandleUploadInAgentMode
 - ExecuteTermuxAPI
 - upload.go
-- SummarizeOldToolResult
+- collector_docker.go
+- FormatHourlyReport
+- collector_coolify.go
+- api_gemini.go
+- CredentialVault
+- GetRecentReceipts
+- GenerateContextualSessionTitle
+- session_fallback_test.go
+- api_anthropic.go
+- TestSwitchActiveModel
+- RedactSecrets
+- ExecuteAutoLogin
 
 ## God Nodes (most connected - your core abstractions)
 1. `HandleTelegramAction()` - 59 edges
 2. `GetStringArg()` - 43 edges
-3. `StartDaemon()` - 40 edges
-4. `RunAgentSessionLoop()` - 39 edges
+3. `RunAgentSessionLoop()` - 42 edges
+4. `StartDaemon()` - 40 edges
 5. `ModelConfig` - 36 edges
 6. `startCLI()` - 35 edges
 7. `TruncateStr()` - 35 edges
@@ -93,31 +104,31 @@
 ## Import Cycles
 - None detected.
 
-## Communities (58 total, 2 thin omitted)
+## Communities (69 total, 3 thin omitted)
 
-### Community 0 - "context.Context"
-Cohesion: 0.06
-Nodes (84): TestParseToolCalls(), context.Context, TruncateStr(), AnthropicProvider, anthropicRequest, anthropicResponse, anthropicTool, callAnthropic() (+76 more)
+### Community 0 - "ToolCall"
+Cohesion: 0.15
+Nodes (20): TestParseToolCalls(), buildCommandCodePayload(), CallCommandCodeWithTools(), createCommandCodeRequest(), extractFallbackToolCalls(), ChatRequest, commandCodeMsg, commandCodeParams (+12 more)
 
-### Community 1 - "HomeDir"
-Cohesion: 0.26
-Nodes (15): HomeDir(), ProjectDir(), PythonSitePackages(), BackKB(), createZip(), DirKeyboard(), FileDetailKeyboard(), FolderZipInfo() (+7 more)
+### Community 1 - "files.go"
+Cohesion: 0.31
+Nodes (13): BackKB(), createZip(), DirKeyboard(), FileDetailKeyboard(), FolderZipInfo(), HumanSize(), PathID(), RootsKeyboard() (+5 more)
 
 ### Community 2 - "testing.T"
 Cohesion: 0.13
-Nodes (16): TestSelfReviewCadence(), TestSelfReviewRateLimit(), testing.T, TestBuildCommandCodePayload(), TestExtractFallbackToolCalls(), TestSwitchActiveModel(), IsRateLimitError(), TestCallModelWithToolsNilModel() (+8 more)
+Nodes (19): TestSelfReviewCadence(), TestSelfReviewRateLimit(), TestCollectorNative_GetTopProcesses(), TestCollectorNative_GetTopProcesses_Limit(), TestCollectorNative_NativeTopProcessStruct(), TestCollectorNative_SortByCPUDesc(), TestCollectorNative_SortByCPUDesc_Empty(), TestCollectorNative_SortByCPUDesc_EqualValues() (+11 more)
 
 ### Community 3 - "chat.go"
-Cohesion: 0.15
-Nodes (23): agentAutoStop(), ClearChatSession(), collectTableLines(), convertInlineMarkdown(), convertTableToList(), ExitAgentMode(), extractAndSaveMemory(), flushPendingMessages() (+15 more)
+Cohesion: 0.18
+Nodes (17): cleanupChatSessions(), CleanupSessionsLoop(), collectTableLines(), convertInlineMarkdown(), convertTableToList(), extractAndSaveMemory(), historyWriterLoop(), init() (+9 more)
 
 ### Community 4 - "ScorpPath"
-Cohesion: 0.06
-Nodes (47): contains(), containsStr(), jsonToMap(), TestPhase6_AllTools(), TestPhase6_ScriptResult(), TestPhase6_VaultEncryption(), truncate(), init() (+39 more)
+Cohesion: 0.13
+Nodes (26): init(), BrowserSessionPath(), BrowserSessionsDir(), CostConfigFilePath(), CostLogFilePath(), DBConnectionsPath(), HomeDir(), Hostname() (+18 more)
 
 ### Community 5 - "client.go"
-Cohesion: 0.13
-Nodes (24): encoding/json.RawMessage, TruncOutputTool(), buildArgDefsFromInputSchema(), getExposedTools(), GetMCPTools(), handleMCPRequest(), MCPToolsForPrompt(), rebuildMCPToolList() (+16 more)
+Cohesion: 0.07
+Nodes (47): bufio.Scanner, encoding/json.Encoder, encoding/json.RawMessage, io.ReadCloser, net/url.URL, TruncOutputTool(), buildArgDefsFromInputSchema(), executeMCPServerTool() (+39 more)
 
 ### Community 6 - "runSubagent"
 Cohesion: 0.08
@@ -128,8 +139,8 @@ Cohesion: 0.06
 Nodes (45): activeToolCall, getBoolArg(), getFloatArg(), getIntArg(), getStringArg(), hybridResult, homeDir(), ragDirPath() (+37 more)
 
 ### Community 8 - "collector_system.go"
-Cohesion: 0.07
-Nodes (52): cleanAppName(), CollectCoolify(), coolifyGet(), CoolifyData, jsonBool(), jsonStr(), parseStatus(), CollectDocker() (+44 more)
+Cohesion: 0.23
+Nodes (18): checkGDriveMount(), checkS3Gateway(), CollectNetwork(), CollectStorage(), detectNewPorts(), getDockerVolumeSizes(), getEstablishedConnections(), getListeningPorts() (+10 more)
 
 ### Community 9 - "collector_security.go"
 Cohesion: 0.19
@@ -140,60 +151,60 @@ Cohesion: 0.11
 Nodes (26): bytes.Buffer, io.WriteCloser, os/exec.Cmd, sync.Mutex, CostTracker, getChatLock(), StartTestEndpoint(), bgKill() (+18 more)
 
 ### Community 11 - "collector_system_native.go"
-Cohesion: 0.09
-Nodes (41): TestCollectorNative_CollectSystem_Structure(), TestCollectorNative_GetTopProcesses(), TestCollectorNative_GetTopProcesses_Limit(), TestCollectorNative_NativeTopProcessStruct(), TestCollectorNative_SortByCPUDesc(), TestCollectorNative_SortByCPUDesc_Empty(), TestCollectorNative_SortByCPUDesc_EqualValues(), TestCollectorNative_SortByCPUDesc_Single() (+33 more)
+Cohesion: 0.10
+Nodes (35): TestCollectorNative_CollectSystem_Structure(), FormatDuration(), CollectSystem(), getCPUCount(), getDiskUsage(), getLoadAvg(), getMemInfo(), getNetBytes() (+27 more)
 
 ### Community 12 - "HandleModelCallback"
-Cohesion: 0.07
-Nodes (57): CatalogEntry, defaultModelConfig(), LoadModelConfig(), SaveModelConfig(), CustomProvider, AutoPopulateFromCatalog(), CatalogModels(), HasCatalog() (+49 more)
+Cohesion: 0.11
+Nodes (44): CatalogEntry, SaveModelConfig(), AutoPopulateFromCatalog(), CatalogModels(), HasCatalog(), ProviderHasAPIKey(), ProviderKeyEnv(), RemoveProviderModels() (+36 more)
 
 ### Community 13 - "cost_router.go"
 Cohesion: 0.05
 Nodes (60): AppendAutoLog(), AutonomousLoop(), CheckKillSwitch(), executeAutonomousAction(), extractJSON(), gatherContext(), LoadAutoLog(), LoadAutonomousConfig() (+52 more)
 
 ### Community 14 - "time.Time"
-Cohesion: 0.13
-Nodes (31): time.Time, EscapeHTML(), ScheduledTask, AddTask(), AddTaskEx(), ExecuteSchedule(), isLikelyScriptPath(), notifyTaskResult() (+23 more)
+Cohesion: 0.17
+Nodes (25): time.Time, EscapeHTML(), ScheduledTask, AddTask(), AddTaskEx(), ExecuteSchedule(), isLikelyScriptPath(), notifyTaskResult() (+17 more)
 
 ### Community 15 - "session_search_fts5.go"
 Cohesion: 0.10
 Nodes (18): getIntArg(), getStringArg(), truncateString(), homeDir(), scorpDir(), scorpPath(), ExecuteSessionSearch(), SessionResult (+10 more)
 
 ### Community 16 - "HandleTelegramAction"
-Cohesion: 0.21
-Nodes (17): HandleTelegramAction(), GetPath(), BackAndRefreshKeyboard(), BackButtonKeyboard(), baseName(), EditMessage(), MainMenuKeyboard(), MonitorMenuKeyboard() (+9 more)
+Cohesion: 0.13
+Nodes (25): UploadsDir(), FormatUsageStats(), HandleTelegramAction(), runCommandLoop(), GetPath(), AnswerCallback(), BackAndRefreshKeyboard(), BackButtonKeyboard() (+17 more)
 
 ### Community 17 - "StartDaemon"
-Cohesion: 0.16
-Nodes (17): UploadsDir(), runCommandLoop(), StartDaemon(), DeleteWebhook(), EditMessageByID(), InitTelegram(), SendChatAction(), SendMessageGetID() (+9 more)
+Cohesion: 0.12
+Nodes (21): getUnclosedTags(), SplitMessage(), StopMCPServerMode(), Init(), StartServer(), StopServer(), InitModelUsage(), Load() (+13 more)
 
-### Community 18 - "GetAllTools"
-Cohesion: 0.22
-Nodes (13): ActivateToolWithTTL(), IsDynamicModeEnabled(), IsToolActive(), ResetDynamicTools(), TestDynamicToolTTL(), TickToolTTL(), GetAllTools(), ResetNativeToolCache() (+5 more)
+### Community 18 - "ResolveAPIKey"
+Cohesion: 0.15
+Nodes (20): defaultModelConfig(), LoadModelConfig(), CustomProvider, ModelRouterConfig, ModelUsage, applyProviderDefaults(), ProviderPreset, hasAPIKey() (+12 more)
 
-### Community 19 - "MCPServer"
-Cohesion: 0.18
-Nodes (12): bufio.Scanner, context.CancelFunc, encoding/json.Encoder, FindMCPTool(), MCPServer, startMCPServer(), MCPServerConfig, MCPTool (+4 more)
+### Community 19 - "TruncateStr"
+Cohesion: 0.21
+Nodes (19): TruncateStr(), callAnthropic(), CallAnthropicWithTools(), CallCommandCodeStream(), CallOpenAI(), CallOpenAIWithTools(), formatOpenAIMessages(), RecordCost() (+11 more)
 
 ### Community 20 - "checker.go"
 Cohesion: 0.25
 Nodes (15): Asset, CheckForUpdate(), DownloadAsset(), FetchLatestRelease(), FindAssetForArch(), getRepo(), IsNewer(), isTermux() (+7 more)
 
 ### Community 21 - "startCLI"
-Cohesion: 0.05
+Cohesion: 0.06
 Nodes (64): clearPendingConfirmation(), confirmKeyboard(), getPendingConfirmation(), GetPendingConfirmationDetails(), AgentMessage, HandleConfirmation(), HasPendingConfirmation(), pendingConfirmation (+56 more)
 
 ### Community 23 - "install.sh"
 Cohesion: 0.60
 Nodes (5): ask(), die(), ok(), install.sh script, warn()
 
-### Community 24 - "LoadMCPConfig"
-Cohesion: 0.50
-Nodes (8): LoadMCPConfig(), ReloadMCPServers(), sanitizeMCPName(), ExecuteMCPManage(), mcpManageAdd(), mcpManageList(), mcpManageReload(), mcpManageRemove()
+### Community 24 - "CallModelWithFallback"
+Cohesion: 0.20
+Nodes (16): ChatResponse, getCheapestModel(), RouteModelCostAware(), CallModel(), CallModelWithFallback(), findFirstVisionModel(), GetModelByName(), isVisionModelName() (+8 more)
 
-### Community 31 - "setSession"
-Cohesion: 0.24
-Nodes (17): appendSessionHistory(), EnterAgentMode(), GetHistoryTokenEstimate(), getOrCreateSession(), getSessionHistory(), getSessionMap(), AgentMessage, loadHistoryFromDisk() (+9 more)
+### Community 31 - "getSession"
+Cohesion: 0.18
+Nodes (22): agentAutoStop(), appendSessionHistory(), EnterAgentMode(), ExitAgentMode(), flushPendingMessages(), GetHistoryTokenEstimate(), getOrCreateSession(), getSession() (+14 more)
 
 ### Community 32 - "🦂 Scorp"
 Cohesion: 0.07
@@ -201,19 +212,19 @@ Nodes (25): 📊 1. Ringkasan Matriks Perbandingan, 🌐 2. Analisis Kemampuan W
 
 ### Community 33 - "skills.go"
 Cohesion: 0.07
-Nodes (37): getSharedMemorySummary(), memoryFact, FormatToolResult(), getAgentSystemPrompt(), GetRepoMap(), InvalidateRepoMap(), TestGetRepoMap(), AgentMessage (+29 more)
+Nodes (36): getSharedMemorySummary(), memoryFact, FormatToolResult(), getAgentSystemPrompt(), GetRepoMap(), InvalidateRepoMap(), TestGetRepoMap(), AgentMessage (+28 more)
 
 ### Community 34 - "RegisterTool"
-Cohesion: 0.11
-Nodes (16): RegisterAutonomous(), init(), init(), init(), init(), TestParseDelegateParams(), TestValidateSubagentTools(), unregisterMCPNativeTools() (+8 more)
+Cohesion: 0.06
+Nodes (34): init(), init(), init(), init(), TestParseDelegateParams(), TestValidateSubagentTools(), TestCallModelWithToolsNilModel(), TestGenerateNativeToolsSchema() (+26 more)
 
 ### Community 35 - "metasearch_engines.go"
 Cohesion: 0.06
 Nodes (40): net/http.Client, net/http.Transport, sync.RWMutex, TransportPool, extractHost(), getClient(), getShortClient(), getTransport() (+32 more)
 
 ### Community 36 - "compaction_test.go"
-Cohesion: 0.27
-Nodes (16): AgentMessage, makeHistory(), makeToolResult(), TestPrune_BoundaryAges(), TestPrune_DockerScenario_41Messages(), TestPrune_EmptyHistory(), TestPrune_HeadTailFormat(), TestPrune_NonToolMessages_Preserved() (+8 more)
+Cohesion: 0.22
+Nodes (18): AgentMessage, makeHistory(), makeToolResult(), TestEstimateHistoryTokens(), TestPrune_BoundaryAges(), TestPrune_DockerScenario_41Messages(), TestPrune_EmptyHistory(), TestPrune_HeadTailFormat() (+10 more)
 
 ### Community 37 - "renderStatusFooter"
 Cohesion: 0.31
@@ -223,40 +234,40 @@ Nodes (9): GetDailyTotalUSD(), SlashCommand, filterCommands(), readInteractiveIn
 Cohesion: 0.13
 Nodes (13): TestGetBoolArg(), TestGetFloatArg(), TestGetInt64Arg(), TestGetIntArg(), TestGetStringArg(), TestGetStringSliceArg(), TestIsDangerousCommand(), TestMaxIterations() (+5 more)
 
-### Community 39 - ".listenSSEStream"
-Cohesion: 0.33
-Nodes (3): io.ReadCloser, net/url.URL, MCPServer
+### Community 39 - "context.Context"
+Cohesion: 0.28
+Nodes (9): context.Context, AnthropicProvider, CallCommandCode(), callGemini(), CallGeminiWithTools(), geminiDoRequest(), ChatMessage, GeminiProvider (+1 more)
 
 ### Community 40 - "RenameSession"
-Cohesion: 0.35
-Nodes (11): historyFilePath(), saveHistoryToDisk(), DeleteSession(), ListSessions(), RenameSession(), sanitizeSessionID(), SessionExists(), TestSessionManager() (+3 more)
+Cohesion: 0.33
+Nodes (11): ClearChatSession(), historyFilePath(), saveHistoryToDisk(), DeleteSession(), ListSessions(), RenameSession(), sanitizeSessionID(), SessionExists() (+3 more)
 
 ### Community 41 - "GetStringArg"
-Cohesion: 0.06
-Nodes (60): StorePendingConfirmation(), init(), init(), ExecuteBrowser(), browserConsole(), browserSessionClick(), browserSessionEvaluate(), browserSessionExtract() (+52 more)
+Cohesion: 0.07
+Nodes (48): StorePendingConfirmation(), init(), init(), GetBoolArg(), GetIntArg(), GetStringArg(), TruncOutput(), GetAllTools() (+40 more)
 
-### Community 42 - "serviceBridgeRequests"
-Cohesion: 0.70
-Nodes (4): executeCodeTool(), init(), serviceBridgeRequests(), writeBridgeResponse()
+### Community 42 - "TestPhase6_AllTools"
+Cohesion: 0.26
+Nodes (14): contains(), containsStr(), jsonToMap(), TestPhase6_AllTools(), TestPhase6_ScriptResult(), TestPhase6_VaultEncryption(), truncate(), CloseBrowserSession() (+6 more)
 
 ### Community 43 - "RunAgentSessionLoop"
-Cohesion: 0.17
-Nodes (20): AgentMessage, countStepsInMessage(), AgentMessage, hasCompletionIndicators(), hasForwardIntent(), isPureInformationalQuery(), looksLikeContinuation(), mentionsBrowserTask() (+12 more)
+Cohesion: 0.18
+Nodes (19): AgentMessage, countStepsInMessage(), AgentMessage, hasCompletionIndicators(), hasForwardIntent(), isPureInformationalQuery(), looksLikeContinuation(), mentionsBrowserTask() (+11 more)
 
-### Community 44 - "TestRegisterPlugin"
-Cohesion: 0.20
-Nodes (7): executeMCPServerTool(), echoPlugin, RegisterPlugin(), TestRegisterPlugin(), ExecuteToolByName(), ToolPlugin, ToolPluginWithSchema
+### Community 44 - "browser_session.go"
+Cohesion: 0.33
+Nodes (13): ExecuteBrowser(), browserConsole(), browserSessionClick(), browserSessionEvaluate(), browserSessionExtract(), browserSessionFill(), browserSessionNavigate(), browserSessionScreenshot() (+5 more)
 
 ### Community 45 - "clarify.go"
-Cohesion: 0.25
-Nodes (9): AnswerCallback(), executeClarify(), GetClarifyChatID(), handleClarifyResponse(), HasPendingClarify(), init(), ResolveClarify(), SetClarifyChatID() (+1 more)
+Cohesion: 0.33
+Nodes (7): executeClarify(), GetClarifyChatID(), HasPendingClarify(), init(), sendClarifyMessage(), SetClarifyChatID(), PendingClarify
 
 ### Community 46 - "LoadConfig"
-Cohesion: 0.33
-Nodes (9): Config, EnvBool(), EnvFloat(), EnvInt(), EnvStr(), LoadConfig(), Init(), StartServer() (+1 more)
+Cohesion: 0.67
+Nodes (6): Config, EnvBool(), EnvFloat(), EnvInt(), EnvStr(), LoadConfig()
 
 ### Community 47 - "session_ui.go"
-Cohesion: 0.42
+Cohesion: 0.44
 Nodes (9): BuildSessionMenuKeyboard(), FormatSessionMenuText(), GetActiveSessionID(), HandleSessionCallback(), init(), loadTgSessionMapping(), saveTgSessionMapping(), SetActiveSessionID() (+1 more)
 
 ### Community 48 - "inline.go"
@@ -264,20 +275,20 @@ Cohesion: 0.38
 Nodes (9): AnswerInlineQuery(), buildInlineResults(), firstN(), TGInlineQuery, HandleInlineQuery(), quickDocker(), quickStatus(), quickStorage() (+1 more)
 
 ### Community 49 - "GetProvider"
-Cohesion: 0.36
-Nodes (6): TestCallOpenAI_MockServer(), TestLLMProviderFactory(), LLMProvider, GetProvider(), init(), RegisterProviderAdapter()
+Cohesion: 0.70
+Nodes (4): LLMProvider, GetProvider(), init(), RegisterProviderAdapter()
 
 ### Community 50 - "estimateHistoryTokens"
-Cohesion: 0.43
-Nodes (6): estimateHistoryTokens(), estimateTokens(), formatTokenEstimate(), AgentMessage, TestEstimateHistoryTokens(), TestEstimateTokens()
+Cohesion: 0.53
+Nodes (5): estimateHistoryTokens(), estimateTokens(), formatTokenEstimate(), AgentMessage, TestEstimateTokens()
 
 ### Community 51 - "TestSteeringQueue"
 Cohesion: 0.43
 Nodes (5): ClearSteeringQueue(), HasSteeringMessage(), PopSteeringMessage(), QueueSteeringMessage(), TestSteeringQueue()
 
-### Community 52 - "CleanupSessionsLoop"
-Cohesion: 0.33
-Nodes (5): agentSession, cleanupChatSessions(), CleanupSessionsLoop(), cleanupAgentSessions(), TGDocument
+### Community 52 - "HandleUploadInAgentMode"
+Cohesion: 0.29
+Nodes (6): agentSession, scorpChat(), touchSession(), RunAgentLoop(), TGDocument, HandleUploadInAgentMode()
 
 ### Community 53 - "ExecuteTermuxAPI"
 Cohesion: 0.73
@@ -287,25 +298,65 @@ Nodes (5): AcquireTermuxWakeLock(), ExecuteTermuxAPI(), IsTermux(), ReleaseTermu
 Cohesion: 0.50
 Nodes (4): contentPart, imageURL, TestBase64Encode(), base64Encode()
 
+### Community 57 - "collector_docker.go"
+Cohesion: 0.27
+Nodes (11): CollectDocker(), CollectDockerFallback(), containerName(), dockerGet(), DockerData, InitDockerClient(), StartDockerStatsSampler(), ContainerInfo (+3 more)
+
+### Community 58 - "FormatHourlyReport"
+Cohesion: 0.31
+Nodes (12): NetworkData, SystemData, Bar(), bar(), FormatHourlyReport(), FormatStatusResponse(), SectionCoolify(), SectionDocker() (+4 more)
+
+### Community 59 - "collector_coolify.go"
+Cohesion: 0.32
+Nodes (11): cleanAppName(), CollectCoolify(), coolifyGet(), CoolifyData, jsonBool(), jsonStr(), parseStatus(), CoolifyApp (+3 more)
+
+### Community 60 - "api_gemini.go"
+Cohesion: 0.36
+Nodes (10): geminiBuildRequest(), geminiMessages(), geminiContent, geminiFuncDecl, geminiFunctionCall, geminiGenConfig, geminiPart, geminiRequest (+2 more)
+
+### Community 61 - "CredentialVault"
+Cohesion: 0.31
+Nodes (3): CredentialEntry, CredentialVault, ExecuteVault()
+
+### Community 62 - "GetRecentReceipts"
+Cohesion: 0.46
+Nodes (6): GetRecentReceipts(), loadReceiptsLocked(), RecordToolReceipt(), saveReceiptsLocked(), TestRecordToolReceipt(), ToolReceipt
+
+### Community 63 - "GenerateContextualSessionTitle"
+Cohesion: 0.60
+Nodes (4): fallbackTitleFromText(), GenerateContextualSessionTitle(), sanitizeSessionTitle(), ShouldAutoTitleSession()
+
+### Community 64 - "session_fallback_test.go"
+Cohesion: 0.40
+Nodes (4): TestSessionFallback_ExecuteSessionSearch_RequiresQuery(), TestSessionFallback_InitAndIndex(), TestSessionFallback_LIKEQueryWithSpaces(), TestSessionFallback_SessionResultStruct()
+
+### Community 65 - "api_anthropic.go"
+Cohesion: 0.67
+Nodes (3): anthropicRequest, anthropicResponse, anthropicTool
+
+### Community 66 - "TestSwitchActiveModel"
+Cohesion: 0.50
+Nodes (3): TestBuildCommandCodePayload(), TestExtractFallbackToolCalls(), TestSwitchActiveModel()
+
 ## Knowledge Gaps
 - **32 isolated node(s):** `memoryFact`, `containerStats`, `ACPInitializeParams`, `AgentMessage`, `scorp-agent` (+27 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 135 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **2 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **3 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `HandleTelegramAction()` connect `HandleTelegramAction` to `HomeDir`, `chat.go`, `RenameSession`, `collector_system.go`, `collector_security.go`, `RunAgentSessionLoop`, `collector_system_native.go`, `clarify.go`, `time.Time`, `session_ui.go`, `HandleModelCallback`, `StartDaemon`, `TestSteeringQueue`, `startCLI`, `LoadMCPConfig`, `setSession`?**
-  _High betweenness centrality (0.145) - this node is a cross-community bridge._
-- **Why does `RunAgentSessionLoop()` connect `RunAgentSessionLoop` to `context.Context`, `skills.go`, `chat.go`, `prompt_test.go`, `rag_vector.go`, `GetStringArg`, `time.Time`, `HandleTelegramAction`, `GetAllTools`, `TestSteeringQueue`, `startCLI`, `ExecuteTermuxAPI`, `setSession`?**
-  _High betweenness centrality (0.092) - this node is a cross-community bridge._
-- **Why does `TruncateStr()` connect `context.Context` to `skills.go`, `chat.go`, `client.go`, `runSubagent`, `RenameSession`, `GetStringArg`, `RunAgentSessionLoop`, `cost_router.go`, `time.Time`, `MCPServer`?**
-  _High betweenness centrality (0.083) - this node is a cross-community bridge._
+- **Why does `HandleTelegramAction()` connect `HandleTelegramAction` to `files.go`, `client.go`, `RenameSession`, `collector_security.go`, `collector_system.go`, `RunAgentSessionLoop`, `collector_system_native.go`, `clarify.go`, `time.Time`, `session_ui.go`, `HandleModelCallback`, `StartDaemon`, `TestSteeringQueue`, `startCLI`, `collector_docker.go`, `FormatHourlyReport`, `collector_coolify.go`, `getSession`?**
+  _High betweenness centrality (0.153) - this node is a cross-community bridge._
+- **Why does `RunAgentSessionLoop()` connect `RunAgentSessionLoop` to `skills.go`, `RegisterTool`, `chat.go`, `prompt_test.go`, `rag_vector.go`, `RenameSession`, `GetStringArg`, `time.Time`, `HandleTelegramAction`, `TestSteeringQueue`, `HandleUploadInAgentMode`, `startCLI`, `TruncateStr`, `ExecuteTermuxAPI`, `CallModelWithFallback`, `GenerateContextualSessionTitle`, `getSession`?**
+  _High betweenness centrality (0.110) - this node is a cross-community bridge._
+- **Why does `init()` connect `GetStringArg` to `skills.go`, `RegisterTool`, `ScorpPath`, `client.go`, `runSubagent`, `rag_vector.go`, `bg.go`, `startCLI`, `ExecuteTermuxAPI`?**
+  _High betweenness centrality (0.080) - this node is a cross-community bridge._
 - **Are the 21 inferred relationships involving `HandleTelegramAction()` (e.g. with `DirKeyboard()` and `FileDetailKeyboard()`) actually correct?**
   _`HandleTelegramAction()` has 21 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 10 inferred relationships involving `StartDaemon()` (e.g. with `SendFile()` and `EditMessageByID()`) actually correct?**
-  _`StartDaemon()` has 10 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 25 inferred relationships involving `RunAgentSessionLoop()` (e.g. with `appendSessionHistory()` and `getSessionHistory()`) actually correct?**
+  _`RunAgentSessionLoop()` has 25 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `memoryFact`, `containerStats`, `ACPInitializeParams` to the rest of the system?**
   _32 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `context.Context` be split into smaller, more focused modules?**
-  _Cohesion score 0.05989010989010989 - nodes in this community are weakly interconnected._
+- **Should `ToolCall` be split into smaller, more focused modules?**
+  _Cohesion score 0.14624505928853754 - nodes in this community are weakly interconnected._

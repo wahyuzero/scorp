@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"scorp-agent/agent"
 	"scorp-agent/config"
@@ -161,8 +162,9 @@ func BuildSessionMenuKeyboard(chatIDStr string) map[string]interface{} {
 
 	// Action row
 	rows = append(rows, []map[string]string{
+		{"text": "➕ Sesi Baru", "callback_data": "sess:new"},
 		{"text": "🔄 Refresh", "callback_data": "sess:refresh"},
-		{"text": "🧹 Reset History", "callback_data": "sess:clear"},
+		{"text": "🧹 Reset", "callback_data": "sess:clear"},
 	})
 
 	// Navigation row
@@ -190,6 +192,12 @@ func HandleSessionCallback(action, chatIDStr string) (string, map[string]interfa
 	switch cmd {
 	case "refresh":
 		return FormatSessionMenuText(chatIDStr), BuildSessionMenuKeyboard(chatIDStr), true
+
+	case "new":
+		newSess := fmt.Sprintf("chat-%s", time.Now().Format("0102-150405"))
+		SetActiveSessionID(chatIDStr, newSess)
+		return fmt.Sprintf("✓ Started new conversation: 🟢 <b>%s</b>\n<i>Topik sesi ini akan otomatis dinamai sesuai pesan pertamamu.</i>\n\n%s", newSess, FormatSessionMenuText(chatIDStr)),
+			BuildSessionMenuKeyboard(chatIDStr), true
 
 	case "use":
 		if len(parts) >= 3 {

@@ -441,9 +441,19 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 		switch subArgs[0] {
 		case "list":
 			SendMessage(FormatSessionMenuText(chatIDStr), BuildSessionMenuKeyboard(chatIDStr))
-		case "new", "switch", "use":
+		case "new":
+			newSess := ""
+			if len(subArgs) >= 2 {
+				newSess = strings.TrimSpace(subArgs[1])
+			} else {
+				// Auto-generate temporary name that will be auto-titled on turn 1
+				newSess = fmt.Sprintf("chat-%s", time.Now().Format("0102-150405"))
+			}
+			SetActiveSessionID(chatIDStr, newSess)
+			SendMessage(fmt.Sprintf("✓ Started new conversation: 🟢 <b>%s</b>\n<i>Topik sesi ini akan otomatis dinamai sesuai pesan pertamamu.</i>", newSess), BuildSessionMenuKeyboard(chatIDStr))
+		case "switch", "use":
 			if len(subArgs) < 2 {
-				SendMessage("⚠️ Usage: <code>/session new &lt;name&gt;</code> or <code>/session use &lt;name&gt;</code>", nil)
+				SendMessage("⚠️ Usage: <code>/session use &lt;name&gt;</code>", nil)
 				break
 			}
 			newSess := strings.TrimSpace(subArgs[1])
