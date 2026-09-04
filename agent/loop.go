@@ -74,6 +74,8 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 	// Auto-title session in background if unnamed and on turn 1
 	if ShouldAutoTitleSession(sessionID) && len(history) <= 3 {
 		go func(oldID string, prompt string, targetChatID int64) {
+			// Wait 3.5 seconds so debounced history disk save completes first
+			time.Sleep(3500 * time.Millisecond)
 			newTitle := GenerateContextualSessionTitle(prompt)
 			if newTitle != "" && newTitle != oldID {
 				if err := RenameSession(oldID, newTitle); err == nil {
@@ -81,6 +83,8 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 					if tools.OnSessionAutoTitled != nil {
 						tools.OnSessionAutoTitled(oldID, newTitle, fmt.Sprintf("%d", targetChatID))
 					}
+				} else {
+					log.Printf("[session] Failed to rename auto-titled session '%s' -> '%s': %v", oldID, newTitle, err)
 				}
 			}
 		}(sessionID, userMessage, chatID)
