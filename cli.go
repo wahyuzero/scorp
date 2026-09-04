@@ -200,6 +200,11 @@ func startCLI(initialPrompts ...string) {
 				agent.ClearChatSession(chatIDStr)
 				fmt.Println("✓ Conversation history cleared.")
 				continue
+			case "/compact":
+				fmt.Println("🗜️ Compacting conversation history...")
+				stats := agent.CompactSessionHistory(currentSessionID)
+				fmt.Println(formatTerminalText(agent.FormatCompactStats(currentSessionID, stats)))
+				continue
 			case "/stop":
 				agent.ExitAgentMode(chatIDStr)
 				fmt.Println("✓ Agent mode stopped.")

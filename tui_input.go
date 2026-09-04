@@ -30,6 +30,7 @@ var availableSlashCommands = []SlashCommand{
 	{Command: "/cron", Args: "[list|run|del]", Description: "View and manage scheduled background cron tasks"},
 	{Command: "/queue", Args: "", Description: "View real-time agent steering & message queue"},
 	{Command: "/receipts", Args: "", Description: "View cryptographic tool execution receipts"},
+	{Command: "/compact", Args: "", Description: "Manually compact and summarize current session history"},
 	{Command: "/clear", Args: "", Description: "Clear current conversation session history"},
 	{Command: "/stop", Args: "", Description: "Interrupt or reset running agent mode"},
 	{Command: "/exit", Args: "", Description: "Quit interactive Scorp session"},

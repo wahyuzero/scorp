@@ -163,6 +163,7 @@ func BuildSessionMenuKeyboard(chatIDStr string) map[string]interface{} {
 	// Action row
 	rows = append(rows, []map[string]string{
 		{"text": "➕ Sesi Baru", "callback_data": "sess:new"},
+		{"text": "🗜️ Compact", "callback_data": "sess:compact"},
 		{"text": "🔄 Refresh", "callback_data": "sess:refresh"},
 		{"text": "🧹 Reset", "callback_data": "sess:clear"},
 	})
@@ -205,6 +206,11 @@ func HandleSessionCallback(action, chatIDStr string) (string, map[string]interfa
 			SetActiveSessionID(chatIDStr, targetSess)
 			return FormatSessionMenuText(chatIDStr), BuildSessionMenuKeyboard(chatIDStr), true
 		}
+
+	case "compact":
+		activeSess := GetActiveSessionID(chatIDStr)
+		stats := agent.CompactSessionHistory(activeSess)
+		return agent.FormatCompactStats(activeSess, stats), BuildSessionMenuKeyboard(chatIDStr), true
 
 	case "clear":
 		activeSess := GetActiveSessionID(chatIDStr)

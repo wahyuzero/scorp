@@ -144,9 +144,9 @@
     "semantic_hash": "08acac7901e0265f06c97b0554494354"
   },
   "cli.go": {
-    "mtime": 1788543732.2567213,
-    "seen": 1788543772.280274,
-    "ast_hash": "6e0c83e550196b21322b81a43f9b4542",
+    "mtime": 1788544068.2634172,
+    "seen": 1788544140.7665672,
+    "ast_hash": "4a116dbadba03b4d44dc39f71b9657e0",
     "semantic_hash": ""
   },
   "cli_test.go": {
@@ -1020,9 +1020,9 @@
     "semantic_hash": ""
   },
   "tui_input.go": {
-    "mtime": 1788538228.377668,
-    "seen": 1788538306.3202062,
-    "ast_hash": "f3aadb9884826ec65b75ea61b5323282",
+    "mtime": 1788544102.4614897,
+    "seen": 1788544140.767009,
+    "ast_hash": "5322c99cd5e53b56d8524e5c0d4a3c14",
     "semantic_hash": ""
   },
   "tui_status.go": {
@@ -1071,6 +1071,12 @@
     "mtime": 1788542748.803053,
     "seen": 1788542837.4716942,
     "ast_hash": "481390c4e813b007668ad89c24ba2fa2",
+    "semantic_hash": ""
+  },
+  "tui_paste.go": {
+    "mtime": 1788544109.1165037,
+    "seen": 1788544140.767013,
+    "ast_hash": "339bf834981938be0aff47f6b86ffb1e",
     "semantic_hash": ""
   }
 }

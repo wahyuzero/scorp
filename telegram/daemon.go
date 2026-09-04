@@ -510,6 +510,14 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 			}
 		}
 
+	case action == "/compact":
+		activeSess := GetActiveSessionID(chatIDStr)
+		SendMessage("🗜️ <i>Compacting conversation history in background...</i>", nil)
+		go func(sessName string) {
+			stats := agent.CompactSessionHistory(sessName)
+			SendMessage(agent.FormatCompactStats(sessName, stats), BuildSessionMenuKeyboard(chatIDStr))
+		}(activeSess)
+
 	case action == "/clear":
 		agent.ClearChatSession(chatIDStr)
 		SendMessage("🧹 Chat history cleared.", nil)
