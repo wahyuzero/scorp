@@ -11286,7 +11286,7 @@
       "file_type": "code",
       "norm_label": "buildsessionmenukeyboard()",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L135"
+      "source_location": "L136"
     },
     {
       "id": "telegram_session_ui_formatsessionmenutext",
@@ -11297,7 +11297,7 @@
       "file_type": "code",
       "norm_label": "formatsessionmenutext()",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L88"
+      "source_location": "L89"
     },
     {
       "id": "telegram_session_ui_getactivesessionid",
@@ -11308,7 +11308,7 @@
       "file_type": "code",
       "norm_label": "getactivesessionid()",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L68"
+      "source_location": "L69"
     },
     {
       "id": "telegram_session_ui_handlesessioncallback",
@@ -11319,7 +11319,7 @@
       "file_type": "code",
       "norm_label": "handlesessioncallback()",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L179"
+      "source_location": "L181"
     },
     {
       "id": "telegram_session_ui_init",
@@ -11330,7 +11330,7 @@
       "file_type": "code",
       "norm_label": "init()",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L27"
+      "source_location": "L28"
     },
     {
       "id": "telegram_session_ui_loadtgsessionmapping",
@@ -11341,7 +11341,7 @@
       "file_type": "code",
       "norm_label": "loadtgsessionmapping()",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L48"
+      "source_location": "L49"
     },
     {
       "id": "telegram_session_ui_savetgsessionmapping",
@@ -11352,7 +11352,7 @@
       "file_type": "code",
       "norm_label": "savetgsessionmapping()",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L59"
+      "source_location": "L60"
     },
     {
       "id": "telegram_session_ui_setactivesessionid",
@@ -11363,7 +11363,7 @@
       "file_type": "code",
       "norm_label": "setactivesessionid()",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L80"
+      "source_location": "L81"
     },
     {
       "id": "telegram_session_ui_tgsessionmappingpath",
@@ -11374,7 +11374,7 @@
       "file_type": "code",
       "norm_label": "tgsessionmappingpath()",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L44"
+      "source_location": "L45"
     },
     {
       "id": "tools_inline",
@@ -24615,7 +24615,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L459",
+      "source_location": "L469",
       "weight": 1.0
     },
     {
@@ -24627,7 +24627,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L473",
+      "source_location": "L483",
       "weight": 1.0
     },
     {
@@ -24639,7 +24639,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L499",
+      "source_location": "L509",
       "weight": 1.0
     },
     {
@@ -24651,7 +24651,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L503",
+      "source_location": "L513",
       "weight": 1.0
     },
     {
@@ -24663,7 +24663,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L507",
+      "source_location": "L517",
       "weight": 1.0
     },
     {
@@ -24675,7 +24675,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L511",
+      "source_location": "L521",
       "weight": 1.0
     },
     {
@@ -24687,7 +24687,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L518",
+      "source_location": "L528",
       "weight": 1.0
     },
     {
@@ -24699,7 +24699,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L518",
+      "source_location": "L528",
       "weight": 1.0
     },
     {
@@ -24711,7 +24711,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L527",
+      "source_location": "L537",
       "weight": 1.0
     },
     {
@@ -24723,7 +24723,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L543",
+      "source_location": "L553",
       "weight": 1.0
     },
     {
@@ -24735,7 +24735,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L545",
+      "source_location": "L555",
       "weight": 1.0
     },
     {
@@ -24747,7 +24747,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L549",
+      "source_location": "L559",
       "weight": 1.0
     },
     {
@@ -24759,7 +24759,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L554",
+      "source_location": "L564",
       "weight": 1.0
     },
     {
@@ -24771,7 +24771,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L582",
+      "source_location": "L592",
       "weight": 1.0
     },
     {
@@ -24783,7 +24783,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L583",
+      "source_location": "L593",
       "weight": 1.0
     },
     {
@@ -24795,7 +24795,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L593",
+      "source_location": "L603",
       "weight": 1.0
     },
     {
@@ -24807,7 +24807,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L594",
+      "source_location": "L604",
       "weight": 1.0
     },
     {
@@ -24819,7 +24819,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L599",
+      "source_location": "L609",
       "weight": 1.0
     },
     {
@@ -24831,7 +24831,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L600",
+      "source_location": "L610",
       "weight": 1.0
     },
     {
@@ -24843,7 +24843,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L608",
+      "source_location": "L618",
       "weight": 1.0
     },
     {
@@ -25443,7 +25443,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L136",
+      "source_location": "L137",
       "weight": 1.0
     },
     {
@@ -25455,7 +25455,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L137",
+      "source_location": "L138",
       "weight": 1.0
     },
     {
@@ -25467,7 +25467,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L109",
+      "source_location": "L110",
       "weight": 1.0
     },
     {
@@ -25479,7 +25479,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L89",
+      "source_location": "L90",
       "weight": 1.0
     },
     {
@@ -25491,7 +25491,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L90",
+      "source_location": "L91",
       "weight": 1.0
     },
     {
@@ -25503,7 +25503,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L192",
+      "source_location": "L194",
       "weight": 1.0
     },
     {
@@ -25515,7 +25515,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L192",
+      "source_location": "L194",
       "weight": 1.0
     },
     {
@@ -25527,7 +25527,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L197",
+      "source_location": "L198",
       "weight": 1.0
     },
     {
@@ -25539,7 +25539,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L202",
+      "source_location": "L210",
       "weight": 1.0
     },
     {
@@ -25551,7 +25551,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L203",
+      "source_location": "L211",
       "weight": 1.0
     },
     {
@@ -25563,7 +25563,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L28",
+      "source_location": "L29",
       "weight": 1.0
     },
     {
@@ -25575,7 +25575,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L40",
+      "source_location": "L41",
       "weight": 1.0
     },
     {
@@ -25587,7 +25587,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L52",
+      "source_location": "L53",
       "weight": 1.0
     },
     {
@@ -25599,7 +25599,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L64",
+      "source_location": "L65",
       "weight": 1.0
     },
     {
@@ -25611,7 +25611,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L83",
+      "source_location": "L84",
       "weight": 1.0
     },
     {
@@ -25623,7 +25623,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/session_ui.go",
-      "source_location": "L45",
+      "source_location": "L46",
       "weight": 1.0
     },
     {
@@ -45549,7 +45549,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "telegram/session_ui.go",
-      "source_location": "L135",
+      "source_location": "L136",
       "weight": 1.0
     },
     {
@@ -45560,7 +45560,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "telegram/session_ui.go",
-      "source_location": "L179",
+      "source_location": "L181",
       "weight": 1.0
     },
     {
@@ -45571,7 +45571,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "telegram/session_ui.go",
-      "source_location": "L27",
+      "source_location": "L28",
       "weight": 1.0
     },
     {
@@ -45582,7 +45582,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "telegram/session_ui.go",
-      "source_location": "L44",
+      "source_location": "L45",
       "weight": 1.0
     },
     {
@@ -45593,7 +45593,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "telegram/session_ui.go",
-      "source_location": "L48",
+      "source_location": "L49",
       "weight": 1.0
     },
     {
@@ -45604,7 +45604,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "telegram/session_ui.go",
-      "source_location": "L59",
+      "source_location": "L60",
       "weight": 1.0
     },
     {
@@ -45615,7 +45615,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "telegram/session_ui.go",
-      "source_location": "L68",
+      "source_location": "L69",
       "weight": 1.0
     },
     {
@@ -45626,7 +45626,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "telegram/session_ui.go",
-      "source_location": "L80",
+      "source_location": "L81",
       "weight": 1.0
     },
     {
@@ -45637,7 +45637,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "telegram/session_ui.go",
-      "source_location": "L88",
+      "source_location": "L89",
       "weight": 1.0
     },
     {
@@ -54104,7 +54104,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L450",
+      "source_location": "L452",
       "weight": 1.0
     },
     {
@@ -54116,7 +54116,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L463",
+      "source_location": "L473",
       "weight": 1.0
     },
     {
@@ -54128,7 +54128,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L489",
+      "source_location": "L499",
       "weight": 1.0
     },
     {
@@ -55297,5 +55297,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "5140b62aa6e4aa49959ec81ce24da773ff82badc"
+  "built_at_commit": "19e40fd94ba51178749bc4c1b7a7729d60164729"
 }

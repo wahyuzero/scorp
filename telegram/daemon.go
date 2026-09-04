@@ -173,6 +173,11 @@ func StartDaemon() {
 	rag.InitVectorRAG()
 	sop.InitDefaultSOPs()
 
+	// Wire ExecuteTool callback for tools bridging
+	tools.ExecuteTool = func(tc models.ToolCall, chatID int64) (string, bool) {
+		return agent.ExecuteTool(tc, chatID)
+	}
+
 	// Start autonomous agent loop
 	wg.Add(1)
 	go func() {
