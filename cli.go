@@ -16,6 +16,7 @@ import (
 	"scorp-agent/config"
 	"scorp-agent/models"
 	"scorp-agent/registry"
+	"scorp-agent/scheduler"
 	"scorp-agent/skills"
 	"scorp-agent/sop"
 	"scorp-agent/tools"
@@ -242,6 +243,12 @@ func startCLI(initialPrompts ...string) {
 			case "/receipts":
 				printReceipts()
 				continue
+			case "/cron":
+				printCronTasks()
+				continue
+			case "/queue":
+				printSteeringQueue(chatIDStr)
+				continue
 			case "/session", "/sessions":
 				handleCLISession(parts[1:])
 				continue
@@ -400,6 +407,8 @@ Commands:
   /mode <level>  — View or set autonomy mode (readonly, supervised, yolo)
   /session       — Manage chat sessions (list, new, use, rename, delete)
   /sop [run]     — List or run Standard Operating Procedures
+  /cron          — View scheduled background cron tasks
+  /queue         — Inspect real-time agent steering queue
   /receipts      — View recent cryptographic tool execution receipts
   /tools         — List all registered agent tools
   /status        — Show agent session status and working directory
@@ -646,6 +655,22 @@ func printReceipts() {
 			status = "❌ FAIL"
 		}
 		fmt.Printf("%-18s %-20s %-10s %-18s\n", r.ReceiptID, r.Tool, status, r.Timestamp.Format("15:04:05"))
+	}
+	fmt.Println()
+}
+
+func printCronTasks() {
+	scheduler.LoadTasks()
+	text := scheduler.FormatTasksList()
+	fmt.Printf("\n%s\n", formatTerminalText(text))
+}
+
+func printSteeringQueue(chatIDStr string) {
+	fmt.Printf("\n⚡ Real-Time Steering Queue for session '%s':\n", chatIDStr)
+	if !agent.HasSteeringMessage(chatIDStr) {
+		fmt.Println("  (queue is empty — no pending steering messages)")
+	} else {
+		fmt.Println("  • Pending interruption/redirection instructions are queued.")
 	}
 	fmt.Println()
 }

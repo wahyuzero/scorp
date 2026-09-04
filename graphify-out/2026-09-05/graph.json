@@ -5028,7 +5028,7 @@
       "file_type": "code",
       "norm_label": "printcostusage()",
       "source_file": "cli.go",
-      "source_location": "L648"
+      "source_location": "L654"
     },
     {
       "id": "cli_printcurrentmodel",
@@ -5061,7 +5061,7 @@
       "file_type": "code",
       "norm_label": "printreceipts()",
       "source_file": "cli.go",
-      "source_location": "L628"
+      "source_location": "L634"
     },
     {
       "id": "cli_printstatus",
@@ -18867,7 +18867,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "cli.go",
-      "source_location": "L599",
+      "source_location": "L605",
       "weight": 1.0
     },
     {
@@ -18879,7 +18879,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "cli.go",
-      "source_location": "L614",
+      "source_location": "L620",
       "weight": 1.0
     },
     {
@@ -18951,7 +18951,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "cli.go",
-      "source_location": "L649",
+      "source_location": "L655",
       "weight": 1.0
     },
     {
@@ -18963,7 +18963,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "cli.go",
-      "source_location": "L650",
+      "source_location": "L656",
       "weight": 1.0
     },
     {
@@ -19023,7 +19023,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "cli.go",
-      "source_location": "L629",
+      "source_location": "L635",
       "weight": 1.0
     },
     {
@@ -39137,7 +39137,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "cli.go",
-      "source_location": "L628",
+      "source_location": "L634",
       "weight": 1.0
     },
     {
@@ -39148,7 +39148,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "cli.go",
-      "source_location": "L648",
+      "source_location": "L654",
       "weight": 1.0
     },
     {
@@ -51452,7 +51452,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "cli.go",
-      "source_location": "L651",
+      "source_location": "L657",
       "weight": 1.0
     },
     {
@@ -55309,5 +55309,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "a6a0583e67a585f46483072f53ca907b1393a012"
+  "built_at_commit": "b647a4c95575c933c6caf1627c9dc1d9c29bfcc1"
 }

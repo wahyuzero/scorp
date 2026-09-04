@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 	"strings"
@@ -9,17 +10,16 @@ import (
 	"golang.org/x/term"
 )
 
-// SlashCommand represents an available slash command in the interactive TUI
+// SlashCommand represents a registered CLI command with description and autocomplete support
 type SlashCommand struct {
 	Command     string
 	Args        string
 	Description string
 }
 
-// Default slash command catalog (all in English for clean professional agent UI)
 var availableSlashCommands = []SlashCommand{
-	{Command: "/help", Args: "", Description: "Show commands and interactive usage guide"},
-	{Command: "/models", Args: "", Description: "List all configured models and key statuses"},
+	{Command: "/help", Args: "", Description: "Show commands and interactive usage help"},
+	{Command: "/models", Args: "", Description: "List all configured models and key status"},
 	{Command: "/model", Args: "<name>", Description: "Switch or inspect active AI model"},
 	{Command: "/mode", Args: "<level>", Description: "Set autonomy level: readonly, supervised, yolo"},
 	{Command: "/session", Args: "[list|new|use|rename|delete]", Description: "Manage conversational chat sessions"},
@@ -27,13 +27,17 @@ var availableSlashCommands = []SlashCommand{
 	{Command: "/cost", Args: "", Description: "Check token usage and daily cost dashboard"},
 	{Command: "/tools", Args: "", Description: "List all registered agent tools and schemas"},
 	{Command: "/sop", Args: "[list|run <name>]", Description: "Run Standard Operating Procedures"},
+	{Command: "/cron", Args: "[list|run|del]", Description: "View and manage scheduled background cron tasks"},
+	{Command: "/queue", Args: "", Description: "View real-time agent steering & message queue"},
 	{Command: "/receipts", Args: "", Description: "View cryptographic tool execution receipts"},
 	{Command: "/clear", Args: "", Description: "Clear current conversation session history"},
 	{Command: "/stop", Args: "", Description: "Interrupt or reset running agent mode"},
 	{Command: "/exit", Args: "", Description: "Quit interactive Scorp session"},
 }
 
-// readInteractiveInput reads a line from terminal with live autocomplete popup when typing '/'
+// readInteractiveInput reads a line or multiline block from terminal with live autocomplete popup.
+// Supports bracketed paste mode (\033[200~ ... \033[201~) so pasting paragraphs with newlines
+// is preserved as a single user turn instead of prematurely submitting each line.
 func readInteractiveInput(prompt string) (string, error) {
 	fd := int(os.Stdin.Fd())
 	if !term.IsTerminal(fd) {
@@ -54,12 +58,18 @@ func readInteractiveInput(prompt string) (string, error) {
 		}
 		return "", scanner.Err()
 	}
-	defer term.Restore(fd, oldState)
+	defer func() {
+		disableBracketedPaste()
+		_ = term.Restore(fd, oldState)
+	}()
+
+	enableBracketedPaste()
 
 	var buf []rune
 	cursorPos := 0
 	selectedIndex := 0
 	popupRenderedLines := 0
+	isPasting := false
 
 	clearPopup := func() {
 		if popupRenderedLines > 0 {
@@ -75,7 +85,20 @@ func readInteractiveInput(prompt string) (string, error) {
 		clearPopup()
 		fmt.Print("\r\033[K")
 		fmt.Print(prompt)
-		fmt.Print(string(buf))
+
+		// If buffer contains newlines (e.g. from paste), print with visual continuation
+		bufStr := string(buf)
+		if strings.Contains(bufStr, "\n") {
+			parts := strings.Split(bufStr, "\n")
+			for idx, p := range parts {
+				if idx > 0 {
+					fmt.Print("\r\n\033[K\033[2m... ❯\033[0m ")
+				}
+				fmt.Print(p)
+			}
+		} else {
+			fmt.Print(bufStr)
+		}
 
 		currentStr := string(buf)
 		var lines []string
@@ -113,7 +136,7 @@ func readInteractiveInput(prompt string) (string, error) {
 
 	render()
 
-	readBuf := make([]byte, 128)
+	readBuf := make([]byte, 512)
 	for {
 		n, err := os.Stdin.Read(readBuf)
 		if err != nil {
@@ -124,13 +147,44 @@ func readInteractiveInput(prompt string) (string, error) {
 			continue
 		}
 
-		for i := 0; i < n; i++ {
-			b := readBuf[i]
+		// Check for Bracketed Paste Mode sequences: \033[200~ (start) and \033[201~ (end)
+		slice := readBuf[:n]
+		for len(slice) > 0 {
+			if bytes.HasPrefix(slice, []byte("\033[200~")) {
+				isPasting = true
+				slice = slice[6:]
+				continue
+			}
+			if bytes.HasPrefix(slice, []byte("\033[201~")) {
+				isPasting = false
+				slice = slice[6:]
+				render()
+				continue
+			}
 
-			// Enter key: \r (13) or \n (10)
+			b := slice[0]
+			slice = slice[1:]
+
+			// While inside bracketed paste block, treat newlines as literal \n without submitting
+			if isPasting {
+				if b == 13 || b == 10 {
+					buf = append(buf[:cursorPos], append([]rune{'\n'}, buf[cursorPos:]...)...)
+					cursorPos++
+					continue
+				}
+				if b >= 32 || b == '\t' {
+					r := rune(b)
+					buf = append(buf[:cursorPos], append([]rune{r}, buf[cursorPos:]...)...)
+					cursorPos++
+					continue
+				}
+			}
+
+			// Enter key outside paste mode: submit
 			if b == 13 || b == 10 {
 				currentStr := string(buf)
 				clearPopup()
+				disableBracketedPaste()
 				_ = term.Restore(fd, oldState)
 				fmt.Print("\r\n")
 
@@ -138,7 +192,6 @@ func readInteractiveInput(prompt string) (string, error) {
 				if strings.HasPrefix(currentStr, "/") && !strings.Contains(currentStr, " ") {
 					matches := filterCommands(currentStr)
 					if len(matches) > 0 {
-						// Check if currentStr is already an exact command
 						isExact := false
 						for _, m := range matches {
 							if m.Command == currentStr {
@@ -158,6 +211,7 @@ func readInteractiveInput(prompt string) (string, error) {
 			// Ctrl+C
 			if b == 3 {
 				clearPopup()
+				disableBracketedPaste()
 				_ = term.Restore(fd, oldState)
 				fmt.Print("\r\n")
 				return "", fmt.Errorf("interrupted")
@@ -166,6 +220,7 @@ func readInteractiveInput(prompt string) (string, error) {
 			// Ctrl+D
 			if b == 4 {
 				clearPopup()
+				disableBracketedPaste()
 				_ = term.Restore(fd, oldState)
 				fmt.Print("\r\n")
 				return "/exit", nil
@@ -203,9 +258,9 @@ func readInteractiveInput(prompt string) (string, error) {
 
 			// ANSI escape sequences: 27, 91 (or 79)
 			if b == 27 {
-				if i+2 < n && (readBuf[i+1] == '[' || readBuf[i+1] == 'O') {
-					code := readBuf[i+2]
-					i += 2
+				if len(slice) >= 2 && (slice[0] == '[' || slice[0] == 'O') {
+					code := slice[1]
+					slice = slice[2:]
 					switch code {
 					case 'A': // UP
 						currentStr := string(buf)
@@ -231,7 +286,6 @@ func readInteractiveInput(prompt string) (string, error) {
 						}
 					}
 				} else {
-					// Escape alone: close popup
 					clearPopup()
 					render()
 				}
