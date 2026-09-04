@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"regexp"
 	"strings"
 	"time"
@@ -247,6 +248,30 @@ func buildCommandCodePayload(model *ModelConfig, messages []ChatMessage, tools [
 		cwd = config.HomeDir()
 	}
 
+	// Detect real git status and branch
+	isGit := false
+	currentBranch := "main"
+	gitStatus := ""
+	var recentCommits []string
+
+	if out, err := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD").Output(); err == nil {
+		b := strings.TrimSpace(string(out))
+		if b != "" {
+			isGit = true
+			currentBranch = b
+			if statOut, err := exec.Command("git", "status", "--porcelain").Output(); err == nil {
+				gitStatus = strings.TrimSpace(string(statOut))
+			}
+			if logOut, err := exec.Command("git", "log", "-n", "3", "--oneline").Output(); err == nil {
+				for _, line := range strings.Split(strings.TrimSpace(string(logOut)), "\n") {
+					if strings.TrimSpace(line) != "" {
+						recentCommits = append(recentCommits, strings.TrimSpace(line))
+					}
+				}
+			}
+		}
+	}
+
 	payload := &commandCodePayload{
 		Memory: strings.Join(systemParts, "\n\n"),
 		Params: commandCodeParams{
@@ -259,11 +284,11 @@ func buildCommandCodePayload(model *ModelConfig, messages []ChatMessage, tools [
 			"date":          time.Now().Format("2006-01-02"),
 			"environment":   "linux",
 			"structure":     []string{},
-			"isGitRepo":     false,
-			"currentBranch": "main",
-			"mainBranch":    "main",
-			"gitStatus":     "",
-			"recentCommits": []string{},
+			"isGitRepo":     isGit,
+			"currentBranch": currentBranch,
+			"mainBranch":    currentBranch,
+			"gitStatus":     gitStatus,
+			"recentCommits": recentCommits,
 		},
 	}
 

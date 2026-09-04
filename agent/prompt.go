@@ -119,38 +119,7 @@ func getAgentSystemPrompt(chatID ...int64) string {
 // ToolCall type alias
 type ToolCall = models.ToolCall
 
-// ──────────────────────────────────────────────
-// Dangerous Command Filtering
-// ──────────────────────────────────────────────
-
-var dangerousPatterns []string
-
-func init() {
-	raw := []string{
-		"rm -rf /", "rm -rf /*", "mkfs", "dd if=", ":(){ :|:& };:",
-		"drop table", "drop database", "delete from",
-		"kill -9", "killall", "pkill",
-		"systemctl stop", "systemctl disable",
-		"apt remove", "apt purge", "pip uninstall",
-		"docker rm", "docker rmi",
-		"docker-compose down", "docker compose down",
-		"> /dev/", "chmod 777",
-	}
-	dangerousPatterns = make([]string, len(raw))
-	for i, p := range raw {
-		dangerousPatterns[i] = strings.ToLower(p)
-	}
-}
-
-func IsDangerousCommand(cmd string) bool {
-	lower := strings.ToLower(cmd)
-	for _, p := range dangerousPatterns {
-		if strings.Contains(lower, p) {
-			return true
-		}
-	}
-	return false
-}
+// Dangerous Command Filtering moved to agent/safety.go (argument tokenizer)
 
 // ──────────────────────────────────────────────
 // Tool Executors

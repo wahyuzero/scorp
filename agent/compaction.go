@@ -29,9 +29,27 @@ const (
 	oldToolResultMax = 400
 )
 
-// estimateTokens gives a rough token count for a string.
+// estimateTokens calculates an accurate token count estimate for a string.
+// Code, JSON, and non-ASCII characters have higher token density than plain English.
 func estimateTokens(s string) int {
-	return int(float64(len(s)) * tokensPerChar)
+	if len(s) == 0 {
+		return 0
+	}
+	base := float64(len(s)) * tokensPerChar
+
+	// Check if content has high code/JSON density (braces, brackets, punctuation)
+	codeDensityPunct := 0
+	for _, r := range s {
+		if r == '{' || r == '}' || r == '[' || r == ']' || r == ';' || r == ':' || r == '=' || r == '"' || r == '\\' {
+			codeDensityPunct++
+		}
+	}
+	// If punctuation accounts for >8% of text, bump token estimate by 25%
+	if float64(codeDensityPunct)/float64(len(s)) > 0.08 {
+		base *= 1.25
+	}
+
+	return int(base)
 }
 
 // estimateHistoryTokens calculates total estimated tokens for a history slice.

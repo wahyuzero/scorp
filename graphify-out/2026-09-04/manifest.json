@@ -6,9 +6,9 @@
     "semantic_hash": ""
   },
   "agent/chat.go": {
-    "mtime": 1788485109.8551533,
-    "seen": 1788485134.5618937,
-    "ast_hash": "883f0e935862050ea177985bae42075f",
+    "mtime": 1788538208.2056255,
+    "seen": 1788538306.3195152,
+    "ast_hash": "49d9169d1345dbb02ffbe8cb4964d85e",
     "semantic_hash": ""
   },
   "agent/compaction.go": {
@@ -348,9 +348,9 @@
     "semantic_hash": ""
   },
   "models/cost_router.go": {
-    "mtime": 1788485109.8671532,
-    "seen": 1788485134.5620441,
-    "ast_hash": "3ea46913fae65528c40ed5b1ccd6943d",
+    "mtime": 1788538203.5166159,
+    "seen": 1788538306.319933,
+    "ast_hash": "d2c49b3aa99a8c7227bdbd76b49a8fb8",
     "semantic_hash": ""
   },
   "models/model_catalog.go": {
@@ -1020,9 +1020,15 @@
     "semantic_hash": ""
   },
   "tui_input.go": {
-    "mtime": 1788537315.1035085,
-    "seen": 1788537408.4840689,
-    "ast_hash": "72981b554e5656ba5c19a7a4e96178a4",
+    "mtime": 1788538228.377668,
+    "seen": 1788538306.3202062,
+    "ast_hash": "f3aadb9884826ec65b75ea61b5323282",
+    "semantic_hash": ""
+  },
+  "tui_status.go": {
+    "mtime": 1788538215.499641,
+    "seen": 1788538306.3202112,
+    "ast_hash": "5c8f66c5e7e027b788ced8af0e13840c",
     "semantic_hash": ""
   }
 }

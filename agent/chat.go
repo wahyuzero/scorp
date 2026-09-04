@@ -769,7 +769,8 @@ func convertInlineMarkdown(line string) string {
 	// 2. Bold: **text** → <b>text</b>
 	line = boldRe.ReplaceAllString(line, "<b>$1</b>")
 
-	// 3. Italic: *text* → <i>text</i> (avoid solitary asterisks or cron patterns)
+	// 3. Italic: *text* → <i>text</i>
+	// Ensure the matched text contains letters/numbers and does not look like a file path, URL, or cron pattern (* * * * *)
 	for {
 		loc := italicRe.FindStringIndex(line)
 		if loc == nil {
@@ -779,11 +780,13 @@ func convertInlineMarkdown(line string) string {
 		if len(match) < 2 {
 			break
 		}
-		if strings.Contains(match[1], "/") {
+		candidate := match[1]
+		// Skip URLs, paths, or purely whitespace/wildcards
+		if strings.Contains(candidate, "/") || strings.Contains(candidate, "http://") || strings.Contains(candidate, "https://") || strings.TrimSpace(candidate) == "" {
 			break
 		}
-		old := "*" + match[1] + "*"
-		line = strings.Replace(line, old, "<i>"+match[1]+"</i>", 1)
+		old := "*" + candidate + "*"
+		line = strings.Replace(line, old, "<i>"+candidate+"</i>", 1)
 	}
 
 	// 4. Restore protected inline code spans

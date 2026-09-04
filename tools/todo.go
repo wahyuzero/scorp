@@ -9,6 +9,7 @@ import (
 
 // ──────────────────────────────────────────────
 // Todo Tool — Task tracking for multi-step work
+// Supports session isolation so CLI and Telegram sessions don't clash.
 // ──────────────────────────────────────────────
 
 type TodoItem struct {
@@ -17,39 +18,51 @@ type TodoItem struct {
 	Status  string // pending, in_progress, completed, cancelled
 }
 
-// In-memory todo list (single user = single list is fine)
+// Session-isolated todo store
 var (
-	todoList  []TodoItem
-	todoMu    sync.Mutex
-	todoIDSeq int
+	todoSessionMap = make(map[string][]TodoItem)
+	todoIDSeqMap   = make(map[string]int)
+	todoMu         sync.Mutex
 )
 
-// executeTodo handles the "todo" tool.
+// resolveSessionKey extracts a session identifier from args or defaults to "default"
+func resolveSessionKey(args map[string]interface{}) string {
+	if s, ok := args["_session_id"].(string); ok && s != "" {
+		return s
+	}
+	if s, ok := args["session_id"].(string); ok && s != "" {
+		return s
+	}
+	return "default"
+}
+
+// ExecuteTodo handles the "todo" tool.
 // No args: returns current list.
 // With todos array: updates list (merge=false replaces, merge=true updates by id).
 func ExecuteTodo(args map[string]interface{}) (string, bool) {
-	// No args → return formatted list
-	if len(args) == 0 {
-		return formatTodoList(), true
-	}
-
-	rawTodos, ok := args["todos"].([]interface{})
-	if !ok {
-		return "Error: 'todos' must be an array of {id, content, status}", false
-	}
-
-	merge := helpers.GetBoolArg(args, "merge", false)
+	sessionKey := resolveSessionKey(args)
 
 	todoMu.Lock()
 	defer todoMu.Unlock()
 
-	if !merge {
-		todoList = nil
-		todoIDSeq = 0
+	// No args or only session_id → return formatted list
+	rawTodos, ok := args["todos"].([]interface{})
+	if !ok || len(rawTodos) == 0 {
+		return formatTodoListLocked(sessionKey), true
 	}
 
+	merge := helpers.GetBoolArg(args, "merge", false)
+
+	if !merge {
+		todoSessionMap[sessionKey] = nil
+		todoIDSeqMap[sessionKey] = 0
+	}
+
+	list := todoSessionMap[sessionKey]
+	seq := todoIDSeqMap[sessionKey]
+
 	inProgressCount := 0
-	for _, item := range todoList {
+	for _, item := range list {
 		if item.Status == "in_progress" {
 			inProgressCount++
 		}
@@ -70,8 +83,8 @@ func ExecuteTodo(args map[string]interface{}) (string, bool) {
 		}
 
 		if id == "" {
-			todoIDSeq++
-			id = fmt.Sprintf("t%d", todoIDSeq)
+			seq++
+			id = fmt.Sprintf("t%d", seq)
 		}
 
 		// Validate status
@@ -86,10 +99,10 @@ func ExecuteTodo(args map[string]interface{}) (string, bool) {
 		// If merge=true, update existing by id
 		updated := false
 		if merge {
-			for i := range todoList {
-				if todoList[i].ID == id {
-					todoList[i].Content = content
-					todoList[i].Status = status
+			for i := range list {
+				if list[i].ID == id {
+					list[i].Content = content
+					list[i].Status = status
 					updated = true
 					break
 				}
@@ -97,38 +110,42 @@ func ExecuteTodo(args map[string]interface{}) (string, bool) {
 		}
 
 		if !updated {
-			todoList = append(todoList, TodoItem{ID: id, Content: content, Status: status})
+			list = append(list, TodoItem{ID: id, Content: content, Status: status})
 		}
 	}
 
 	// Enforce: only ONE in_progress at a time
 	if inProgressCount > 1 {
 		first := true
-		for i := range todoList {
-			if todoList[i].Status == "in_progress" {
+		for i := range list {
+			if list[i].Status == "in_progress" {
 				if first {
 					first = false
 				} else {
-					todoList[i].Status = "pending"
+					list[i].Status = "pending"
 				}
 			}
 		}
 	}
 
-	return formatTodoListLocked(), true
+	todoSessionMap[sessionKey] = list
+	todoIDSeqMap[sessionKey] = seq
+
+	return formatTodoListLocked(sessionKey), true
 }
 
 // formatTodoList returns the formatted todo list (thread-safe wrapper)
 func formatTodoList() string {
 	todoMu.Lock()
 	defer todoMu.Unlock()
-	return formatTodoListLocked()
+	return formatTodoListLocked("default")
 }
 
 // formatTodoListLocked returns formatted todo list WITHOUT locking.
 // Caller MUST hold todoMu.
-func formatTodoListLocked() string {
-	if len(todoList) == 0 {
+func formatTodoListLocked(sessionKey string) string {
+	list := todoSessionMap[sessionKey]
+	if len(list) == 0 {
 		return "📋 Todo list is empty.\nUse: todos=[{id, content, status}] to create items."
 	}
 
@@ -142,26 +159,27 @@ func formatTodoListLocked() string {
 		"cancelled":   "❌",
 	}
 
-	for i, item := range todoList {
+	for _, item := range list {
 		icon := statusIcon[item.Status]
 		if icon == "" {
 			icon = "🔲"
 		}
-		sb.WriteString(fmt.Sprintf("%d. %s <b>%s</b> <code>[%s]</code>\n", i+1, icon, item.Content, item.ID))
-	}
 
-	sb.WriteString("\n💡 <b>Usage:</b>\n")
-	sb.WriteString(`<code>{"todos": [{"id": "t1", "content": "Task 1", "status": "in_progress"}]}</code> — replace list`)
-	sb.WriteString("\n")
-	sb.WriteString(`<code>{"todos": [{"id": "t1", "status": "completed"}], "merge": true}</code> — update item`)
+		if item.Status == "completed" {
+			sb.WriteString(fmt.Sprintf("%s <s>%s. %s</s>\n", icon, item.ID, item.Content))
+		} else if item.Status == "in_progress" {
+			sb.WriteString(fmt.Sprintf("%s <b>%s. %s</b>\n", icon, item.ID, item.Content))
+		} else {
+			sb.WriteString(fmt.Sprintf("%s %s. %s\n", icon, item.ID, item.Content))
+		}
+	}
 
 	return sb.String()
 }
 
-// getStringArgFromMap gets string arg from map[string]interface{}
 func getStringArgFromMap(m map[string]interface{}, key, defaultVal string) string {
-	if v, ok := m[key]; ok {
-		if s, ok := v.(string); ok {
+	if val, ok := m[key]; ok {
+		if s, ok := val.(string); ok {
 			return s
 		}
 	}
