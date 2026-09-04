@@ -276,6 +276,15 @@ func findFirstVisionModel() string {
 	return ModelCfg.DefaultModel
 }
 
+// isVisionModelName checks if a model name/ID supports vision/multimodal input
+func isVisionModelName(name string) bool {
+	lower := strings.ToLower(name)
+	return strings.Contains(lower, "vision") || strings.Contains(lower, "luna") ||
+		strings.Contains(lower, "omni") || strings.Contains(lower, "4o") ||
+		strings.Contains(lower, "glm-5.3") || strings.Contains(lower, "mimo") ||
+		strings.Contains(lower, "sonnet") || strings.Contains(lower, "gemini")
+}
+
 func GetModelByName(name string) *ModelConfig {
 	ModelCfgMu.RLock()
 	defer ModelCfgMu.RUnlock()
@@ -615,6 +624,33 @@ func CallModelWithFallback(ctx context.Context, taskType string, messages []Chat
 		}
 	}
 
+	// For vision tasks, ensure only vision-capable models are in the chain
+	if taskType == "vision" {
+		var visionModels []*ModelConfig
+		if primary != nil && isVisionModelName(primary.Model) {
+			visionModels = append(visionModels, primary)
+		}
+		// Add known vision candidates from config
+		visionCandidates := []string{"opencode/mimo-v2.5-free", "gpt-5.6-luna", "z-ai/glm-5.3-flash", "gpt-4o", "gpt-4o-mini"}
+		for _, name := range visionCandidates {
+			if m := GetModelByName(name); m != nil {
+				dup := false
+				for _, existing := range visionModels {
+					if existing.Model == m.Model {
+						dup = true
+						break
+					}
+				}
+				if !dup {
+					visionModels = append(visionModels, m)
+				}
+			}
+		}
+		if len(visionModels) > 0 {
+			models = visionModels
+		}
+	}
+
 	if len(models) == 0 {
 		return "", "", fmt.Errorf("no models available")
 	}
@@ -654,6 +690,10 @@ func ShouldFallbackOnError(err error, triggers []string) bool {
 		return true // fallback on any error if no specific triggers configured
 	}
 	msg := strings.ToLower(err.Error())
+	// Always allow fallback if upstream rejected parameters or model failed
+	if strings.Contains(msg, "invalid request") || strings.Contains(msg, "upstream request failed") || strings.Contains(msg, "http 400") {
+		return true
+	}
 	for _, trigger := range triggers {
 		trigger = strings.ToLower(trigger)
 		switch trigger {

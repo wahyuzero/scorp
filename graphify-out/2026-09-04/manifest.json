@@ -312,9 +312,9 @@
     "semantic_hash": "13d73368678f57e032b4399e29805c37"
   },
   "models.example.json": {
-    "mtime": 1788480262.2243237,
-    "seen": 1788480380.7905629,
-    "ast_hash": "225a7b5ffd69f03b370d4726e4d98f2c",
+    "mtime": 1788483304.0569139,
+    "seen": 1788483451.1866953,
+    "ast_hash": "c478e461270a6aaf8f6554bacd7e17fe",
     "semantic_hash": ""
   },
   "models/api_anthropic.go": {
@@ -324,9 +324,9 @@
     "semantic_hash": ""
   },
   "models/api_commandcode.go": {
-    "mtime": 1788480768.4890723,
-    "seen": 1788480826.58464,
-    "ast_hash": "44379b69b076b09cc33577d52ead1b82",
+    "mtime": 1788483255.475325,
+    "seen": 1788483451.1866992,
+    "ast_hash": "60aded2c4393d97c3bd147acf8e28d92",
     "semantic_hash": ""
   },
   "models/api_commandcode_test.go": {
@@ -360,9 +360,9 @@
     "semantic_hash": ""
   },
   "models/model_router.go": {
-    "mtime": 1788480816.5706196,
-    "seen": 1788480826.5846548,
-    "ast_hash": "3e5054318f5dab01ab033404da26d86e",
+    "mtime": 1788483236.9085023,
+    "seen": 1788483451.1867154,
+    "ast_hash": "29b9c32be2c66a99b738beb3478d13e6",
     "semantic_hash": ""
   },
   "models/providers.go": {
@@ -648,10 +648,10 @@
     "semantic_hash": "58a559a35dd38319724ac0c6bf828b7b"
   },
   "tools/vision.go": {
-    "mtime": 1788454397.7352192,
-    "seen": 1788456167.4335318,
-    "ast_hash": "b50f7972fa0b442aac12efa0b1bac273",
-    "semantic_hash": "b50f7972fa0b442aac12efa0b1bac273"
+    "mtime": 1788483282.9250836,
+    "seen": 1788483451.1868582,
+    "ast_hash": "41ab7ef0cf6cd488a689a1ba146171c9",
+    "semantic_hash": ""
   },
   "tools/web.go": {
     "mtime": 1788482069.442434,
@@ -678,10 +678,10 @@
     "semantic_hash": "fe6692ca9ce104f013fd8e730f3c78d8"
   },
   "wizard/wizard.go": {
-    "mtime": 1788454397.7356358,
-    "seen": 1788456167.4335399,
-    "ast_hash": "10506faa66e8533ee5789c0f6599d088",
-    "semantic_hash": "10506faa66e8533ee5789c0f6599d088"
+    "mtime": 1788483297.640964,
+    "seen": 1788483451.1868699,
+    "ast_hash": "5f3e995481345fd12f9a0cefbb7940a3",
+    "semantic_hash": ""
   },
   ".github/workflows/ci.yml": {
     "mtime": 1788454397.7282078,
@@ -894,9 +894,9 @@
     "semantic_hash": ""
   },
   "models/api_openai.go": {
-    "mtime": 1788480775.6339982,
-    "seen": 1788480826.584646,
-    "ast_hash": "c559a61f25e37bc40339fdcfd46d7cc9",
+    "mtime": 1788483320.2947927,
+    "seen": 1788483451.1867054,
+    "ast_hash": "16fa945d02a8e469d2c05270d53bac75",
     "semantic_hash": ""
   },
   "models/api_openai_test.go": {
@@ -930,9 +930,9 @@
     "semantic_hash": ""
   },
   "agent/upload.go": {
-    "mtime": 1788461083.7949662,
-    "seen": 1788461303.9441948,
-    "ast_hash": "19a4ee480ceda512483153906d51622f",
+    "mtime": 1788483290.3820221,
+    "seen": 1788483451.1865973,
+    "ast_hash": "5bbeb07ab547e8a99289c64d0d9d46ce",
     "semantic_hash": ""
   },
   "telegram/daemon.go": {

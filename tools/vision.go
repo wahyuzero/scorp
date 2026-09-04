@@ -61,7 +61,7 @@ func ExecuteAnalyzeImage(args map[string]interface{}) (string, bool) {
 		return fmt.Sprintf("Vision analysis error: %v", err), false
 	}
 
-	return helpers.TruncOutput(result, helpers.MaxToolOutput), false
+	return helpers.TruncOutput(result, helpers.MaxToolOutput), true
 }
 
 // callVisionModel sends an image + question to the configured vision model
