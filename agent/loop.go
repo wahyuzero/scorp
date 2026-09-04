@@ -71,6 +71,21 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 	setLoopActive(chatIDStr, true)
 	defer setLoopActive(chatIDStr, false)
 
+	// Auto-title session in background if unnamed and on turn 1
+	if ShouldAutoTitleSession(sessionID) && len(history) <= 3 {
+		go func(oldID string, prompt string, targetChatID int64) {
+			newTitle := GenerateContextualSessionTitle(prompt)
+			if newTitle != "" && newTitle != oldID {
+				if err := RenameSession(oldID, newTitle); err == nil {
+					log.Printf("[session] Auto-titled session '%s' -> '%s'", oldID, newTitle)
+					if tools.OnSessionAutoTitled != nil {
+						tools.OnSessionAutoTitled(oldID, newTitle, fmt.Sprintf("%d", targetChatID))
+					}
+				}
+			}
+		}(sessionID, userMessage, chatID)
+	}
+
 	// In Termux environments: hold wake lock to prevent CPU sleep during multi-step runs
 	if tools.IsTermux() {
 		tools.AcquireTermuxWakeLock()

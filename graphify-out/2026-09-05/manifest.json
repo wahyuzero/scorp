@@ -936,9 +936,9 @@
     "semantic_hash": ""
   },
   "telegram/daemon.go": {
-    "mtime": 1788461233.9016683,
-    "seen": 1788461303.944368,
-    "ast_hash": "6c970b6f8c38189a30c03e3cafdc9e9d",
+    "mtime": 1788541816.0826561,
+    "seen": 1788541875.822525,
+    "ast_hash": "69a8ee3ff8c1f33fae32557ce23fc70b",
     "semantic_hash": ""
   },
   "agent/session_mgr.go": {
@@ -1059,6 +1059,12 @@
     "mtime": 1788539553.0882604,
     "seen": 1788539746.062623,
     "ast_hash": "7f56e90dbc6cdf55f515796db2eae387",
+    "semantic_hash": ""
+  },
+  "telegram/session_ui.go": {
+    "mtime": 1788541825.7756834,
+    "seen": 1788541875.8225305,
+    "ast_hash": "b7f6f7e51da161b27955382a81f85ee2",
     "semantic_hash": ""
   }
 }

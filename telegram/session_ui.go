@@ -11,6 +11,7 @@ import (
 	"scorp-agent/agent"
 	"scorp-agent/config"
 	"scorp-agent/internal/helpers"
+	"scorp-agent/tools"
 )
 
 // ──────────────────────────────────────────────
@@ -25,6 +26,19 @@ var (
 
 func init() {
 	loadTgSessionMapping()
+	tools.OnSessionAutoTitled = func(oldID, newID, chatIDStr string) {
+		tgSessionMu.Lock()
+		defer tgSessionMu.Unlock()
+		for cid, s := range tgActiveSessions {
+			if s == oldID {
+				tgActiveSessions[cid] = newID
+			}
+		}
+		if tgActiveSessions[chatIDStr] == "" || tgActiveSessions[chatIDStr] == oldID {
+			tgActiveSessions[chatIDStr] = newID
+		}
+		saveTgSessionMapping()
+	}
 }
 
 func tgSessionMappingPath() string {

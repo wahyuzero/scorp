@@ -57,6 +57,7 @@ var (
 	SendMessageSmart       func(text string, keyboard map[string]interface{})
 	SendFile               func(chatID, filePath string) bool
 	MainMenuKeyboard       func() map[string]interface{}
+	OnSessionAutoTitled    func(oldID, newID, chatIDStr string)
 )
 
 // Autonomous callbacks
