@@ -696,9 +696,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1788462305.802822,
-    "seen": 1788462352.1410716,
-    "ast_hash": "eb6f3acc2c0f946c41db1f8a890e4b6e",
+    "mtime": 1788481581.0088012,
+    "seen": 1788481584.984301,
+    "ast_hash": "09fa49faf9b7d311aa305c7b78b7ffa9",
     "semantic_hash": ""
   },
   "agent/repomap.go": {
@@ -963,6 +963,12 @@
     "mtime": 1788462298.6958063,
     "seen": 1788462352.1410694,
     "ast_hash": "6c0565a2b81e5000386d83908d5c8fc3",
+    "semantic_hash": ""
+  },
+  "docs/COMPARISON_SCORP_PICOCLAW_ZEROCLAW.md": {
+    "mtime": 1788481577.0067625,
+    "seen": 1788481584.9843042,
+    "ast_hash": "c756c2d4f73d401b255957501170cec8",
     "semantic_hash": ""
   }
 }

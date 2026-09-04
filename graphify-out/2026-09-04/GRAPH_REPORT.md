@@ -1,22 +1,22 @@
 # Graph Report - scorp  (2026-09-04)
 
 ## Corpus Check
-- 159 files · ~110,027 words
+- 160 files · ~110,902 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1282 nodes · 3175 edges · 46 communities (36 shown, 2 thin omitted)
+- 1291 nodes · 3184 edges · 48 communities (39 shown, 1 thin omitted)
 - Extraction: 88% EXTRACTED · 12% INFERRED · 0% AMBIGUOUS · INFERRED: 376 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ae66f821`
+- Built from commit: `a4b0e785`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - TruncateStr
-- HandleTelegramAction
+- StartDaemon
 - testing.T
 - chat.go
 - agent/autonomous.go
@@ -26,33 +26,35 @@
 - collector_system.go
 - collector_security.go
 - runSubagent
-- uptime.go
+- collector_system_native.go
 - wizard.go
 - startCLI
 - time.Time
 - session_search_fts5.go
-- skills.go
+- HandleTelegramAction
 - cost_router.go
 - ScorpPath
-- runSelfReview
+- skills.go
 - checker.go
 - GetProvider
 - install.sh
 - bg.go
 - scorp-agent
-- TestPhase6_AllTools
+- main
 - 🦂 Scorp
-- collector_system_native.go
+- TestGatewayEndpoints
 - RegisterTool
-- collector_native_test.go
+- clarify.go
 - RunAgentSessionLoop
 - ExecuteTool
-- StorePendingConfirmation
-- ExecuteTermuxAPI
-- TestSteeringQueue
+- HandleConfirmation
+- inline.go
+- EscapeHTML
 - GetStringArg
-- upload.go
-- StartTestEndpoint
+- GetRecentReceipts
+- ExecuteAutonomous
+- formatFinalResponse
+- serviceBridgeRequests
 
 ## God Nodes (most connected - your core abstractions)
 1. `HandleTelegramAction()` - 54 edges
@@ -67,45 +69,45 @@
 10. `HandleModelCallback()` - 29 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `ExecuteSQL()` --calls--> `StorePendingConfirmation()`  [INFERRED]
-  tools/db.go → agent/confirmation.go
-- `ExecuteShell()` --calls--> `StorePendingConfirmation()`  [INFERRED]
-  tools/exec.go → agent/confirmation.go
-- `ExecuteGit()` --calls--> `StorePendingConfirmation()`  [INFERRED]
-  tools/git.go → agent/confirmation.go
-- `ExecuteProcess()` --calls--> `StorePendingConfirmation()`  [INFERRED]
-  tools/process.go → agent/confirmation.go
+- `ExecuteAutonomous()` --calls--> `SetKillSwitch()`  [INFERRED]
+  tools/autonomous.go → agent/autonomous.go
+- `ExecuteAutonomous()` --calls--> `RunAutonomousCycle()`  [INFERRED]
+  tools/autonomous.go → agent/autonomous.go
 - `runAgentTask()` --calls--> `RunAgentLoop()`  [INFERRED]
   scheduler/scheduler.go → agent/loop.go
+- `ExecuteShell()` --calls--> `IsDangerousCommand()`  [INFERRED]
+  tools/exec.go → agent/prompt.go
+- `serviceBridgeRequests()` --calls--> `ExecuteTool()`  [INFERRED]
+  tools/exec_code.go → agent/prompt.go
 
 ## Import Cycles
 - None detected.
 
-## Communities (46 total, 2 thin omitted)
+## Communities (48 total, 1 thin omitted)
 
 ### Community 0 - "TruncateStr"
-Cohesion: 0.05
-Nodes (94): TestParseToolCalls(), context.Context, TruncateStr(), AnthropicProvider, anthropicRequest, anthropicResponse, anthropicTool, callAnthropic() (+86 more)
-
-### Community 1 - "HandleTelegramAction"
 Cohesion: 0.06
-Nodes (66): HomeDir(), PythonSitePackages(), Init(), StartServer(), StopServer(), HandleTelegramAction(), runCommandLoop(), StartDaemon() (+58 more)
+Nodes (81): TestParseToolCalls(), context.Context, TruncateStr(), AnthropicProvider, anthropicRequest, anthropicResponse, anthropicTool, callAnthropic() (+73 more)
+
+### Community 1 - "StartDaemon"
+Cohesion: 0.13
+Nodes (25): Init(), StartServer(), StopServer(), runCommandLoop(), StartDaemon(), baseName(), DeleteWebhook(), EditMessage() (+17 more)
 
 ### Community 2 - "testing.T"
-Cohesion: 0.11
-Nodes (23): TestBase64Encode(), TestGetBoolArg(), TestGetFloatArg(), TestGetInt64Arg(), TestGetIntArg(), TestGetStringArg(), TestGetStringSliceArg(), TestMaxIterations() (+15 more)
+Cohesion: 0.09
+Nodes (32): TestGetBoolArg(), TestGetFloatArg(), TestGetInt64Arg(), TestGetIntArg(), TestGetStringArg(), TestGetStringSliceArg(), TestMaxIterations(), TestTruncOutput() (+24 more)
 
 ### Community 3 - "chat.go"
-Cohesion: 0.08
-Nodes (54): agentSession, agentAutoStop(), appendSessionHistory(), cleanupChatSessions(), CleanupSessionsLoop(), ClearChatSession(), collectTableLines(), convertInlineMarkdown() (+46 more)
+Cohesion: 0.07
+Nodes (58): agentSession, agentAutoStop(), appendSessionHistory(), cleanupChatSessions(), CleanupSessionsLoop(), ClearChatSession(), collectTableLines(), convertInlineMarkdown() (+50 more)
 
 ### Community 4 - "agent/autonomous.go"
-Cohesion: 0.12
-Nodes (31): AppendAutoLog(), AutonomousLoop(), CheckKillSwitch(), executeAutonomousAction(), extractJSON(), gatherContext(), LoadAutoLog(), LoadAutonomousConfig() (+23 more)
+Cohesion: 0.14
+Nodes (25): AppendAutoLog(), AutonomousLoop(), CheckKillSwitch(), executeAutonomousAction(), extractJSON(), gatherContext(), LoadAutoLog(), LoadAutonomousConfig() (+17 more)
 
 ### Community 5 - "client.go"
 Cohesion: 0.07
-Nodes (47): bufio.Scanner, encoding/json.Encoder, encoding/json.RawMessage, io.ReadCloser, net/url.URL, TruncOutputTool(), buildArgDefsFromInputSchema(), executeMCPServerTool() (+39 more)
+Nodes (46): bufio.Scanner, encoding/json.Encoder, encoding/json.RawMessage, io.ReadCloser, net/url.URL, TruncOutputTool(), buildArgDefsFromInputSchema(), FindMCPTool() (+38 more)
 
 ### Community 6 - "compaction_test.go"
 Cohesion: 0.19
@@ -127,29 +129,29 @@ Nodes (24): BruteForceAlert, CheckBruteForce(), CheckVNCConnections(), CollectSe
 Cohesion: 0.08
 Nodes (39): checkACPAvailable(), launchACP(), listAvailableACP(), runOpenCodeCLI(), runSubagentACP(), ACPError, ACPInitializeParams, ACPMessageNewParams (+31 more)
 
-### Community 11 - "uptime.go"
-Cohesion: 0.11
-Nodes (27): FormatDuration(), getUptime(), net/http.Client, net/http.Transport, sync.RWMutex, time.Duration, TransportPool, extractHost() (+19 more)
+### Community 11 - "collector_system_native.go"
+Cohesion: 0.07
+Nodes (45): TestCollectorNative_CollectSystem_Structure(), FormatDuration(), CollectSystem(), getCPUCount(), getDiskUsage(), getLoadAvg(), getMemInfo(), getNetBytes() (+37 more)
 
 ### Community 12 - "wizard.go"
-Cohesion: 0.12
-Nodes (44): ProjectDir(), CatalogEntry, AutoPopulateFromCatalog(), CatalogModels(), HasCatalog(), ProviderHasAPIKey(), ProviderKeyEnv(), RemoveProviderModels() (+36 more)
+Cohesion: 0.09
+Nodes (52): CatalogEntry, AutoPopulateFromCatalog(), CatalogModels(), HasCatalog(), ProviderHasAPIKey(), ProviderKeyEnv(), RemoveProviderModels(), LoadModelConfig() (+44 more)
 
 ### Community 13 - "startCLI"
-Cohesion: 0.20
-Nodes (22): executeOneShot(), executeTurn(), formatFinalResponse(), formatTerminalText(), handleCLISession(), handleCLISOP(), isTerminal(), printBanner() (+14 more)
+Cohesion: 0.25
+Nodes (19): executeOneShot(), executeTurn(), formatTerminalText(), handleCLISession(), handleCLISOP(), isTerminal(), printBanner(), printCLIHelp() (+11 more)
 
 ### Community 14 - "time.Time"
-Cohesion: 0.16
-Nodes (26): time.Time, EscapeHTML(), ModelUsage, ScheduledTask, AddTask(), AddTaskEx(), ExecuteSchedule(), isLikelyScriptPath() (+18 more)
+Cohesion: 0.21
+Nodes (20): time.Time, ModelUsage, ScheduledTask, AddTask(), AddTaskEx(), ExecuteSchedule(), FormatTasksList(), GetTask() (+12 more)
 
 ### Community 15 - "session_search_fts5.go"
 Cohesion: 0.10
 Nodes (18): getIntArg(), getStringArg(), truncateString(), homeDir(), scorpDir(), scorpPath(), ExecuteSessionSearch(), SessionResult (+10 more)
 
-### Community 16 - "skills.go"
-Cohesion: 0.24
-Nodes (13): ExecuteSkillManage(), executeSkillManageCreate(), executeSkillManageDelete(), executeSkillManageList(), executeSkillManageUpdate(), ExecuteSkillManageView(), Skill, Delete() (+5 more)
+### Community 16 - "HandleTelegramAction"
+Cohesion: 0.20
+Nodes (20): HandleTelegramAction(), BackKB(), createZip(), DirKeyboard(), FileDetailKeyboard(), FolderZipInfo(), GetPath(), HumanSize() (+12 more)
 
 ### Community 17 - "cost_router.go"
 Cohesion: 0.09
@@ -157,11 +159,11 @@ Nodes (30): CM(), ConfigMgr(), InitConfigManager(), NewConfigManager(), ConfigMa
 
 ### Community 18 - "ScorpPath"
 Cohesion: 0.05
-Nodes (63): init(), hasDebugFlag(), setupCLILogging(), Config, EnvBool(), EnvFloat(), EnvInt(), EnvStr() (+55 more)
+Nodes (69): contains(), containsStr(), jsonToMap(), TestPhase6_AllTools(), TestPhase6_ScriptResult(), TestPhase6_VaultEncryption(), truncate(), init() (+61 more)
 
-### Community 19 - "runSelfReview"
-Cohesion: 0.10
-Nodes (23): getSharedMemorySummary(), memoryFact, FormatToolResult(), getAgentSystemPrompt(), GetRepoMap(), InvalidateRepoMap(), TestGetRepoMap(), AgentMessage (+15 more)
+### Community 19 - "skills.go"
+Cohesion: 0.07
+Nodes (36): getSharedMemorySummary(), memoryFact, FormatToolResult(), getAgentSystemPrompt(), GetRepoMap(), InvalidateRepoMap(), TestGetRepoMap(), AgentMessage (+28 more)
 
 ### Community 20 - "checker.go"
 Cohesion: 0.25
@@ -176,71 +178,83 @@ Cohesion: 0.60
 Nodes (5): ask(), die(), ok(), install.sh script, warn()
 
 ### Community 24 - "bg.go"
-Cohesion: 0.25
-Nodes (15): bytes.Buffer, io.WriteCloser, os/exec.Cmd, bgKill(), bgList(), bgPoll(), bgSpawn(), bgWait() (+7 more)
+Cohesion: 0.12
+Nodes (20): bytes.Buffer, io.WriteCloser, os/exec.Cmd, sync.Mutex, CostTracker, bgKill(), bgList(), bgPoll() (+12 more)
 
-### Community 31 - "TestPhase6_AllTools"
-Cohesion: 0.13
-Nodes (19): contains(), containsStr(), jsonToMap(), TestPhase6_AllTools(), TestPhase6_ScriptResult(), TestPhase6_VaultEncryption(), truncate(), CloseBrowserSession() (+11 more)
+### Community 31 - "main"
+Cohesion: 0.20
+Nodes (14): RegisterAutonomous(), hasDebugFlag(), StartGateway(), isCLIMode(), main(), InitModelUsage(), SOP, Dir() (+6 more)
 
 ### Community 32 - "🦂 Scorp"
-Cohesion: 0.11
-Nodes (17): 1. Diet Ekstrem `main.go`, 2. Modularisasi `agent/loop.go`, 3. Pemisahan Provider AI Independen (`models/`), 🚀 Panduan Perintah Cepat (Quick Cheatsheet), 🧱 Rekapitulasi Refactoring Arsitektur Bersih (*Clean Architecture*), 📌 Ringkasan Pembaruan Utama (v2.0), 🦂 Scorp Agent v2.0 — Modernization & Architecture Upgrade Report, 🧪 Verifikasi & Kualitas Kode (+9 more)
+Cohesion: 0.07
+Nodes (25): 📊 1. Ringkasan Matriks Perbandingan, 🌐 2. Analisis Kemampuan Web Search & "Trik Pihak Ketiga", 🎯 3. Posisi & Rekomendasi Pilihan, 🚀 4. Roadmap Pengembangan Scorp (Next Upgrades), 🥊 Komparasi Arsitektur: Scorp vs PicoClaw vs ZeroClaw, 🦞 PicoClaw (Fokus Multi-Region & Auto-Fallback), 🦂 Scorp (Local-First Parsing vs Cloud Fallback), 🦀 ZeroClaw (Raja Pihak Ketiga & Metasearch) (+17 more)
 
-### Community 33 - "collector_system_native.go"
-Cohesion: 0.23
-Nodes (16): TestCollectorNative_StartCPUSampler_DoesNotBlock(), CollectSystem(), getCPUCount(), getDiskUsage(), getLoadAvg(), getMemInfo(), getNetBytes(), getProcesses() (+8 more)
+### Community 33 - "TestGatewayEndpoints"
+Cohesion: 0.31
+Nodes (12): contextWithTimeout(), handleChat(), handleDashboard(), handleReceipts(), handleSOPs(), handleStatus(), handleTools(), TestGatewayEndpoints() (+4 more)
 
 ### Community 34 - "RegisterTool"
-Cohesion: 0.06
-Nodes (39): RegisterAutonomous(), init(), init(), init(), init(), unregisterMCPNativeTools(), TestCallModelWithToolsNilModel(), TestGenerateNativeToolsSchema() (+31 more)
+Cohesion: 0.07
+Nodes (34): init(), init(), init(), init(), executeMCPServerTool(), unregisterMCPNativeTools(), TestCallModelWithToolsNilModel(), TestGenerateNativeToolsSchema() (+26 more)
 
-### Community 35 - "collector_native_test.go"
-Cohesion: 0.21
-Nodes (12): TestCollectorNative_CollectSystem_Structure(), TestCollectorNative_GetTopProcesses(), TestCollectorNative_GetTopProcesses_Limit(), TestCollectorNative_NativeTopProcessStruct(), TestCollectorNative_SortByCPUDesc(), TestCollectorNative_SortByCPUDesc_Empty(), TestCollectorNative_SortByCPUDesc_EqualValues(), TestCollectorNative_SortByCPUDesc_Single() (+4 more)
+### Community 35 - "clarify.go"
+Cohesion: 0.27
+Nodes (9): AnswerCallback(), executeClarify(), GetClarifyChatID(), handleClarifyResponse(), HasPendingClarify(), init(), ResolveClarify(), sendClarifyMessage() (+1 more)
 
 ### Community 36 - "RunAgentSessionLoop"
-Cohesion: 0.16
-Nodes (21): AgentMessage, countStepsInMessage(), AgentMessage, hasCompletionIndicators(), hasForwardIntent(), looksLikeContinuation(), mentionsBrowserTask(), screenshotWasTaken() (+13 more)
+Cohesion: 0.09
+Nodes (34): AgentMessage, countStepsInMessage(), AgentMessage, hasCompletionIndicators(), hasForwardIntent(), looksLikeContinuation(), mentionsBrowserTask(), screenshotWasTaken() (+26 more)
 
 ### Community 37 - "ExecuteTool"
 Cohesion: 0.23
 Nodes (9): ExecuteTool(), GetAutonomyLevel(), IsPathRestricted(), IsToolAllowed(), SetAutonomyLevel(), TestAutonomyLevels(), AutonomyLevel, RedactSecrets() (+1 more)
 
-### Community 38 - "StorePendingConfirmation"
-Cohesion: 0.31
-Nodes (10): clearPendingConfirmation(), confirmKeyboard(), getPendingConfirmation(), GetPendingConfirmationDetails(), AgentMessage, HandleConfirmation(), HasPendingConfirmation(), StorePendingConfirmation() (+2 more)
+### Community 38 - "HandleConfirmation"
+Cohesion: 0.36
+Nodes (8): clearPendingConfirmation(), confirmKeyboard(), getPendingConfirmation(), GetPendingConfirmationDetails(), AgentMessage, HandleConfirmation(), HasPendingConfirmation(), pendingConfirmation
 
-### Community 39 - "ExecuteTermuxAPI"
-Cohesion: 0.46
-Nodes (6): AcquireTermuxWakeLock(), ExecuteTermuxAPI(), IsTermux(), ReleaseTermuxWakeLock(), SendTermuxNotification(), TestExecuteTermuxAPI_Simulation()
+### Community 39 - "inline.go"
+Cohesion: 0.38
+Nodes (9): AnswerInlineQuery(), buildInlineResults(), firstN(), TGInlineQuery, HandleInlineQuery(), quickDocker(), quickStatus(), quickStorage() (+1 more)
 
-### Community 40 - "TestSteeringQueue"
-Cohesion: 0.43
-Nodes (5): ClearSteeringQueue(), HasSteeringMessage(), PopSteeringMessage(), QueueSteeringMessage(), TestSteeringQueue()
+### Community 40 - "EscapeHTML"
+Cohesion: 0.36
+Nodes (7): EscapeHTML(), isLikelyScriptPath(), notifyTaskResult(), runScriptTask(), runShellTaskConfig(), splitMessage(), ShellTask()
 
 ### Community 41 - "GetStringArg"
-Cohesion: 0.05
-Nodes (65): init(), init(), ExecuteBrowser(), browserConsole(), browserSessionClick(), browserSessionEvaluate(), browserSessionExtract(), browserSessionFill() (+57 more)
+Cohesion: 0.06
+Nodes (51): StorePendingConfirmation(), init(), init(), GetBoolArg(), GetIntArg(), GetStringArg(), getUnclosedTags(), SplitMessage() (+43 more)
 
-### Community 42 - "upload.go"
-Cohesion: 0.67
-Nodes (3): contentPart, imageURL, base64Encode()
+### Community 42 - "GetRecentReceipts"
+Cohesion: 0.46
+Nodes (6): GetRecentReceipts(), loadReceiptsLocked(), RecordToolReceipt(), saveReceiptsLocked(), TestRecordToolReceipt(), ToolReceipt
+
+### Community 43 - "ExecuteAutonomous"
+Cohesion: 0.52
+Nodes (6): SaveAutonomousConfig(), autoShowActions(), autoShowConfig(), autoShowLog(), autoStatus(), ExecuteAutonomous()
+
+### Community 44 - "formatFinalResponse"
+Cohesion: 0.50
+Nodes (4): formatFinalResponse(), stripHTML(), TestFormatFinalResponse(), TestStripHTML()
+
+### Community 45 - "serviceBridgeRequests"
+Cohesion: 0.70
+Nodes (4): executeCodeTool(), init(), serviceBridgeRequests(), writeBridgeResponse()
 
 ## Knowledge Gaps
-- **26 isolated node(s):** `memoryFact`, `containerStats`, `ACPInitializeParams`, `AgentMessage`, `scorp-agent` (+21 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 117 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **2 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **32 isolated node(s):** `memoryFact`, `containerStats`, `ACPInitializeParams`, `AgentMessage`, `scorp-agent` (+27 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 123 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **1 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `HandleTelegramAction()` connect `HandleTelegramAction` to `collector_system_native.go`, `chat.go`, `RunAgentSessionLoop`, `client.go`, `StorePendingConfirmation`, `TestSteeringQueue`, `collector_system.go`, `collector_security.go`, `wizard.go`, `startCLI`, `time.Time`, `ScorpPath`?**
-  _High betweenness centrality (0.147) - this node is a cross-community bridge._
-- **Why does `StartDaemon()` connect `HandleTelegramAction` to `TruncateStr`, `collector_system_native.go`, `RegisterTool`, `chat.go`, `agent/autonomous.go`, `RunAgentSessionLoop`, `StorePendingConfirmation`, `client.go`, `collector_system.go`, `rag_vector.go`, `StartTestEndpoint`, `wizard.go`, `time.Time`, `skills.go`, `cost_router.go`, `ScorpPath`, `runSelfReview`?**
+- **Why does `HandleTelegramAction()` connect `HandleTelegramAction` to `StartDaemon`, `chat.go`, `RunAgentSessionLoop`, `client.go`, `HandleConfirmation`, `clarify.go`, `collector_system.go`, `collector_security.go`, `collector_system_native.go`, `wizard.go`, `startCLI`, `time.Time`, `main`?**
+  _High betweenness centrality (0.145) - this node is a cross-community bridge._
+- **Why does `StartDaemon()` connect `StartDaemon` to `chat.go`, `agent/autonomous.go`, `RunAgentSessionLoop`, `client.go`, `rag_vector.go`, `collector_system.go`, `GetStringArg`, `collector_system_native.go`, `wizard.go`, `time.Time`, `HandleTelegramAction`, `cost_router.go`, `skills.go`, `main`?**
   _High betweenness centrality (0.100) - this node is a cross-community bridge._
-- **Why does `GetStringArg()` connect `GetStringArg` to `TruncateStr`, `testing.T`, `RegisterTool`, `RunAgentSessionLoop`, `client.go`, `ExecuteTermuxAPI`, `runSubagent`, `uptime.go`, `time.Time`, `cost_router.go`, `ScorpPath`, `runSelfReview`, `TestPhase6_AllTools`?**
-  _High betweenness centrality (0.094) - this node is a cross-community bridge._
+- **Why does `GetStringArg()` connect `GetStringArg` to `testing.T`, `RegisterTool`, `RunAgentSessionLoop`, `client.go`, `runSubagent`, `collector_system_native.go`, `wizard.go`, `time.Time`, `cost_router.go`, `ScorpPath`, `skills.go`, `bg.go`, `main`?**
+  _High betweenness centrality (0.093) - this node is a cross-community bridge._
 - **Are the 17 inferred relationships involving `HandleTelegramAction()` (e.g. with `DirKeyboard()` and `FileDetailKeyboard()`) actually correct?**
   _`HandleTelegramAction()` has 17 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 10 inferred relationships involving `StartDaemon()` (e.g. with `SendFile()` and `EditMessageByID()`) actually correct?**
@@ -248,4 +262,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Are the 21 inferred relationships involving `RunAgentSessionLoop()` (e.g. with `appendSessionHistory()` and `getSessionHistory()`) actually correct?**
   _`RunAgentSessionLoop()` has 21 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `memoryFact`, `containerStats`, `ACPInitializeParams` to the rest of the system?**
-  _26 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _32 weakly-connected nodes found - possible documentation gaps or missing edges._
