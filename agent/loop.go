@@ -263,7 +263,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 					fmt.Sprintf("⚠️ <b>Dangerous Command</b>\n\n<pre>%s</pre>\n\nAllow execution?", helpers.EscapeHTML(cmd)),
 					chatID, confirmKeyboard())
 
-				StorePendingConfirmation(chatIDStr, "shell", cmd, history, promptMsgID)
+				StorePendingConfirmation(fmt.Sprintf("%d", chatID), "shell", cmd, history, promptMsgID)
 				return
 			}
 
