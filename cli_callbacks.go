@@ -167,4 +167,14 @@ func wireCLICallbacks() {
 	models.UpdateEnvFile = func(key, value string) {
 		// CLI users manage .env manually
 	}
+
+	// Auto-titling callback for live CLI prompt update
+	tools.OnSessionAutoTitled = func(oldID, newID, chatIDStr string) {
+		cliMu.Lock()
+		defer cliMu.Unlock()
+		if currentSessionID == oldID || currentSessionID == "default" {
+			currentSessionID = newID
+			fmt.Printf("\n\033[1;34mℹ️ Session auto-titled:\033[0m \033[1;32m%s\033[0m\n", newID)
+		}
+	}
 }

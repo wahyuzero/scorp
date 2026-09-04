@@ -541,8 +541,8 @@ func handleCLISession(args []string) {
 	if len(args) == 0 || args[0] == "list" {
 		sessions := agent.ListSessions()
 		fmt.Printf("\n📋 Saved Chat Sessions (%d total):\n", len(sessions))
-		fmt.Printf("  %-18s %-10s %-16s %-30s\n", "NAME", "MESSAGES", "LAST MODIFIED", "PREVIEW")
-		fmt.Println("  " + strings.Repeat("─", 78))
+		fmt.Printf("  %-24s %-10s %-16s %-30s\n", "NAME", "MESSAGES", "LAST MODIFIED", "PREVIEW")
+		fmt.Println("  " + strings.Repeat("─", 84))
 
 		foundCurrent := false
 		for _, s := range sessions {
@@ -551,18 +551,18 @@ func handleCLISession(args []string) {
 				marker = "\033[1;32m●\033[0m"
 				foundCurrent = true
 			}
-			fmt.Printf("%s %-18s %-10s %-16s \033[2m%-30s\033[0m\n",
+			fmt.Printf("%s %-24s %-10s %-16s \033[2m%-30s\033[0m\n",
 				marker, s.ID, fmt.Sprintf("%d msgs", s.MsgCount), s.LastModified.Format("02 Jan 15:04"), s.LastPreview)
 		}
 		if !foundCurrent {
-			fmt.Printf("\033[1;32m●\033[0m %-18s %-10s %-16s \033[2m%-30s\033[0m\n",
+			fmt.Printf("\033[1;32m●\033[0m %-24s %-10s %-16s \033[2m%-30s\033[0m\n",
 				currentSessionID, "0 msgs", time.Now().Format("02 Jan 15:04"), "(current active session)")
 		}
 
 		fmt.Println("\nCommands:")
 		fmt.Println("  /session list                — List all sessions")
-		fmt.Println("  /session new <name>          — Create & switch to a new session")
-		fmt.Println("  /session use <name>          — Switch to existing session")
+		fmt.Println("  /session new [name]          — Create new session (auto-titled if no name)")
+		fmt.Println("  /session use <name>          — Switch to existing session (quotes allowed)")
 		fmt.Println("  /session rename <old> <new>  — Rename a session")
 		fmt.Println("  /session delete <name>       — Delete a session")
 		fmt.Println()
@@ -570,32 +570,38 @@ func handleCLISession(args []string) {
 	}
 
 	cmd := args[0]
+	rest := strings.TrimSpace(strings.TrimPrefix(strings.Join(args, " "), cmd))
+
 	switch cmd {
 	case "new":
-		if len(args) < 2 {
-			fmt.Println("Usage: /session new <name>")
-			return
+		name := rest
+		if name == "" {
+			name = fmt.Sprintf("chat-%s", time.Now().Format("0102-150405"))
+		} else {
+			name = strings.Trim(name, "\"'")
 		}
-		name := strings.TrimSpace(args[1])
 		currentSessionID = name
-		fmt.Printf("✓ Switched to new session: \033[1m%s\033[0m\n", currentSessionID)
+		fmt.Printf("✓ Switched to new session: \033[1;32m%s\033[0m\n", currentSessionID)
+		if strings.HasPrefix(name, "chat-") {
+			fmt.Println("\033[2mℹ️ Topik sesi ini akan otomatis dinamai sesuai pesan pertamamu.\033[0m")
+		}
 
 	case "use", "switch":
-		if len(args) < 2 {
+		if rest == "" {
 			fmt.Println("Usage: /session use <name>")
 			return
 		}
-		name := strings.TrimSpace(args[1])
+		name := strings.Trim(rest, "\"'")
 		currentSessionID = name
-		fmt.Printf("✓ Active session switched to: \033[1m%s\033[0m\n", currentSessionID)
+		fmt.Printf("✓ Active session switched to: \033[1;32m%s\033[0m\n", currentSessionID)
 
 	case "rename":
 		if len(args) < 3 {
 			fmt.Println("Usage: /session rename <old> <new>")
 			return
 		}
-		oldName := strings.TrimSpace(args[1])
-		newName := strings.TrimSpace(args[2])
+		oldName := strings.Trim(args[1], "\"'")
+		newName := strings.Trim(strings.Join(args[2:], " "), "\"'")
 		if err := agent.RenameSession(oldName, newName); err != nil {
 			fmt.Printf("❌ %v\n", err)
 			return
@@ -606,11 +612,11 @@ func handleCLISession(args []string) {
 		fmt.Printf("✓ Session renamed from '%s' to '%s'\n", oldName, newName)
 
 	case "delete", "rm":
-		if len(args) < 2 {
+		if rest == "" {
 			fmt.Println("Usage: /session delete <name>")
 			return
 		}
-		name := strings.TrimSpace(args[1])
+		name := strings.Trim(rest, "\"'")
 		if err := agent.DeleteSession(name); err != nil {
 			fmt.Printf("❌ %v\n", err)
 			return

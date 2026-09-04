@@ -144,9 +144,9 @@
     "semantic_hash": "08acac7901e0265f06c97b0554494354"
   },
   "cli.go": {
-    "mtime": 1788539629.4414072,
-    "seen": 1788539746.061533,
-    "ast_hash": "7d87c98e1ced45951afd98336cd50b65",
+    "mtime": 1788543732.2567213,
+    "seen": 1788543772.280274,
+    "ast_hash": "6e0c83e550196b21322b81a43f9b4542",
     "semantic_hash": ""
   },
   "cli_test.go": {
@@ -1044,9 +1044,9 @@
     "semantic_hash": ""
   },
   "cli_callbacks.go": {
-    "mtime": 1788539590.5143323,
-    "seen": 1788539746.0615344,
-    "ast_hash": "23a39ed268cdbd10a5aac53f8dd9cb8b",
+    "mtime": 1788543725.0097065,
+    "seen": 1788543772.28028,
+    "ast_hash": "35492f6700b0ce54bcca2589e22781cc",
     "semantic_hash": ""
   },
   "cli_format.go": {
