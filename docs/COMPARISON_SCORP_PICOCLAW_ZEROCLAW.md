@@ -39,9 +39,14 @@ ZeroClaw menduduki peringkat teratas dalam hal fleksibilitas search engine, namu
 * Memiliki rute pencarian wilayah Asia/China ke **Baidu & Sogou API**.
 * Menyediakan fitur `provider: "auto"` yang otomatis turun (*fallback*) ke scraping DuckDuckGo jika kuota API pihak ketiga habis.
 
-### 🦂 Scorp (Local-First Parsing vs Cloud Fallback)
-Scorp memilih pendekatan *clean engineering* yang sangat mandiri di mesin lokal:
-* **Search Engine Bawaan:** Scraping langsung ke `html.duckduckgo.com` tanpa biaya API sepeser pun. *Catatan:* Pendekatan ini murni tanpa pihak ketiga, tetapi memiliki kelemahan rawan terkena rate-limit / HTTP 403 jika query dilakukan terlalu agresif.
+### 🦂 Scorp (The Native Embedded Metasearch Winner)
+Scorp menerapkan arsitektur *clean engineering* yang sangat mandiri di mesin lokal:
+* **Embedded Native MetaSearch Cluster (Zero-RAM, Zero-Docker):**
+  Scorp kini memiliki metasearch engine bawaan yang berjalan paralel via Go goroutines menembak **Bing**, **DuckDuckGo**, **Wikipedia OpenSearch**, dan **GitHub Repositories**.
+  - *Consensus Ranking:* URL yang muncul di beberapa engine sekaligus otomatis mendapatkan skor relevansi lebih tinggi.
+  - *Smart Deduplication:* Mengelompokkan URL identik dan menggabungkan snippet terpanjang.
+  - *Anti-Single-Point-of-Failure:* Jika satu engine terkena limit/blokir (misal DDG 403), engine lain (Bing/Wiki/GitHub) tetap mengembalikan hasil tanpa membuat agen gagal.
+  - *Pluggable Hooks:* Jika user ingin memakai server **SearXNG pribadi** (`SEARXNG_URL`), **Brave API** (`BRAVE_API_KEY`), atau **Tavily API** (`TAVILY_API_KEY`), Scorp langsung menghubungkannya secara otomatis!
 * **Ekstraksi Konten Halaman Terbersih (`read_url`):**
   Alih-alih langsung menyedot data mentah, Scorp membangun arsitektur **Tiered Web Engine (< 5MB RAM)**:
   1. *Local Zero-RAM:* Mengambil HTML mentah via HTTP stream native.
@@ -67,8 +72,13 @@ Scorp memilih pendekatan *clean engineering* yang sangat mandiri di mesin lokal:
 
 ---
 
-## 🚀 4. Roadmap Pengembangan Scorp (Next Upgrades)
+## 🚀 4. Status Implementasi Fitur Baru Scorp (Completed)
 
-Untuk memperkuat sektor pencarian web tanpa menghilangkan prinsip efisiensi lokal:
-- [ ] Menambahkan dukungan opsional untuk API Key **Brave Search** & **Tavily** di `tools/web.go` sebagai prioritas sebelum fallback ke DuckDuckGo.
-- [ ] Menambahkan opsi koneksi ke self-hosted **SearXNG** bagi pengguna yang menginginkan pencarian web bebas blokir tanpa API berbayar.
+Sektor pencarian web Scorp telah resmi ditingkatkan tanpa menambah footprint memori:
+- [x] **Embedded Native Multi-Engine Metasearch** (`tools/metasearch.go`) berjalan paralel (Bing + DuckDuckGo + Wikipedia + GitHub).
+- [x] **Consensus Scoring & Deduplication** (URL yang muncul di banyak engine mendapat ranking teratas).
+- [x] **Anti-Pollution Regional Filters** (Enforce English locale headers & parameters pada search engine).
+- [x] **Pluggable Hooks Terintegrasi:**
+  - `SEARXNG_URL` untuk menghubungkan instance SearXNG lokal/eksternal.
+  - `BRAVE_API_KEY` untuk opsi komersial Brave Search.
+  - `TAVILY_API_KEY` untuk opsi komersial Tavily.
