@@ -77,12 +77,8 @@ func readInteractiveInput(prompt string) (string, error) {
 		fmt.Print(prompt)
 		fmt.Print(string(buf))
 
-		moveBack := len(buf) - cursorPos
-		if moveBack > 0 {
-			fmt.Printf("\033[%dD", moveBack)
-		}
-
 		currentStr := string(buf)
+		var lines []string
 		if strings.HasPrefix(currentStr, "/") && !strings.Contains(currentStr, " ") {
 			matches := filterCommands(currentStr)
 			if len(matches) > 0 {
@@ -92,16 +88,26 @@ func readInteractiveInput(prompt string) (string, error) {
 				if selectedIndex < 0 {
 					selectedIndex = len(matches) - 1
 				}
-
-				lines := renderPopupBox(matches, selectedIndex)
-				popupRenderedLines = len(lines)
-
-				fmt.Print("\033[s") // Save cursor
-				for _, line := range lines {
-					fmt.Print("\r\n" + line)
-				}
-				fmt.Print("\033[u") // Restore cursor
+				lines = renderPopupBox(matches, selectedIndex)
 			}
+		}
+
+		// Add persistent bottom statusline below prompt (or below popup if open)
+		statusline := renderStatusFooter(currentSessionID)
+		lines = append(lines, statusline)
+		popupRenderedLines = len(lines)
+
+		// Render below cursor, then restore cursor
+		fmt.Print("\033[s") // Save cursor position
+		for _, line := range lines {
+			fmt.Print("\r\n\033[K" + line)
+		}
+		fmt.Print("\033[u") // Restore cursor position
+
+		// Move cursor to proper position in buffer
+		moveBack := len(buf) - cursorPos
+		if moveBack > 0 {
+			fmt.Printf("\033[%dD", moveBack)
 		}
 	}
 

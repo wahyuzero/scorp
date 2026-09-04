@@ -252,6 +252,12 @@ func saveHistoryToDisk(chatID string, msgs []AgentMessage) {
 	os.WriteFile(historyFilePath(chatID), data, 0644)
 }
 
+// GetHistoryTokenEstimate returns estimated token count for a chat session
+func GetHistoryTokenEstimate(chatID string) int {
+	history := getSessionHistory(chatID)
+	return estimateHistoryTokens(history)
+}
+
 func getSessionHistory(chatID string) []AgentMessage {
 	sess := getSession(chatID)
 	if sess != nil && len(sess.history) > 0 {

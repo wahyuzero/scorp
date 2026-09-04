@@ -209,6 +209,13 @@ func RecordCostWithCache(modelName string, inputTokens, outputTokens, cachedToke
 	}
 }
 
+// GetDailyTotalUSD returns the total spend today in USD
+func GetDailyTotalUSD() float64 {
+	costTracker.mu.Lock()
+	defer costTracker.mu.Unlock()
+	return costTracker.TotalUSD
+}
+
 func (ct *CostTracker) getTotal() float64 {
 	return ct.TotalUSD
 }
