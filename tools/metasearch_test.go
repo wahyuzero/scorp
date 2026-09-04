@@ -198,3 +198,18 @@ func TestMetaSearchAggregator_FaultTolerance(t *testing.T) {
 		t.Errorf("expected [HealthyEngine], got: %v", engines)
 	}
 }
+
+func TestLiveWebSearch(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping live network test in short mode")
+	}
+	out, ok := ExecuteWebSearch(map[string]interface{}{
+		"query": "eBPF Linux observability tools",
+		"num_results": 5,
+	})
+	if !ok {
+		t.Logf("Search failed or offline: %s", out)
+		return
+	}
+	t.Logf("Live Search Output:\n%s", out)
+}

@@ -8646,7 +8646,7 @@
       "file_type": "code",
       "norm_label": "countstepsinmessage()",
       "source_file": "agent/continuation.go",
-      "source_location": "L88"
+      "source_location": "L90"
     },
     {
       "id": "agent_continuation_go_agentmessage",
@@ -8668,7 +8668,7 @@
       "file_type": "code",
       "norm_label": "hascompletionindicators()",
       "source_file": "agent/continuation.go",
-      "source_location": "L37"
+      "source_location": "L38"
     },
     {
       "id": "agent_continuation_hasforwardintent",
@@ -8690,7 +8690,7 @@
       "file_type": "code",
       "norm_label": "lookslikecontinuation()",
       "source_file": "agent/continuation.go",
-      "source_location": "L58"
+      "source_location": "L59"
     },
     {
       "id": "agent_continuation_mentionsbrowsertask",
@@ -8701,7 +8701,7 @@
       "file_type": "code",
       "norm_label": "mentionsbrowsertask()",
       "source_file": "agent/continuation.go",
-      "source_location": "L123"
+      "source_location": "L125"
     },
     {
       "id": "agent_continuation_screenshotwastaken",
@@ -8712,7 +8712,7 @@
       "file_type": "code",
       "norm_label": "screenshotwastaken()",
       "source_file": "agent/continuation.go",
-      "source_location": "L139"
+      "source_location": "L141"
     },
     {
       "id": "agent_loop",
@@ -12474,7 +12474,7 @@
       "file_type": "code",
       "norm_label": "bingengine",
       "source_file": "tools/metasearch.go",
-      "source_location": "L139"
+      "source_location": "L141"
     },
     {
       "id": "tools_bingengine_name",
@@ -12485,7 +12485,7 @@
       "file_type": "code",
       "norm_label": ".name()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L149"
+      "source_location": "L151"
     },
     {
       "id": "tools_bingengine_search",
@@ -12496,7 +12496,7 @@
       "file_type": "code",
       "norm_label": ".search()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L157"
+      "source_location": "L159"
     },
     {
       "id": "tools_bravesearchengine",
@@ -12507,7 +12507,7 @@
       "file_type": "code",
       "norm_label": "bravesearchengine",
       "source_file": "tools/metasearch.go",
-      "source_location": "L567"
+      "source_location": "L570"
     },
     {
       "id": "tools_bravesearchengine_name",
@@ -12518,7 +12518,7 @@
       "file_type": "code",
       "norm_label": ".name()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L579"
+      "source_location": "L582"
     },
     {
       "id": "tools_bravesearchengine_search",
@@ -12529,7 +12529,7 @@
       "file_type": "code",
       "norm_label": ".search()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L581"
+      "source_location": "L584"
     },
     {
       "id": "tools_duckduckgohtmlengine",
@@ -12573,7 +12573,7 @@
       "file_type": "code",
       "norm_label": "duckduckgoliteengine",
       "source_file": "tools/metasearch.go",
-      "source_location": "L239"
+      "source_location": "L242"
     },
     {
       "id": "tools_duckduckgoliteengine_name",
@@ -12584,7 +12584,7 @@
       "file_type": "code",
       "norm_label": ".name()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L249"
+      "source_location": "L252"
     },
     {
       "id": "tools_duckduckgoliteengine_search",
@@ -12595,7 +12595,7 @@
       "file_type": "code",
       "norm_label": ".search()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L256"
+      "source_location": "L259"
     },
     {
       "id": "tools_githubengine",
@@ -12606,7 +12606,7 @@
       "file_type": "code",
       "norm_label": "githubengine",
       "source_file": "tools/metasearch.go",
-      "source_location": "L400"
+      "source_location": "L403"
     },
     {
       "id": "tools_githubengine_name",
@@ -12617,7 +12617,7 @@
       "file_type": "code",
       "norm_label": ".name()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L410"
+      "source_location": "L413"
     },
     {
       "id": "tools_githubengine_search",
@@ -12628,7 +12628,7 @@
       "file_type": "code",
       "norm_label": ".search()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L412"
+      "source_location": "L415"
     },
     {
       "id": "tools_metasearch",
@@ -12650,7 +12650,7 @@
       "file_type": "code",
       "norm_label": "deduplicateandrank()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L826"
+      "source_location": "L829"
     },
     {
       "id": "tools_metasearch_getmetasearchaggregator",
@@ -12661,7 +12661,7 @@
       "file_type": "code",
       "norm_label": "getmetasearchaggregator()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L720"
+      "source_location": "L723"
     },
     {
       "id": "tools_metasearch_newbingengine",
@@ -12672,7 +12672,7 @@
       "file_type": "code",
       "norm_label": "newbingengine()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L143"
+      "source_location": "L145"
     },
     {
       "id": "tools_metasearch_newbravesearchengine",
@@ -12683,7 +12683,7 @@
       "file_type": "code",
       "norm_label": "newbravesearchengine()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L572"
+      "source_location": "L575"
     },
     {
       "id": "tools_metasearch_newdefaultmetasearchaggregator",
@@ -12694,7 +12694,7 @@
       "file_type": "code",
       "norm_label": "newdefaultmetasearchaggregator()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L728"
+      "source_location": "L731"
     },
     {
       "id": "tools_metasearch_newduckduckgohtmlengine",
@@ -12716,7 +12716,7 @@
       "file_type": "code",
       "norm_label": "newduckduckgoliteengine()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L243"
+      "source_location": "L246"
     },
     {
       "id": "tools_metasearch_newgithubengine",
@@ -12727,7 +12727,7 @@
       "file_type": "code",
       "norm_label": "newgithubengine()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L404"
+      "source_location": "L407"
     },
     {
       "id": "tools_metasearch_newsearxngengine",
@@ -12738,7 +12738,7 @@
       "file_type": "code",
       "norm_label": "newsearxngengine()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L500"
+      "source_location": "L503"
     },
     {
       "id": "tools_metasearch_newtavilysearchengine",
@@ -12749,7 +12749,7 @@
       "file_type": "code",
       "norm_label": "newtavilysearchengine()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L641"
+      "source_location": "L644"
     },
     {
       "id": "tools_metasearch_newwikipediaengine",
@@ -12760,7 +12760,7 @@
       "file_type": "code",
       "norm_label": "newwikipediaengine()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L333"
+      "source_location": "L336"
     },
     {
       "id": "tools_metasearch_normalizesearchurl",
@@ -12771,7 +12771,7 @@
       "file_type": "code",
       "norm_label": "normalizesearchurl()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L878"
+      "source_location": "L881"
     },
     {
       "id": "tools_metasearch_test",
@@ -12837,7 +12837,7 @@
       "file_type": "code",
       "norm_label": "metasearchaggregator",
       "source_file": "tools/metasearch.go",
-      "source_location": "L709"
+      "source_location": "L712"
     },
     {
       "id": "tools_metasearchaggregator_registerengine",
@@ -12848,7 +12848,7 @@
       "file_type": "code",
       "norm_label": ".registerengine()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L753"
+      "source_location": "L756"
     },
     {
       "id": "tools_metasearchaggregator_search",
@@ -12859,7 +12859,7 @@
       "file_type": "code",
       "norm_label": ".search()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L760"
+      "source_location": "L763"
     },
     {
       "id": "tools_mocksearchengine",
@@ -12925,7 +12925,7 @@
       "file_type": "code",
       "norm_label": "searxngengine",
       "source_file": "tools/metasearch.go",
-      "source_location": "L495"
+      "source_location": "L498"
     },
     {
       "id": "tools_searxngengine_name",
@@ -12936,7 +12936,7 @@
       "file_type": "code",
       "norm_label": ".name()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L507"
+      "source_location": "L510"
     },
     {
       "id": "tools_searxngengine_search",
@@ -12947,7 +12947,7 @@
       "file_type": "code",
       "norm_label": ".search()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L509"
+      "source_location": "L512"
     },
     {
       "id": "tools_tavilysearchengine",
@@ -12958,7 +12958,7 @@
       "file_type": "code",
       "norm_label": "tavilysearchengine",
       "source_file": "tools/metasearch.go",
-      "source_location": "L636"
+      "source_location": "L639"
     },
     {
       "id": "tools_tavilysearchengine_name",
@@ -12969,7 +12969,7 @@
       "file_type": "code",
       "norm_label": ".name()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L648"
+      "source_location": "L651"
     },
     {
       "id": "tools_tavilysearchengine_search",
@@ -12980,7 +12980,7 @@
       "file_type": "code",
       "norm_label": ".search()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L650"
+      "source_location": "L653"
     },
     {
       "id": "tools_uptime",
@@ -13112,7 +13112,7 @@
       "file_type": "code",
       "norm_label": "wikipediaengine",
       "source_file": "tools/metasearch.go",
-      "source_location": "L329"
+      "source_location": "L332"
     },
     {
       "id": "tools_wikipediaengine_name",
@@ -13123,7 +13123,7 @@
       "file_type": "code",
       "norm_label": ".name()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L339"
+      "source_location": "L342"
     },
     {
       "id": "tools_wikipediaengine_search",
@@ -13134,7 +13134,7 @@
       "file_type": "code",
       "norm_label": ".search()",
       "source_file": "tools/metasearch.go",
-      "source_location": "L341"
+      "source_location": "L344"
     },
     {
       "id": "models_activetoolcall",
@@ -16079,7 +16079,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/continuation.go",
-      "source_location": "L38",
+      "source_location": "L39",
       "weight": 1.0
     },
     {
@@ -16091,7 +16091,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/continuation.go",
-      "source_location": "L59",
+      "source_location": "L60",
       "weight": 1.0
     },
     {
@@ -16103,7 +16103,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/continuation.go",
-      "source_location": "L62",
+      "source_location": "L63",
       "weight": 1.0
     },
     {
@@ -26351,7 +26351,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "tools/metasearch.go",
-      "source_location": "L831",
+      "source_location": "L834",
       "weight": 1.0
     },
     {
@@ -26363,7 +26363,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "tools/metasearch.go",
-      "source_location": "L722",
+      "source_location": "L725",
       "weight": 1.0
     },
     {
@@ -26375,7 +26375,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "tools/metasearch.go",
-      "source_location": "L735",
+      "source_location": "L738",
       "weight": 1.0
     },
     {
@@ -26387,7 +26387,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "tools/metasearch.go",
-      "source_location": "L735",
+      "source_location": "L738",
       "weight": 1.0
     },
     {
@@ -26399,7 +26399,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "tools/metasearch.go",
-      "source_location": "L738",
+      "source_location": "L741",
       "weight": 1.0
     },
     {
@@ -26411,7 +26411,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "tools/metasearch.go",
-      "source_location": "L741",
+      "source_location": "L744",
       "weight": 1.0
     },
     {
@@ -26423,7 +26423,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "tools/metasearch.go",
-      "source_location": "L745",
+      "source_location": "L748",
       "weight": 1.0
     },
     {
@@ -26435,7 +26435,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "tools/metasearch.go",
-      "source_location": "L746",
+      "source_location": "L749",
       "weight": 1.0
     },
     {
@@ -26447,7 +26447,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "tools/metasearch.go",
-      "source_location": "L747",
+      "source_location": "L750",
       "weight": 1.0
     },
     {
@@ -26459,7 +26459,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "tools/metasearch.go",
-      "source_location": "L748",
+      "source_location": "L751",
       "weight": 1.0
     },
     {
@@ -26495,7 +26495,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "tools/metasearch.go",
-      "source_location": "L786",
+      "source_location": "L789",
       "weight": 1.0
     },
     {
@@ -26507,7 +26507,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "tools/metasearch.go",
-      "source_location": "L815",
+      "source_location": "L818",
       "weight": 1.0
     },
     {
@@ -30179,7 +30179,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "tools/metasearch.go",
-      "source_location": "L140",
+      "source_location": "L142",
       "weight": 1.0
     },
     {
@@ -30191,7 +30191,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "tools/metasearch.go",
-      "source_location": "L569",
+      "source_location": "L572",
       "weight": 1.0
     },
     {
@@ -30275,7 +30275,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "tools/metasearch.go",
-      "source_location": "L240",
+      "source_location": "L243",
       "weight": 1.0
     },
     {
@@ -30287,7 +30287,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "tools/metasearch.go",
-      "source_location": "L401",
+      "source_location": "L404",
       "weight": 1.0
     },
     {
@@ -30299,7 +30299,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "tools/metasearch.go",
-      "source_location": "L710",
+      "source_location": "L713",
       "weight": 1.0
     },
     {
@@ -30311,7 +30311,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "tools/metasearch.go",
-      "source_location": "L711",
+      "source_location": "L714",
       "weight": 1.0
     },
     {
@@ -30371,7 +30371,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "tools/metasearch.go",
-      "source_location": "L497",
+      "source_location": "L500",
       "weight": 1.0
     },
     {
@@ -30383,7 +30383,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "tools/metasearch.go",
-      "source_location": "L638",
+      "source_location": "L641",
       "weight": 1.0
     },
     {
@@ -30479,7 +30479,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "tools/metasearch.go",
-      "source_location": "L330",
+      "source_location": "L333",
       "weight": 1.0
     },
     {
@@ -30803,7 +30803,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "agent/continuation.go",
-      "source_location": "L139",
+      "source_location": "L141",
       "weight": 1.0
     },
     {
@@ -33647,7 +33647,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L157",
+      "source_location": "L159",
       "weight": 1.0
     },
     {
@@ -33659,7 +33659,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L581",
+      "source_location": "L584",
       "weight": 1.0
     },
     {
@@ -33683,7 +33683,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L256",
+      "source_location": "L259",
       "weight": 1.0
     },
     {
@@ -33707,7 +33707,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L412",
+      "source_location": "L415",
       "weight": 1.0
     },
     {
@@ -33779,7 +33779,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L753",
+      "source_location": "L756",
       "weight": 1.0
     },
     {
@@ -33791,7 +33791,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L760",
+      "source_location": "L763",
       "weight": 1.0
     },
     {
@@ -33923,7 +33923,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L509",
+      "source_location": "L512",
       "weight": 1.0
     },
     {
@@ -33935,7 +33935,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L650",
+      "source_location": "L653",
       "weight": 1.0
     },
     {
@@ -33971,7 +33971,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L341",
+      "source_location": "L344",
       "weight": 1.0
     },
     {
@@ -35603,7 +35603,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L157",
+      "source_location": "L159",
       "weight": 1.0
     },
     {
@@ -35615,7 +35615,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L581",
+      "source_location": "L584",
       "weight": 1.0
     },
     {
@@ -35651,7 +35651,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L256",
+      "source_location": "L259",
       "weight": 1.0
     },
     {
@@ -35663,7 +35663,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L412",
+      "source_location": "L415",
       "weight": 1.0
     },
     {
@@ -35675,7 +35675,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L826",
+      "source_location": "L829",
       "weight": 1.0
     },
     {
@@ -35687,7 +35687,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L720",
+      "source_location": "L723",
       "weight": 1.0
     },
     {
@@ -35699,7 +35699,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L143",
+      "source_location": "L145",
       "weight": 1.0
     },
     {
@@ -35711,7 +35711,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L572",
+      "source_location": "L575",
       "weight": 1.0
     },
     {
@@ -35723,7 +35723,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L728",
+      "source_location": "L731",
       "weight": 1.0
     },
     {
@@ -35747,7 +35747,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L243",
+      "source_location": "L246",
       "weight": 1.0
     },
     {
@@ -35759,7 +35759,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L404",
+      "source_location": "L407",
       "weight": 1.0
     },
     {
@@ -35771,7 +35771,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L500",
+      "source_location": "L503",
       "weight": 1.0
     },
     {
@@ -35783,7 +35783,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L641",
+      "source_location": "L644",
       "weight": 1.0
     },
     {
@@ -35795,7 +35795,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L333",
+      "source_location": "L336",
       "weight": 1.0
     },
     {
@@ -35807,7 +35807,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L760",
+      "source_location": "L763",
       "weight": 1.0
     },
     {
@@ -35867,7 +35867,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L509",
+      "source_location": "L512",
       "weight": 1.0
     },
     {
@@ -35879,7 +35879,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L650",
+      "source_location": "L653",
       "weight": 1.0
     },
     {
@@ -35915,7 +35915,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "tools/metasearch.go",
-      "source_location": "L341",
+      "source_location": "L344",
       "weight": 1.0
     },
     {
@@ -36931,7 +36931,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "agent/continuation.go",
-      "source_location": "L123",
+      "source_location": "L125",
       "weight": 1.0
     },
     {
@@ -36942,7 +36942,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "agent/continuation.go",
-      "source_location": "L139",
+      "source_location": "L141",
       "weight": 1.0
     },
     {
@@ -36964,7 +36964,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "agent/continuation.go",
-      "source_location": "L37",
+      "source_location": "L38",
       "weight": 1.0
     },
     {
@@ -36975,7 +36975,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "agent/continuation.go",
-      "source_location": "L58",
+      "source_location": "L59",
       "weight": 1.0
     },
     {
@@ -36986,7 +36986,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "agent/continuation.go",
-      "source_location": "L88",
+      "source_location": "L90",
       "weight": 1.0
     },
     {
@@ -45841,7 +45841,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L139",
+      "source_location": "L141",
       "weight": 1.0
     },
     {
@@ -45852,7 +45852,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L143",
+      "source_location": "L145",
       "weight": 1.0
     },
     {
@@ -45863,7 +45863,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L239",
+      "source_location": "L242",
       "weight": 1.0
     },
     {
@@ -45874,7 +45874,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L243",
+      "source_location": "L246",
       "weight": 1.0
     },
     {
@@ -45896,7 +45896,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L329",
+      "source_location": "L332",
       "weight": 1.0
     },
     {
@@ -45907,7 +45907,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L333",
+      "source_location": "L336",
       "weight": 1.0
     },
     {
@@ -45929,7 +45929,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L400",
+      "source_location": "L403",
       "weight": 1.0
     },
     {
@@ -45940,7 +45940,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L404",
+      "source_location": "L407",
       "weight": 1.0
     },
     {
@@ -45962,7 +45962,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L495",
+      "source_location": "L498",
       "weight": 1.0
     },
     {
@@ -45984,7 +45984,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L500",
+      "source_location": "L503",
       "weight": 1.0
     },
     {
@@ -45995,7 +45995,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L567",
+      "source_location": "L570",
       "weight": 1.0
     },
     {
@@ -46006,7 +46006,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L572",
+      "source_location": "L575",
       "weight": 1.0
     },
     {
@@ -46017,7 +46017,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L636",
+      "source_location": "L639",
       "weight": 1.0
     },
     {
@@ -46028,7 +46028,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L641",
+      "source_location": "L644",
       "weight": 1.0
     },
     {
@@ -46039,7 +46039,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L709",
+      "source_location": "L712",
       "weight": 1.0
     },
     {
@@ -46050,7 +46050,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L720",
+      "source_location": "L723",
       "weight": 1.0
     },
     {
@@ -46061,7 +46061,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L728",
+      "source_location": "L731",
       "weight": 1.0
     },
     {
@@ -46072,7 +46072,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L826",
+      "source_location": "L829",
       "weight": 1.0
     },
     {
@@ -46083,7 +46083,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L878",
+      "source_location": "L881",
       "weight": 1.0
     },
     {
@@ -48349,7 +48349,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L149",
+      "source_location": "L151",
       "weight": 1.0
     },
     {
@@ -48360,7 +48360,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L157",
+      "source_location": "L159",
       "weight": 1.0
     },
     {
@@ -48371,7 +48371,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L579",
+      "source_location": "L582",
       "weight": 1.0
     },
     {
@@ -48382,7 +48382,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L581",
+      "source_location": "L584",
       "weight": 1.0
     },
     {
@@ -48492,7 +48492,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L249",
+      "source_location": "L252",
       "weight": 1.0
     },
     {
@@ -48503,7 +48503,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L256",
+      "source_location": "L259",
       "weight": 1.0
     },
     {
@@ -48514,7 +48514,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L410",
+      "source_location": "L413",
       "weight": 1.0
     },
     {
@@ -48525,7 +48525,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L412",
+      "source_location": "L415",
       "weight": 1.0
     },
     {
@@ -48536,7 +48536,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L753",
+      "source_location": "L756",
       "weight": 1.0
     },
     {
@@ -48547,7 +48547,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L760",
+      "source_location": "L763",
       "weight": 1.0
     },
     {
@@ -48580,7 +48580,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L507",
+      "source_location": "L510",
       "weight": 1.0
     },
     {
@@ -48591,7 +48591,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L509",
+      "source_location": "L512",
       "weight": 1.0
     },
     {
@@ -48602,7 +48602,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L648",
+      "source_location": "L651",
       "weight": 1.0
     },
     {
@@ -48613,7 +48613,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L650",
+      "source_location": "L653",
       "weight": 1.0
     },
     {
@@ -48624,7 +48624,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L339",
+      "source_location": "L342",
       "weight": 1.0
     },
     {
@@ -48635,7 +48635,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tools/metasearch.go",
-      "source_location": "L341",
+      "source_location": "L344",
       "weight": 1.0
     },
     {
@@ -53210,5 +53210,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "ebb3bb0d8b0f3217982b7d7d39f8824e60bea425"
+  "built_at_commit": "8510741504c1855a0fc7f59594593a32a899e597"
 }

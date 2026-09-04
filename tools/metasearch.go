@@ -342,6 +342,12 @@ func NewWikipediaEngine() *WikipediaEngine {
 func (e *WikipediaEngine) Name() string { return "Wikipedia" }
 
 func (e *WikipediaEngine) Search(ctx context.Context, query string, limit int) ([]SearchResult, error) {
+	// Only query Wikipedia if query is concise (entity/concept lookup) or explicitly mentions wiki
+	words := strings.Fields(query)
+	if len(words) > 4 && !strings.Contains(strings.ToLower(query), "wiki") {
+		return nil, nil // Skip encyclopedic search for long multi-keyword queries
+	}
+
 	apiURL := fmt.Sprintf("https://en.wikipedia.org/w/api.php?action=opensearch&search=%s&limit=%d&format=json",
 		url.QueryEscape(query), limit)
 
