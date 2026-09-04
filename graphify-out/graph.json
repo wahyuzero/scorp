@@ -12518,7 +12518,7 @@
       "file_type": "code",
       "norm_label": "countstepsinmessage()",
       "source_file": "agent/continuation.go",
-      "source_location": "L122"
+      "source_location": "L123"
     },
     {
       "id": "agent_continuation_go_agentmessage",
@@ -12540,7 +12540,7 @@
       "file_type": "code",
       "norm_label": "hascompletionindicators()",
       "source_file": "agent/continuation.go",
-      "source_location": "L74"
+      "source_location": "L75"
     },
     {
       "id": "agent_continuation_hasforwardintent",
@@ -12573,7 +12573,7 @@
       "file_type": "code",
       "norm_label": "lookslikecontinuation()",
       "source_file": "agent/continuation.go",
-      "source_location": "L95"
+      "source_location": "L96"
     },
     {
       "id": "agent_continuation_mentionsbrowsertask",
@@ -12584,7 +12584,7 @@
       "file_type": "code",
       "norm_label": "mentionsbrowsertask()",
       "source_file": "agent/continuation.go",
-      "source_location": "L155"
+      "source_location": "L156"
     },
     {
       "id": "agent_continuation_screenshotwastaken",
@@ -12595,7 +12595,7 @@
       "file_type": "code",
       "norm_label": "screenshotwastaken()",
       "source_file": "agent/continuation.go",
-      "source_location": "L171"
+      "source_location": "L172"
     },
     {
       "id": "agent_loop",
@@ -16542,19 +16542,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/continuation.go",
-      "source_location": "L75",
-      "weight": 1.0
-    },
-    {
-      "source": "agent_continuation_lookslikecontinuation",
-      "target": "agent_continuation_hasforwardintent",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "agent/continuation.go",
-      "source_location": "L96",
+      "source_location": "L76",
       "weight": 1.0
     },
     {
@@ -16566,7 +16554,19 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/continuation.go",
-      "source_location": "L99",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "agent_continuation_lookslikecontinuation",
+      "target": "agent_continuation_hasforwardintent",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "agent/continuation.go",
+      "source_location": "L97",
       "weight": 1.0
     },
     {
@@ -31062,7 +31062,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "agent/continuation.go",
-      "source_location": "L171",
+      "source_location": "L172",
       "weight": 1.0
     },
     {
@@ -37345,7 +37345,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "agent/continuation.go",
-      "source_location": "L122",
+      "source_location": "L123",
       "weight": 1.0
     },
     {
@@ -37356,7 +37356,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "agent/continuation.go",
-      "source_location": "L155",
+      "source_location": "L156",
       "weight": 1.0
     },
     {
@@ -37378,7 +37378,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "agent/continuation.go",
-      "source_location": "L171",
+      "source_location": "L172",
       "weight": 1.0
     },
     {
@@ -37400,7 +37400,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "agent/continuation.go",
-      "source_location": "L74",
+      "source_location": "L75",
       "weight": 1.0
     },
     {
@@ -37411,7 +37411,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "agent/continuation.go",
-      "source_location": "L95",
+      "source_location": "L96",
       "weight": 1.0
     },
     {
@@ -54665,5 +54665,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "59f29641a0debca7363262aeec33f1c96d0ce7d8"
+  "built_at_commit": "1cb7d18db79c8fab26e6a8e4852faf642b24f59a"
 }
