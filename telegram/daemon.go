@@ -423,25 +423,77 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 	case action == "/usage":
 		SendMessage(models.FormatUsageStats(), BackButtonKeyboard())
 
-	case action == "/sessions":
-		entries, err := os.ReadDir(config.HistoryDirPath())
-		if err != nil || len(entries) == 0 {
-			SendMessage("📂 <b>No saved sessions.</b>", nil)
+	case action == "/session" || action == "/sessions" || action == "sessions":
+		text := FormatSessionMenuText(chatIDStr)
+		kb := BuildSessionMenuKeyboard(chatIDStr)
+		if edit {
+			EditMessage(chatID, messageID, text, kb)
+		} else {
+			SendMessage(text, kb)
+		}
+
+	case strings.HasPrefix(action, "/session "):
+		subArgs := strings.Fields(strings.TrimPrefix(action, "/session "))
+		if len(subArgs) == 0 {
+			SendMessage(FormatSessionMenuText(chatIDStr), BuildSessionMenuKeyboard(chatIDStr))
 			break
 		}
-		var sb strings.Builder
-		sb.WriteString("📂 <b>Saved Sessions:</b>\n\n")
-		for _, e := range entries {
-			info, err := e.Info()
-			if err != nil {
-				continue
+		switch subArgs[0] {
+		case "list":
+			SendMessage(FormatSessionMenuText(chatIDStr), BuildSessionMenuKeyboard(chatIDStr))
+		case "new", "switch", "use":
+			if len(subArgs) < 2 {
+				SendMessage("⚠️ Usage: <code>/session new &lt;name&gt;</code> or <code>/session use &lt;name&gt;</code>", nil)
+				break
 			}
-			name := strings.TrimSuffix(e.Name(), ".json")
-			size := info.Size()
-			modTime := info.ModTime().Format("2006-01-02 15:04")
-			sb.WriteString(fmt.Sprintf("• <code>%s</code> — %s (%s)\n", name, modTime, HumanSize(size)))
+			newSess := strings.TrimSpace(subArgs[1])
+			SetActiveSessionID(chatIDStr, newSess)
+			SendMessage(fmt.Sprintf("✓ Active session switched to: 🟢 <b>%s</b>", newSess), BuildSessionMenuKeyboard(chatIDStr))
+		case "rename":
+			if len(subArgs) < 3 {
+				SendMessage("⚠️ Usage: <code>/session rename &lt;old&gt; &lt;new&gt;</code>", nil)
+				break
+			}
+			oldName := strings.TrimSpace(subArgs[1])
+			newName := strings.TrimSpace(subArgs[2])
+			if err := agent.RenameSession(oldName, newName); err != nil {
+				SendMessage(fmt.Sprintf("❌ %v", err), nil)
+				break
+			}
+			if GetActiveSessionID(chatIDStr) == oldName {
+				SetActiveSessionID(chatIDStr, newName)
+			}
+			SendMessage(fmt.Sprintf("✓ Session renamed from <code>%s</code> to <code>%s</code>", oldName, newName), BuildSessionMenuKeyboard(chatIDStr))
+		case "delete", "rm":
+			if len(subArgs) < 2 {
+				SendMessage("⚠️ Usage: <code>/session delete &lt;name&gt;</code>", nil)
+				break
+			}
+			targetName := strings.TrimSpace(subArgs[1])
+			if err := agent.DeleteSession(targetName); err != nil {
+				SendMessage(fmt.Sprintf("❌ %v", err), nil)
+				break
+			}
+			if GetActiveSessionID(chatIDStr) == targetName {
+				SetActiveSessionID(chatIDStr, chatIDStr)
+			}
+			SendMessage(fmt.Sprintf("✓ Session <code>%s</code> deleted.", targetName), BuildSessionMenuKeyboard(chatIDStr))
+		default:
+			SendMessage(FormatSessionMenuText(chatIDStr), BuildSessionMenuKeyboard(chatIDStr))
 		}
-		SendMessage(sb.String(), nil)
+
+	case strings.HasPrefix(action, "sess:"):
+		if isCallback {
+			AnswerCallback(callbackID, "")
+		}
+		text, kb, handled := HandleSessionCallback(action, chatIDStr)
+		if handled && text != "" {
+			if edit {
+				EditMessage(chatID, messageID, text, kb)
+			} else {
+				SendMessage(text, kb)
+			}
+		}
 
 	case action == "/clear":
 		agent.ClearChatSession(chatIDStr)
@@ -550,8 +602,9 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 			return
 		}
 
-		// Check if session is in agent mode, default to agent loop
-		agent.EnterAgentMode(chatIDStr)
-		agent.RunAgentLoop(chatID, action, 0)
+		// Check if session is in agent mode, default to agent loop using current active session!
+		activeSess := GetActiveSessionID(chatIDStr)
+		agent.EnterAgentMode(activeSess)
+		agent.RunAgentSessionLoop(activeSess, chatID, action, 0)
 	}
 }
