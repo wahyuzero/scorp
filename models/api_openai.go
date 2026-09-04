@@ -34,6 +34,35 @@ func (p *OpenAIProvider) CallWithTools(ctx context.Context, model *ModelConfig, 
 	return CallOpenAIWithTools(ctx, model, messages)
 }
 
+// formatOpenAIMessages converts ChatMessage list to OpenAI-compatible messages,
+// unpacking multimodal array content (e.g. vision image_url) if present.
+func formatOpenAIMessages(messages []ChatMessage) []map[string]interface{} {
+	var formatted []map[string]interface{}
+	for _, m := range messages {
+		msgMap := map[string]interface{}{
+			"role": m.Role,
+		}
+		// Check if content is a JSON array of multimodal content parts
+		trimmed := strings.TrimSpace(m.Content)
+		if strings.HasPrefix(trimmed, "[") && strings.Contains(trimmed, "image") {
+			var parts []interface{}
+			if err := json.Unmarshal([]byte(trimmed), &parts); err == nil {
+				msgMap["content"] = parts
+			} else {
+				msgMap["content"] = m.Content
+			}
+		} else {
+			msgMap["content"] = m.Content
+		}
+
+		if len(m.ToolCalls) > 0 {
+			msgMap["tool_calls"] = m.ToolCalls
+		}
+		formatted = append(formatted, msgMap)
+	}
+	return formatted
+}
+
 // CallOpenAI sends a plain chat completion request to an OpenAI-compatible API.
 func CallOpenAI(ctx context.Context, model *ModelConfig, messages []ChatMessage) (string, error) {
 	apiKey := ResolveAPIKey(model)
@@ -47,11 +76,11 @@ func CallOpenAI(ctx context.Context, model *ModelConfig, messages []ChatMessage)
 		maxTokens = 4096
 	}
 
-	reqBody := ChatRequest{
-		Model:       model.Model,
-		Messages:    messages,
-		MaxTokens:   maxTokens,
-		Temperature: 0.7,
+	reqBody := map[string]interface{}{
+		"model":       model.Model,
+		"messages":    formatOpenAIMessages(messages),
+		"max_tokens":  maxTokens,
+		"temperature": 0.7,
 	}
 
 	jsonData, err := json.Marshal(reqBody)
@@ -132,13 +161,13 @@ func CallOpenAIWithTools(ctx context.Context, model *ModelConfig, messages []Cha
 		maxTokens = 4096
 	}
 
-	reqBody := ChatRequest{
-		Model:       model.Model,
-		Messages:    messages,
-		MaxTokens:   maxTokens,
-		Temperature: 0.7,
-		Tools:       registry.GenerateNativeToolsSchema(),
-		ToolChoice:  "auto",
+	reqBody := map[string]interface{}{
+		"model":       model.Model,
+		"messages":    formatOpenAIMessages(messages),
+		"max_tokens":  maxTokens,
+		"temperature": 0.7,
+		"tools":       registry.GenerateNativeToolsSchema(),
+		"tool_choice":  "auto",
 	}
 
 	jsonData, err := json.Marshal(reqBody)

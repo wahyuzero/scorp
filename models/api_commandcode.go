@@ -186,6 +186,44 @@ func buildCommandCodePayload(model *ModelConfig, messages []ChatMessage, tools [
 		if role != "assistant" {
 			role = "user"
 		}
+
+		// Check for multimodal vision content
+		trimmed := strings.TrimSpace(msg.Content)
+		if strings.HasPrefix(trimmed, "[") && strings.Contains(trimmed, "image") {
+			var rawParts []map[string]interface{}
+			if err := json.Unmarshal([]byte(trimmed), &rawParts); err == nil {
+				var ccParts []interface{}
+				for _, p := range rawParts {
+					pType, _ := p["type"].(string)
+					if pType == "text" {
+						if txt, ok := p["text"].(string); ok {
+							ccParts = append(ccParts, textContentPart{Type: "text", Text: txt})
+						}
+					} else if pType == "image_url" || pType == "image" {
+						dataURL := ""
+						if imgURL, ok := p["image_url"].(map[string]interface{}); ok {
+							dataURL, _ = imgURL["url"].(string)
+						} else if img, ok := p["image"].(string); ok {
+							dataURL = img
+						}
+						if dataURL != "" {
+							ccParts = append(ccParts, map[string]interface{}{
+								"type":  "image",
+								"image": dataURL,
+							})
+						}
+					}
+				}
+				if len(ccParts) > 0 {
+					convertedMsgs = append(convertedMsgs, commandCodeMsg{
+						Role:    role,
+						Content: ccParts,
+					})
+					continue
+				}
+			}
+		}
+
 		convertedMsgs = append(convertedMsgs, commandCodeMsg{
 			Role: role,
 			Content: []interface{}{

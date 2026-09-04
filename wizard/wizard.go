@@ -175,11 +175,16 @@ func ModelMenuKeyboard() map[string]interface{} {
 		{"text": agentLabel, "callback_data": "mdl:pick:role:agent:_"},
 	})
 	delegLabel := "🎯 Delegation: " + OrNA(models.ModelCfg.DelegationModel)
-	if len(delegLabel) > 35 {
-		delegLabel = delegLabel[:35] + "…"
+	if len(delegLabel) > 30 {
+		delegLabel = delegLabel[:30] + "…"
+	}
+	visionLabel := "👁 Vision: " + OrNA(models.ModelCfg.VisionModel)
+	if len(visionLabel) > 30 {
+		visionLabel = visionLabel[:30] + "…"
 	}
 	rows = append(rows, []map[string]string{
 		{"text": delegLabel, "callback_data": "mdl:pick:role:delegation:_"},
+		{"text": visionLabel, "callback_data": "mdl:pick:role:vision:_"},
 	})
 
 	// ── Model list — tap for details ──
@@ -481,6 +486,9 @@ func ModelMenuText() string {
 		}
 		if name == models.ModelCfg.DelegationModel && name != models.ModelCfg.DefaultModel && name != models.ModelCfg.AgentModel {
 			roles = append(roles, "Delegation")
+		}
+		if name == models.ModelCfg.VisionModel && name != models.ModelCfg.DefaultModel && name != models.ModelCfg.AgentModel && name != models.ModelCfg.DelegationModel {
+			roles = append(roles, "Vision")
 		}
 		roleStr := ""
 		if len(roles) > 0 {
@@ -1157,6 +1165,8 @@ func HandleModelCallback(data string, chatID int64, msgID int64) (string, map[st
 				current = OrNA(models.ModelCfg.AgentModel)
 			case "delegation":
 				current = OrNA(models.ModelCfg.DelegationModel)
+			case "vision":
+				current = OrNA(models.ModelCfg.VisionModel)
 			}
 			models.ModelCfgMu.RUnlock()
 			title := fmt.Sprintf("%s — pick a model\nCurrent: <code>%s</code>", roleLabel(roleType), current)
@@ -1273,6 +1283,8 @@ func roleLabel(role string) string {
 		return "🤖 Agent"
 	case "delegation":
 		return "🎯 Delegation"
+	case "vision":
+		return "👁 Vision"
 	}
 	return role
 }

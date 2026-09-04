@@ -1,17 +1,17 @@
 package tools
 
 import (
-	"scorp-agent/models"
-	"scorp-agent/internal/helpers"
-	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"os"
 	"strings"
+	"time"
+
+	"scorp-agent/internal/helpers"
+	"scorp-agent/models"
 )
 
 // ──────────────────────────────────────────────
@@ -64,97 +64,36 @@ func ExecuteAnalyzeImage(args map[string]interface{}) (string, bool) {
 	return helpers.TruncOutput(result, helpers.MaxToolOutput), false
 }
 
-// callVisionModel sends an image + question to a vision-capable model via OpenAI-compatible API
+// callVisionModel sends an image + question to the configured vision model
 func callVisionModel(question, dataURL string) (string, error) {
-	// Get the configured model or use default vision model
-	modelCfg := models.RouteModel("chat")
-	if modelCfg == nil {
-		return "", fmt.Errorf("no model configured")
-	}
-
-	// Use a vision-capable model
-	// kr/claude-sonnet-4 is the only model on 9router that reliably supports image input
-	apiKey := models.ResolveAPIKey(modelCfg)
-	if apiKey == "" {
-		return "", fmt.Errorf("no API key for vision model — %s", models.KeySourceLabel(modelCfg))
-	}
-	baseURL := strings.TrimRight(modelCfg.BaseURL, "/")
-	endpoint := baseURL + "/chat/completions"
-
-	// Build request with image content
-	reqBody := map[string]interface{}{
-		"model": "kr/claude-sonnet-4", // Vision-capable model on 9router
-		"messages": []map[string]interface{}{
-			{
-				"role": "user",
-				"content": []map[string]interface{}{
-					{
-						"type": "text",
-						"text": question,
-					},
-					{
-						"type": "image_url",
-						"image_url": map[string]string{
-							"url": dataURL,
-						},
-					},
-				},
+	// Build multimodal content parts
+	parts := []map[string]interface{}{
+		{
+			"type": "text",
+			"text": question,
+		},
+		{
+			"type": "image_url",
+			"image_url": map[string]string{
+				"url": dataURL,
 			},
 		},
-		"max_tokens": 1000,
-		"stream":     false,
+	}
+	partsJSON, _ := json.Marshal(parts)
+
+	chatMsgs := []models.ChatMessage{
+		{
+			Role:    "user",
+			Content: string(partsJSON),
+		},
 	}
 
-	jsonData, err := json.Marshal(reqBody)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	reply, _, err := models.CallModelWithFallback(ctx, "vision", chatMsgs)
 	if err != nil {
-		return "", fmt.Errorf("marshal error: %w", err)
+		return "", err
 	}
-
-	req, err := http.NewRequest("POST", endpoint, bytes.NewReader(jsonData))
-	if err != nil {
-		return "", fmt.Errorf("request error: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+apiKey)
-
-	resp, err := models.GetAIClient(baseURL).Do(req)
-	if err != nil {
-		return "", fmt.Errorf("vision API call failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("read error: %w", err)
-	}
-
-	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("vision API error (HTTP %d): %s", resp.StatusCode, helpers.TruncateStr(string(body), 300))
-	}
-
-	var chatResp struct {
-		Choices []struct {
-			Message struct {
-				Role    string `json:"role"`
-				Content string `json:"content"`
-			} `json:"message"`
-		} `json:"choices"`
-		Error *struct {
-			Message string `json:"message"`
-		} `json:"error,omitempty"`
-	}
-
-	if err := json.Unmarshal(body, &chatResp); err != nil {
-		return "", fmt.Errorf("parse error: %s", helpers.TruncateStr(string(body), 200))
-	}
-
-	if chatResp.Error != nil {
-		return "", fmt.Errorf("API error: %s", chatResp.Error.Message)
-	}
-
-	if len(chatResp.Choices) == 0 {
-		return "", fmt.Errorf("no response from vision model")
-	}
-
-	return chatResp.Choices[0].Message.Content, nil
+	return reply, nil
 }

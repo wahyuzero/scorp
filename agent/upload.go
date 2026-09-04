@@ -114,7 +114,7 @@ func HandleUploadInAgentMode(doc TGDocument) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 		defer cancel()
 
-		reply, _, err := models.CallModelWithFallback(ctx, "agent", chatMsgs)
+		reply, _, err := models.CallModelWithFallback(ctx, "vision", chatMsgs)
 		if err != nil {
 			tools.EditMessageByID(doc.ChatID, msgID, fmt.Sprintf("❌ Error: %v", err), nil)
 			return

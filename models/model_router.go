@@ -36,6 +36,7 @@ type ModelRouterConfig struct {
 	DefaultModel    string `json:"default_model"`    // 💬 primary chat model
 	AgentModel      string `json:"agent_model"`      // 🤖 agent mode model
 	DelegationModel string `json:"delegation_model"` // 🎯 delegation/subagent model
+	VisionModel     string `json:"vision_model,omitempty"` // 👁 vision/image analysis model
 	PremiumModel    string `json:"premium_model"`    // 💎 complex tasks (optional)
 	Models       map[string]ModelConfig `json:"models"`
 	RoutingRules map[string]string      `json:"routing_rules"` // taskType → modelName
@@ -221,6 +222,12 @@ func RouteModel(taskType string) *ModelConfig {
 			modelName = ModelCfg.AgentModel
 		case "complex":
 			modelName = ModelCfg.PremiumModel
+		case "vision":
+			if ModelCfg.VisionModel != "" {
+				modelName = ModelCfg.VisionModel
+			} else {
+				modelName = findFirstVisionModel()
+			}
 		default:
 			modelName = ModelCfg.DefaultModel
 		}
@@ -236,6 +243,37 @@ func RouteModel(taskType string) *ModelConfig {
 		return &mc
 	}
 	return nil
+}
+
+// findFirstVisionModel returns the best available vision-capable model in config
+func findFirstVisionModel() string {
+	if ModelCfg == nil {
+		return ""
+	}
+	// 1. High-priority known vision models
+	candidates := []string{
+		"opencode/mimo-v2.5-free",
+		"gpt-5.6-luna",
+		"z-ai/glm-5.3-flash",
+		"gpt-4o",
+		"gpt-4o-mini",
+		"claude-3-5-sonnet",
+	}
+	for _, c := range candidates {
+		if _, ok := ModelCfg.Models[c]; ok {
+			return c
+		}
+	}
+	// 2. Keyword heuristic
+	for name := range ModelCfg.Models {
+		lower := strings.ToLower(name)
+		if strings.Contains(lower, "vision") || strings.Contains(lower, "luna") ||
+			strings.Contains(lower, "omni") || strings.Contains(lower, "4o") ||
+			strings.Contains(lower, "mimo") || strings.Contains(lower, "gemini") {
+			return name
+		}
+	}
+	return ModelCfg.DefaultModel
 }
 
 func GetModelByName(name string) *ModelConfig {
@@ -943,6 +981,12 @@ func SwitchModel(role, modelName string) string {
 		ModelCfg.RoutingRules["agent"] = modelName
 	case "delegation", "delegate":
 		ModelCfg.DelegationModel = modelName
+	case "vision":
+		ModelCfg.VisionModel = modelName
+		if ModelCfg.RoutingRules == nil {
+			ModelCfg.RoutingRules = make(map[string]string)
+		}
+		ModelCfg.RoutingRules["vision"] = modelName
 	case "premium":
 		ModelCfg.PremiumModel = modelName
 	default:

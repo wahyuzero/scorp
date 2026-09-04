@@ -2,11 +2,13 @@
   "default_model": "deepseek/deepseek-v4-flash",
   "agent_model": "deepseek/deepseek-v4-flash",
   "delegation_model": "deepseek/deepseek-v4-flash",
+  "vision_model": "opencode/mimo-v2.5-free",
   "premium_model": "deepseek/deepseek-v4-pro",
   "routing_rules": {
     "agent": "deepseek/deepseek-v4-flash",
     "chat": "deepseek/deepseek-v4-flash",
-    "complex": "deepseek/deepseek-v4-pro"
+    "complex": "deepseek/deepseek-v4-pro",
+    "vision": "opencode/mimo-v2.5-free"
   },
   "fallback_models": [
     "opencode/big-pickle",
