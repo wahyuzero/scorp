@@ -168,16 +168,16 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 			shouldRetry := false
 			retryReason := ""
 
-			if noToolRetries < 5 {
+			if noToolRetries < 5 && !isPureInformationalQuery(userMessage) {
 				if mentionsBrowserTask(userMessage) && !screenshotWasTaken(history) {
 					shouldRetry = true
 					retryReason = "⚠️ INCOMPLETE TASK: The user asked for a browser task. You MUST take a screenshot (browser action=screenshot) before completing."
 				} else if looksLikeContinuation(cleanReply) {
 					shouldRetry = true
-					retryReason = "⚠️ CONTINUATION DETECTED: You stated what you intend to do, but did NOT call any tools. You MUST execute the actions by calling tools NOW."
+					retryReason = "⚠️ ACTION-FIRST PROTOCOL: You stated an intended action in text without calling the tool. Do not narrate future actions — execute the tool call immediately."
 				} else if toolCount > 0 && expectedSteps >= 2 && toolCount < expectedSteps && !looksLikeContinuation(cleanReply) && !hasCompletionIndicators(cleanReply) {
 					shouldRetry = true
-					retryReason = fmt.Sprintf("⚠️ PARTIAL COMPLETION: The user asked for %d distinct steps, but you only executed %d tool(s).", expectedSteps, toolCount)
+					retryReason = fmt.Sprintf("⚠️ TASK PROGRESSION: The user requested a sequence of %d distinct steps, but only %d operation(s) have executed so far. Continue and execute the next requested operation now.", expectedSteps, toolCount)
 				}
 			}
 
@@ -362,7 +362,7 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 			if noToolRetries < 5 {
 				if looksLikeContinuation(cleanReply) {
 					shouldRetry = true
-					retryReason = "⚠️ CONTINUATION DETECTED: You stated what you intend to do, but did NOT call any tools. You MUST execute the actions by calling tools NOW."
+					retryReason = "⚠️ ACTION-FIRST PROTOCOL: You stated an intended action in text without calling the tool. Do not narrate future actions — execute the tool call immediately."
 				}
 			}
 
