@@ -1,7 +1,7 @@
 # Graph Report - scorp  (2026-09-04)
 
 ## Corpus Check
-- 162 files · ~114,097 words
+- 162 files · ~114,124 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ebb3bb0d`
+- Built from commit: `85107415`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 

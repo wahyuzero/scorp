@@ -64,6 +64,7 @@ var (
 func (e *DuckDuckGoHTMLEngine) Search(ctx context.Context, query string, limit int) ([]SearchResult, error) {
 	data := url.Values{}
 	data.Set("q", query)
+	data.Set("kl", "us-en")
 
 	req, err := http.NewRequestWithContext(ctx, "POST", "https://html.duckduckgo.com/html/", strings.NewReader(data.Encode()))
 	if err != nil {
@@ -71,6 +72,7 @@ func (e *DuckDuckGoHTMLEngine) Search(ctx context.Context, query string, limit i
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+	req.Header.Set("Accept-Language", "en-US,en;q=0.9,id;q=0.8")
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
 
 	resp, err := e.client.Do(req)
@@ -155,13 +157,14 @@ var (
 )
 
 func (e *BingEngine) Search(ctx context.Context, query string, limit int) ([]SearchResult, error) {
-	bingURL := fmt.Sprintf("https://www.bing.com/search?q=%s", url.QueryEscape(query))
+	bingURL := fmt.Sprintf("https://www.bing.com/search?q=%s&setlang=en&cc=us", url.QueryEscape(query))
 
 	req, err := http.NewRequestWithContext(ctx, "GET", bingURL, nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+	req.Header.Set("Accept-Language", "en-US,en;q=0.9,id;q=0.8")
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
 
 	resp, err := e.client.Do(req)

@@ -22,6 +22,7 @@ func hasForwardIntent(text string) bool {
 		"akan saya buat", "akan saya jalankan", "akan saya hapus", "akan saya bersihkan",
 		"saya bersihkan ", "saya buat file", "saya hapus file", "saya jalankan ",
 		"saya buat laporan", "saya susun ulang", "saya perbaiki",
+		"biarkan saya ", "izinkan saya ", "biar saya ", "akan saya verifikasi",
 		"let me ", "now i will ", "now i'll ", "next, i will ", "next i will ",
 		"i will now ", "i will next ",
 	}
@@ -67,6 +68,7 @@ func looksLikeContinuation(text string) bool {
 	patterns := []string{
 		"let me ", "i'll ", "i will ", "i'm going to ", "going to ",
 		"mari coba", "saya akan ", "akan coba ", "coba jalankan ", "coba periksa ",
+		"biarkan saya ", "izinkan saya ", "biar saya ",
 		"saya perlu ", "perlu saya ", "perlu dicek", "perlu periksa", "mari kita ",
 		"akan saya ", "akan memeriksa", "akan mengecek ", "cek dulu ", "tunggu sebentar",
 		"sekarang saya ", "sekarang kita ", "sekarang akan ", "sekarang compile", "sekarang jalankan",

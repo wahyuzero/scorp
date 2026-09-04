@@ -918,9 +918,9 @@
     "semantic_hash": ""
   },
   "agent/continuation.go": {
-    "mtime": 1788478527.593346,
-    "seen": 1788478568.4030237,
-    "ast_hash": "b9e5ff1583a7fc9079810b35ff62158e",
+    "mtime": 1788482347.30414,
+    "seen": 1788482385.2579322,
+    "ast_hash": "a48d438ea31e9b3d810c69b875f4279c",
     "semantic_hash": ""
   },
   "agent/thinking.go": {
@@ -972,9 +972,9 @@
     "semantic_hash": ""
   },
   "tools/metasearch.go": {
-    "mtime": 1788482230.3665526,
-    "seen": 1788482265.1967049,
-    "ast_hash": "0425ed8b990c7325077ab50d2ed04987",
+    "mtime": 1788482365.9063957,
+    "seen": 1788482385.2582123,
+    "ast_hash": "76ed7590564c0677a2ef063e3c335b49",
     "semantic_hash": ""
   },
   "tools/metasearch_test.go": {
