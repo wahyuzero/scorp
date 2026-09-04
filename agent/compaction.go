@@ -112,15 +112,15 @@ func truncateToolResultsInHistory(history []AgentMessage) ([]AgentMessage, int) 
 
 		var truncated string
 		if maxLen <= 120 {
-			// Stub: first line + char count
-			firstLine := content
+			// Extract tool name from header [Tool Result: <name>]
+			toolName := "tool"
 			if idx := strings.Index(content, "\n"); idx > 0 {
-				firstLine = content[:idx]
+				header := content[:idx]
+				header = strings.TrimPrefix(header, "[Tool Result:")
+				header = strings.TrimSuffix(header, "]")
+				toolName = strings.TrimSpace(header)
 			}
-			if len(firstLine) > 100 {
-				firstLine = firstLine[:100]
-			}
-			truncated = firstLine + fmt.Sprintf(" ...[%d chars trimmed]", len(content))
+			truncated = SummarizeOldToolResult(toolName, content)
 		} else {
 			// Keep head + tail
 			head := maxLen * 3 / 4

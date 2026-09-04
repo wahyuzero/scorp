@@ -9,7 +9,7 @@ import (
 
 // ──────────────────────────────────────────────
 // Todo Tool — Task tracking for multi-step work
-// Supports session isolation so CLI and Telegram sessions don't clash.
+// Encapsulated within TodoManager
 // ──────────────────────────────────────────────
 
 type TodoItem struct {
@@ -18,15 +18,26 @@ type TodoItem struct {
 	Status  string // pending, in_progress, completed, cancelled
 }
 
-// Session-isolated todo store
-var (
-	todoSessionMap = make(map[string][]TodoItem)
-	todoIDSeqMap   = make(map[string]int)
-	todoMu         sync.Mutex
-)
+type TodoManager struct {
+	mu         sync.Mutex
+	sessionMap map[string][]TodoItem
+	seqMap     map[string]int
+}
 
-// resolveSessionKey extracts a session identifier from args or defaults to "default"
-func resolveSessionKey(args map[string]interface{}) string {
+var defaultTodoManager = NewTodoManager()
+
+func NewTodoManager() *TodoManager {
+	return &TodoManager{
+		sessionMap: make(map[string][]TodoItem),
+		seqMap:     make(map[string]int),
+	}
+}
+
+func GetDefaultTodoManager() *TodoManager {
+	return defaultTodoManager
+}
+
+func (tm *TodoManager) ResolveKey(args map[string]interface{}) string {
 	if s, ok := args["_session_id"].(string); ok && s != "" {
 		return s
 	}
@@ -36,30 +47,26 @@ func resolveSessionKey(args map[string]interface{}) string {
 	return "default"
 }
 
-// ExecuteTodo handles the "todo" tool.
-// No args: returns current list.
-// With todos array: updates list (merge=false replaces, merge=true updates by id).
-func ExecuteTodo(args map[string]interface{}) (string, bool) {
-	sessionKey := resolveSessionKey(args)
+func (tm *TodoManager) Execute(args map[string]interface{}) (string, bool) {
+	sessionKey := tm.ResolveKey(args)
 
-	todoMu.Lock()
-	defer todoMu.Unlock()
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
 
-	// No args or only session_id → return formatted list
 	rawTodos, ok := args["todos"].([]interface{})
 	if !ok || len(rawTodos) == 0 {
-		return formatTodoListLocked(sessionKey), true
+		return tm.formatLocked(sessionKey), true
 	}
 
 	merge := helpers.GetBoolArg(args, "merge", false)
 
 	if !merge {
-		todoSessionMap[sessionKey] = nil
-		todoIDSeqMap[sessionKey] = 0
+		tm.sessionMap[sessionKey] = nil
+		tm.seqMap[sessionKey] = 0
 	}
 
-	list := todoSessionMap[sessionKey]
-	seq := todoIDSeqMap[sessionKey]
+	list := tm.sessionMap[sessionKey]
+	seq := tm.seqMap[sessionKey]
 
 	inProgressCount := 0
 	for _, item := range list {
@@ -87,7 +94,6 @@ func ExecuteTodo(args map[string]interface{}) (string, bool) {
 			id = fmt.Sprintf("t%d", seq)
 		}
 
-		// Validate status
 		if status != "pending" && status != "in_progress" && status != "completed" && status != "cancelled" {
 			status = "pending"
 		}
@@ -96,7 +102,6 @@ func ExecuteTodo(args map[string]interface{}) (string, bool) {
 			inProgressCount++
 		}
 
-		// If merge=true, update existing by id
 		updated := false
 		if merge {
 			for i := range list {
@@ -128,23 +133,14 @@ func ExecuteTodo(args map[string]interface{}) (string, bool) {
 		}
 	}
 
-	todoSessionMap[sessionKey] = list
-	todoIDSeqMap[sessionKey] = seq
+	tm.sessionMap[sessionKey] = list
+	tm.seqMap[sessionKey] = seq
 
-	return formatTodoListLocked(sessionKey), true
+	return tm.formatLocked(sessionKey), true
 }
 
-// formatTodoList returns the formatted todo list (thread-safe wrapper)
-func formatTodoList() string {
-	todoMu.Lock()
-	defer todoMu.Unlock()
-	return formatTodoListLocked("default")
-}
-
-// formatTodoListLocked returns formatted todo list WITHOUT locking.
-// Caller MUST hold todoMu.
-func formatTodoListLocked(sessionKey string) string {
-	list := todoSessionMap[sessionKey]
+func (tm *TodoManager) formatLocked(sessionKey string) string {
+	list := tm.sessionMap[sessionKey]
 	if len(list) == 0 {
 		return "📋 Todo list is empty.\nUse: todos=[{id, content, status}] to create items."
 	}
@@ -175,6 +171,20 @@ func formatTodoListLocked(sessionKey string) string {
 	}
 
 	return sb.String()
+}
+
+// ──────────────────────────────────────────────
+// Compatibility Layer
+// ──────────────────────────────────────────────
+
+func ExecuteTodo(args map[string]interface{}) (string, bool) {
+	return defaultTodoManager.Execute(args)
+}
+
+func formatTodoList() string {
+	defaultTodoManager.mu.Lock()
+	defer defaultTodoManager.mu.Unlock()
+	return defaultTodoManager.formatLocked("default")
 }
 
 func getStringArgFromMap(m map[string]interface{}, key, defaultVal string) string {
