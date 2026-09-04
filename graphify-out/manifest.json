@@ -144,9 +144,9 @@
     "semantic_hash": "08acac7901e0265f06c97b0554494354"
   },
   "cli.go": {
-    "mtime": 1788462137.8134348,
-    "seen": 1788462184.2393959,
-    "ast_hash": "fb4779edcc42e9cf46b960f4b2d5c403",
+    "mtime": 1788537047.1476681,
+    "seen": 1788537408.483388,
+    "ast_hash": "a7d6ac374c10bc0dd8d18126509a60c2",
     "semantic_hash": ""
   },
   "cli_test.go": {
@@ -270,9 +270,9 @@
     "semantic_hash": ""
   },
   "go.mod": {
-    "mtime": 1788457280.4111238,
-    "seen": 1788457860.2796836,
-    "ast_hash": "f287f1f53c94b7196c4f37b596dd25ca",
+    "mtime": 1788537024.2495878,
+    "seen": 1788537408.483512,
+    "ast_hash": "ce88ec3cc99fdb5d9e36dcf02f65be18",
     "semantic_hash": ""
   },
   "install.sh": {
@@ -1017,6 +1017,12 @@
     "mtime": 1788485070.7364862,
     "seen": 1788485134.562198,
     "ast_hash": "96226564e4ed29d80a6ca44cc5d9e020",
+    "semantic_hash": ""
+  },
+  "tui_input.go": {
+    "mtime": 1788537315.1035085,
+    "seen": 1788537408.4840689,
+    "ast_hash": "72981b554e5656ba5c19a7a4e96178a4",
     "semantic_hash": ""
   }
 }

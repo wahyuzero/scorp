@@ -96,17 +96,23 @@ func startCLI(initialPrompts ...string) {
 	scanner.Buffer(make([]byte, 1024*1024), 1024*1024) // 1MB buffer
 
 	for {
+		var input string
 		if isTerminal(os.Stdin) {
-			if currentSessionID == "default" {
-				fmt.Print("\n\033[1;36mscorp\033[0m \033[1;32m❯\033[0m ")
-			} else {
-				fmt.Printf("\n\033[1;36mscorp\033[0m \033[2m[%s]\033[0m \033[1;32m❯\033[0m ", currentSessionID)
+			promptStr := "\n\033[1;36mscorp\033[0m \033[1;32m❯\033[0m "
+			if currentSessionID != "default" {
+				promptStr = fmt.Sprintf("\n\033[1;36mscorp\033[0m \033[2m[%s]\033[0m \033[1;32m❯\033[0m ", currentSessionID)
 			}
+			line, err := readInteractiveInput(promptStr)
+			if err != nil {
+				break
+			}
+			input = strings.TrimSpace(line)
+		} else {
+			if !scanner.Scan() {
+				break
+			}
+			input = strings.TrimSpace(scanner.Text())
 		}
-		if !scanner.Scan() {
-			break
-		}
-		input := strings.TrimSpace(scanner.Text())
 		if input == "" {
 			continue
 		}
