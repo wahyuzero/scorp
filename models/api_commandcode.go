@@ -298,7 +298,7 @@ func CallCommandCodeWithTools(ctx context.Context, model *ModelConfig, messages 
 	var textBuilder strings.Builder
 	activeCalls := make(map[string]*activeToolCall)
 	var toolCalls []ToolCall
-	var promptTokens, completionTokens int
+	var promptTokens, completionTokens, cachedTokens int
 
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
@@ -381,6 +381,25 @@ func CallCommandCodeWithTools(ctx context.Context, model *ModelConfig, messages 
 				if outTok, ok := usage["outputTokens"].(float64); ok {
 					completionTokens = int(outTok)
 				}
+				if details, ok := usage["inputTokenDetails"].(map[string]interface{}); ok {
+					if cr, ok := details["cacheReadTokens"].(float64); ok {
+						cachedTokens = int(cr)
+					}
+				}
+				if cachedTokens == 0 {
+					if cr, ok := usage["cachedInputTokens"].(float64); ok {
+						cachedTokens = int(cr)
+					}
+				}
+				if cachedTokens == 0 {
+					if raw, ok := usage["raw"].(map[string]interface{}); ok {
+						if ptd, ok := raw["prompt_tokens_details"].(map[string]interface{}); ok {
+							if ct, ok := ptd["cached_tokens"].(float64); ok {
+								cachedTokens = int(ct)
+							}
+						}
+					}
+				}
 			}
 		case "error":
 			errMsg := "Command Code API stream error"
@@ -424,10 +443,10 @@ func CallCommandCodeWithTools(ctx context.Context, model *ModelConfig, messages 
 		reply = cleanReply
 	}
 
-	// Track usage and cost
+	// Track usage and cost with prompt caching
 	if promptTokens > 0 || completionTokens > 0 {
-		TrackModelUsage(model.Model, promptTokens, completionTokens)
-		RecordCost(model.Model, promptTokens, completionTokens)
+		TrackModelUsageWithCache(model.Model, promptTokens, completionTokens, cachedTokens)
+		RecordCostWithCache(model.Model, promptTokens, completionTokens, cachedTokens)
 	}
 
 	return reply, toolCalls, nil

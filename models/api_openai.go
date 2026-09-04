@@ -110,8 +110,12 @@ func CallOpenAI(ctx context.Context, model *ModelConfig, messages []ChatMessage)
 	reply := chatResp.Choices[0].Message.Content
 
 	// Track usage + cost
-	TrackModelUsage(model.Model, chatResp.Usage.PromptTokens, chatResp.Usage.CompletionTokens)
-	RecordCost(model.Model, chatResp.Usage.PromptTokens, chatResp.Usage.CompletionTokens)
+	cachedTokens := 0
+	if chatResp.Usage.PromptTokensDetails != nil {
+		cachedTokens = chatResp.Usage.PromptTokensDetails.CachedTokens
+	}
+	TrackModelUsageWithCache(model.Model, chatResp.Usage.PromptTokens, chatResp.Usage.CompletionTokens, cachedTokens)
+	RecordCostWithCache(model.Model, chatResp.Usage.PromptTokens, chatResp.Usage.CompletionTokens, cachedTokens)
 
 	return reply, nil
 }
@@ -203,8 +207,12 @@ func CallOpenAIWithTools(ctx context.Context, model *ModelConfig, messages []Cha
 	}
 
 	// Track usage + cost
-	TrackModelUsage(model.Model, chatResp.Usage.PromptTokens, chatResp.Usage.CompletionTokens)
-	RecordCost(model.Model, chatResp.Usage.PromptTokens, chatResp.Usage.CompletionTokens)
+	cachedTokensWithTools := 0
+	if chatResp.Usage.PromptTokensDetails != nil {
+		cachedTokensWithTools = chatResp.Usage.PromptTokensDetails.CachedTokens
+	}
+	TrackModelUsageWithCache(model.Model, chatResp.Usage.PromptTokens, chatResp.Usage.CompletionTokens, cachedTokensWithTools)
+	RecordCostWithCache(model.Model, chatResp.Usage.PromptTokens, chatResp.Usage.CompletionTokens, cachedTokensWithTools)
 
 	return content, toolCalls, nil
 }

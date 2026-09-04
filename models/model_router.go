@@ -53,6 +53,7 @@ type ModelUsage struct {
 	Model        string    `json:"model"`
 	InputTokens  int       `json:"input_tokens"`
 	OutputTokens int       `json:"output_tokens"`
+	CachedTokens int       `json:"cached_tokens"`
 	Calls        int       `json:"calls"`
 	LastUsed     time.Time `json:"last_used"`
 }
@@ -680,6 +681,10 @@ func InitModelUsage() {
 }
 
 func TrackModelUsage(model string, inputTokens, outputTokens int) {
+	TrackModelUsageWithCache(model, inputTokens, outputTokens, 0)
+}
+
+func TrackModelUsageWithCache(model string, inputTokens, outputTokens, cachedTokens int) {
 	ModelUsageMu.Lock()
 	defer ModelUsageMu.Unlock()
 
@@ -695,6 +700,7 @@ func TrackModelUsage(model string, inputTokens, outputTokens int) {
 
 	u.InputTokens += inputTokens
 	u.OutputTokens += outputTokens
+	u.CachedTokens += cachedTokens
 	u.Calls++
 	u.LastUsed = time.Now()
 
@@ -878,7 +884,12 @@ func FormatUsageStats() string {
 	for _, u := range ModelUsageMap {
 		cost := 0.0
 		if p, ok := pricing[u.Model]; ok && len(p) == 2 {
-			cost = (float64(u.InputTokens)/1e6)*p[0] + (float64(u.OutputTokens)/1e6)*p[1]
+			noCache := u.InputTokens - u.CachedTokens
+			if noCache < 0 {
+				noCache = 0
+			}
+			cacheRate := p[0] * 0.10 // 90% discount on cached tokens
+			cost = (float64(noCache)/1e6)*p[0] + (float64(u.CachedTokens)/1e6)*cacheRate + (float64(u.OutputTokens)/1e6)*p[1]
 		}
 		totalCost += cost
 
@@ -887,8 +898,13 @@ func FormatUsageStats() string {
 			costStr = fmt.Sprintf("$%.4f", cost)
 		}
 
+		cachedInfo := ""
+		if u.CachedTokens > 0 && u.InputTokens > 0 {
+			cachedInfo = fmt.Sprintf(" | Cached: %d (%.0f%%)", u.CachedTokens, float64(u.CachedTokens)*100.0/float64(u.InputTokens))
+		}
+
 		sb.WriteString(fmt.Sprintf("<b>%s</b>\n", u.Model))
-		sb.WriteString(fmt.Sprintf("  Calls: %d | In: %d | Out: %d\n", u.Calls, u.InputTokens, u.OutputTokens))
+		sb.WriteString(fmt.Sprintf("  Calls: %d | In: %d%s | Out: %d\n", u.Calls, u.InputTokens, cachedInfo, u.OutputTokens))
 		sb.WriteString(fmt.Sprintf("  Cost: %s | Last: %s\n\n", costStr, u.LastUsed.Format("01/02 15:04")))
 	}
 

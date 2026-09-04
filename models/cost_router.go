@@ -19,8 +19,9 @@ import (
 
 // ModelCost tracks pricing and budget for cost-aware routing.
 type ModelCost struct {
-	InputPer1M  float64 `json:"input_per_1m"`  // $/1M input tokens
-	OutputPer1M float64 `json:"output_per_1m"` // $/1M output tokens
+	InputPer1M     float64 `json:"input_per_1m"`      // $/1M input tokens
+	OutputPer1M    float64 `json:"output_per_1m"`     // $/1M output tokens
+	CacheReadPer1M float64 `json:"cache_read_per_1m"` // $/1M cache read tokens
 }
 
 // CostConfig holds cost-aware routing settings.
@@ -60,24 +61,24 @@ func defaultCostConfig() *CostConfig {
 		OffPeakEnd:     7,
 		Enabled:        true,
 		ModelCosts: map[string]ModelCost{
-			"deepseek/deepseek-v4-flash":       {InputPer1M: 0.22, OutputPer1M: 0.66},
-			"deepseek/deepseek-v4-pro":         {InputPer1M: 0.66, OutputPer1M: 1.98},
-			"poolside/laguna-s-2.1-free":       {InputPer1M: 0.0, OutputPer1M: 0.0},
-			"big-pickle":                       {InputPer1M: 0.0, OutputPer1M: 0.0},
-			"mimo-v2.5-free":                   {InputPer1M: 0.0, OutputPer1M: 0.0},
-			"ling-3.0-flash-fin-free":          {InputPer1M: 0.0, OutputPer1M: 0.0},
-			"gpt-5.6-luna":                     {InputPer1M: 0.20, OutputPer1M: 1.20},
-			"meta/muse-spark-1.2-contributor":  {InputPer1M: 0.10, OutputPer1M: 0.20},
-			"z-ai/glm-5.3-flash":               {InputPer1M: 0.15, OutputPer1M: 0.50},
-			"xiaomi/mimo-v2.5":                 {InputPer1M: 0.14, OutputPer1M: 0.28},
-			"Qwen/Qwen3.8-Flash":               {InputPer1M: 0.16, OutputPer1M: 0.47},
-			"glm-4-flash":                      {InputPer1M: 0.0, OutputPer1M: 0.0},
-			"deepseek-chat":                    {InputPer1M: 0.14, OutputPer1M: 0.28},
-			"deepseek-coder":                   {InputPer1M: 0.14, OutputPer1M: 0.28},
-			"groq-llama-70b":                   {InputPer1M: 0.59, OutputPer1M: 0.79},
-			"gemini-flash":                     {InputPer1M: 0.075, OutputPer1M: 0.30},
-			"glm-4.6":                          {InputPer1M: 0.60, OutputPer1M: 2.20},
-			"glm-5.2":                          {InputPer1M: 0.50, OutputPer1M: 2.00},
+			"deepseek/deepseek-v4-flash":       {InputPer1M: 0.22, OutputPer1M: 0.66, CacheReadPer1M: 0.022},
+			"deepseek/deepseek-v4-pro":         {InputPer1M: 0.66, OutputPer1M: 1.98, CacheReadPer1M: 0.066},
+			"poolside/laguna-s-2.1-free":       {InputPer1M: 0.0, OutputPer1M: 0.0, CacheReadPer1M: 0.0},
+			"big-pickle":                       {InputPer1M: 0.0, OutputPer1M: 0.0, CacheReadPer1M: 0.0},
+			"mimo-v2.5-free":                   {InputPer1M: 0.0, OutputPer1M: 0.0, CacheReadPer1M: 0.0},
+			"ling-3.0-flash-fin-free":          {InputPer1M: 0.0, OutputPer1M: 0.0, CacheReadPer1M: 0.0},
+			"gpt-5.6-luna":                     {InputPer1M: 0.20, OutputPer1M: 1.20, CacheReadPer1M: 0.020},
+			"meta/muse-spark-1.2-contributor":  {InputPer1M: 0.10, OutputPer1M: 0.20, CacheReadPer1M: 0.010},
+			"z-ai/glm-5.3-flash":               {InputPer1M: 0.15, OutputPer1M: 0.50, CacheReadPer1M: 0.015},
+			"xiaomi/mimo-v2.5":                 {InputPer1M: 0.14, OutputPer1M: 0.28, CacheReadPer1M: 0.014},
+			"Qwen/Qwen3.8-Flash":               {InputPer1M: 0.16, OutputPer1M: 0.47, CacheReadPer1M: 0.016},
+			"glm-4-flash":                      {InputPer1M: 0.0, OutputPer1M: 0.0, CacheReadPer1M: 0.0},
+			"deepseek-chat":                    {InputPer1M: 0.14, OutputPer1M: 0.28, CacheReadPer1M: 0.014},
+			"deepseek-coder":                   {InputPer1M: 0.14, OutputPer1M: 0.28, CacheReadPer1M: 0.014},
+			"groq-llama-70b":                   {InputPer1M: 0.59, OutputPer1M: 0.79, CacheReadPer1M: 0.059},
+			"gemini-flash":                     {InputPer1M: 0.075, OutputPer1M: 0.30, CacheReadPer1M: 0.0},
+			"glm-4.6":                          {InputPer1M: 0.60, OutputPer1M: 2.20, CacheReadPer1M: 0.060},
+			"glm-5.2":                          {InputPer1M: 0.50, OutputPer1M: 2.00, CacheReadPer1M: 0.050},
 		},
 	}
 }
@@ -158,8 +159,13 @@ func isOffPeak() bool {
 	return hour >= start || hour < end
 }
 
-// recordCost adds to today's cost tracker.
+// RecordCost adds to today's cost tracker (backward-compatible).
 func RecordCost(modelName string, inputTokens, outputTokens int) {
+	RecordCostWithCache(modelName, inputTokens, outputTokens, 0)
+}
+
+// RecordCostWithCache adds to today's cost tracker taking prompt caching into account.
+func RecordCostWithCache(modelName string, inputTokens, outputTokens, cachedTokens int) {
 	costCfgMu.RLock()
 	cfg := costCfg
 	costCfgMu.RUnlock()
@@ -173,7 +179,18 @@ func RecordCost(modelName string, inputTokens, outputTokens int) {
 		return // Unknown model cost, skip
 	}
 
-	callCost := (float64(inputTokens)/1_000_000.0)*cost.InputPer1M +
+	cacheRate := cost.CacheReadPer1M
+	if cacheRate == 0 && cost.InputPer1M > 0 {
+		cacheRate = cost.InputPer1M * 0.10 // 90% discount by default
+	}
+
+	noCacheTokens := inputTokens - cachedTokens
+	if noCacheTokens < 0 {
+		noCacheTokens = 0
+	}
+
+	callCost := (float64(noCacheTokens)/1_000_000.0)*cost.InputPer1M +
+		(float64(cachedTokens)/1_000_000.0)*cacheRate +
 		(float64(outputTokens)/1_000_000.0)*cost.OutputPer1M
 
 	costTracker.mu.Lock()
@@ -183,8 +200,13 @@ func RecordCost(modelName string, inputTokens, outputTokens int) {
 
 	saveCostTracker()
 
-	log.Printf("[cost] +%s $%.6f (in=%d out=%d) total=$%.4f",
-		modelName, callCost, inputTokens, outputTokens, costTracker.getTotal())
+	if cachedTokens > 0 {
+		log.Printf("[cost] +%s $%.6f (in=%d cached=%d out=%d) total=$%.4f",
+			modelName, callCost, noCacheTokens, cachedTokens, outputTokens, costTracker.getTotal())
+	} else {
+		log.Printf("[cost] +%s $%.6f (in=%d out=%d) total=$%.4f",
+			modelName, callCost, inputTokens, outputTokens, costTracker.getTotal())
+	}
 }
 
 func (ct *CostTracker) getTotal() float64 {
