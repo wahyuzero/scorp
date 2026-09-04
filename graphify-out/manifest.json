@@ -972,9 +972,9 @@
     "semantic_hash": ""
   },
   "tools/metasearch.go": {
-    "mtime": 1788482038.8790421,
-    "seen": 1788482129.6786118,
-    "ast_hash": "a37a48d02be1a22315a187fda3ba2289",
+    "mtime": 1788482230.3665526,
+    "seen": 1788482265.1967049,
+    "ast_hash": "0425ed8b990c7325077ab50d2ed04987",
     "semantic_hash": ""
   },
   "tools/metasearch_test.go": {

@@ -2,6 +2,7 @@ package tools
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"html"
@@ -133,7 +134,107 @@ func (e *DuckDuckGoHTMLEngine) Search(ctx context.Context, query string, limit i
 	return results, nil
 }
 
-// ── 2. DuckDuckGo Lite Engine (Ultra-compact fallback) ──
+// ── 2. Bing Web Search Engine ──
+
+type BingEngine struct {
+	client *http.Client
+}
+
+func NewBingEngine() *BingEngine {
+	return &BingEngine{
+		client: &http.Client{Timeout: 4 * time.Second},
+	}
+}
+
+func (e *BingEngine) Name() string { return "Bing" }
+
+var (
+	bingAlgoBlockRegex = regexp.MustCompile(`(?s)<li class="b_algo"[^>]*>(.*?)</li>`)
+	bingLinkRegex      = regexp.MustCompile(`(?s)<h2[^>]*><a[^>]+href="([^"]+)"[^>]*>(.*?)</a></h2>`)
+	bingSnippetRegex   = regexp.MustCompile(`(?s)<p[^>]*>(.*?)</p>`)
+)
+
+func (e *BingEngine) Search(ctx context.Context, query string, limit int) ([]SearchResult, error) {
+	bingURL := fmt.Sprintf("https://www.bing.com/search?q=%s", url.QueryEscape(query))
+
+	req, err := http.NewRequestWithContext(ctx, "GET", bingURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+
+	resp, err := e.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 512*1024))
+	if err != nil {
+		return nil, err
+	}
+
+	htmlStr := string(body)
+	algos := bingAlgoBlockRegex.FindAllStringSubmatch(htmlStr, limit*2)
+
+	var results []SearchResult
+	for _, block := range algos {
+		if len(results) >= limit {
+			break
+		}
+		linkMatch := bingLinkRegex.FindStringSubmatch(block[1])
+		if len(linkMatch) < 3 {
+			continue
+		}
+
+		rawURL := html.UnescapeString(linkMatch[1])
+		title := html.UnescapeString(strings.TrimSpace(htmlCleaner.ReplaceAllString(linkMatch[2], "")))
+
+		// Decode Bing redirect URL: &u=a1<BASE64>...
+		actualURL := rawURL
+		if strings.Contains(rawURL, "&u=a1") {
+			parts := strings.Split(rawURL, "&u=a1")
+			if len(parts) > 1 {
+				b64Part := parts[1]
+				if idx := strings.Index(b64Part, "&"); idx > 0 {
+					b64Part = b64Part[:idx]
+				}
+				// Pad base64 if needed
+				if pad := len(b64Part) % 4; pad != 0 {
+					b64Part += strings.Repeat("=", 4-pad)
+				}
+				if decodedBytes, err := base64.StdEncoding.DecodeString(b64Part); err == nil {
+					actualURL = string(decodedBytes)
+				} else if decodedBytes, err := base64.URLEncoding.DecodeString(b64Part); err == nil {
+					actualURL = string(decodedBytes)
+				}
+			}
+		}
+
+		snippet := ""
+		snipMatch := bingSnippetRegex.FindStringSubmatch(block[1])
+		if len(snipMatch) >= 2 {
+			snippet = html.UnescapeString(strings.TrimSpace(htmlCleaner.ReplaceAllString(snipMatch[1], "")))
+		}
+
+		if actualURL != "" && title != "" && !strings.Contains(actualURL, "bing.com/ck/a") {
+			results = append(results, SearchResult{
+				Title:   title,
+				URL:     actualURL,
+				Snippet: snippet,
+				Engine:  "Bing",
+				Score:   1.2,
+			})
+		}
+	}
+
+	return results, nil
+}
 
 type DuckDuckGoLiteEngine struct {
 	client *http.Client
@@ -641,10 +742,10 @@ func NewDefaultMetaSearchAggregator() *MetaSearchAggregator {
 	}
 
 	// 2. Built-in zero-dependency free engines (always active)
+	agg.RegisterEngine(NewBingEngine())
 	agg.RegisterEngine(NewDuckDuckGoHTMLEngine())
 	agg.RegisterEngine(NewWikipediaEngine())
 	agg.RegisterEngine(NewGitHubEngine())
-	agg.RegisterEngine(NewDuckDuckGoLiteEngine())
 
 	return agg
 }
