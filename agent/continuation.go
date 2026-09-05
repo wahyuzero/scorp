@@ -1,9 +1,7 @@
 package agent
 
 import (
-	"fmt"
 	"strings"
-	"unicode"
 )
 
 // ──────────────────────────────────────────────
@@ -78,55 +76,6 @@ func IsPureInformationalQuery(msg string) bool {
 	}
 	for _, p := range infoPrefixes {
 		if strings.HasPrefix(lower, p) {
-			return true
-		}
-	}
-	return false
-}
-
-// CountStepsInMessage counts requested steps if user formatted a numbered list or sequential connectors.
-func CountStepsInMessage(msg string) int {
-	lower := strings.ToLower(msg)
-
-	numberedCount := 0
-	for i := 1; i <= 20; i++ {
-		if strings.Contains(lower, fmt.Sprintf("%d.", i)) || strings.Contains(lower, fmt.Sprintf("%d)", i)) {
-			numberedCount++
-		}
-	}
-	if numberedCount >= 2 {
-		return numberedCount
-	}
-
-	seqCount := 0
-	seqConnectors := []string{
-		" then ", " after that ", " next,", "\nthen ", "→",
-		" lalu ", " kemudian ", " setelah ", " setelah itu ",
-	}
-	for _, sc := range seqConnectors {
-		seqCount += strings.Count(lower, sc)
-	}
-
-	if seqCount >= 1 {
-		return seqCount + 1
-	}
-
-	return 0
-}
-
-// ContainsAnyWord checks if a string contains any target token bounded by non-alphanumeric chars
-func ContainsAnyWord(s string, words []string) bool {
-	fields := strings.FieldsFunc(s, func(r rune) bool {
-		return !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '_' && r != '\''
-	})
-
-	fieldSet := make(map[string]bool, len(fields))
-	for _, f := range fields {
-		fieldSet[f] = true
-	}
-
-	for _, w := range words {
-		if fieldSet[w] {
 			return true
 		}
 	}
