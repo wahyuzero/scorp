@@ -270,6 +270,14 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 			shouldRetry := false
 			retryReason := ""
 
+			// Detect text-form tool syntax (DSML/XML) — a training prior of
+			// some gateway models. Nudge specifically so the retry uses
+			// native function calling instead of repeating the mistake.
+			dsmlHint := ""
+			if strings.Contains(cleanReply, "DSML") || strings.Contains(cleanReply, "<tool_call>") || strings.Contains(cleanReply, "tool_call>") {
+				dsmlHint = " Your last reply contained raw tool-call TAGS (DSML/XML). That text is NOT executed. Emit the tool call through native function calling instead."
+			}
+
 			// If user asked a simple informational/conceptual question (e.g. "What is Docker?"), allow direct text answer.
 			if isPureInfo && toolCount == 0 && iter == 0 {
 				shouldRetry = false
@@ -281,6 +289,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 				} else {
 					retryReason = "⚠️ TASK IN-PROGRESS: You outputted intermediate thought without calling any tools. In Agent Mode, you must either call an action tool to continue execution, or call 'complete_task' with your final report if all requested work is finished and verified."
 				}
+				retryReason += dsmlHint
 			}
 
 			if shouldRetry {
