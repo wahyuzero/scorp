@@ -24,9 +24,9 @@
     "semantic_hash": ""
   },
   "agent/loop.go": {
-    "mtime": 1788614211.6651905,
-    "seen": 1788614289.4501655,
-    "ast_hash": "5f36a46ac31e1498ea79eb5900ca857c",
+    "mtime": 1788614536.3518312,
+    "seen": 1788614570.672077,
+    "ast_hash": "e8d13758405321ae933aed4f5af9be1e",
     "semantic_hash": ""
   },
   "agent/phase6_test.go": {
@@ -936,9 +936,9 @@
     "semantic_hash": ""
   },
   "telegram/daemon.go": {
-    "mtime": 1788569130.9918857,
-    "seen": 1788569227.5850475,
-    "ast_hash": "f4984b9e14121473e7d39e864de2c20e",
+    "mtime": 1788614530.4468377,
+    "seen": 1788614570.6723216,
+    "ast_hash": "ce4d6d6b002d0d6a6e99b95fe0450d40",
     "semantic_hash": ""
   },
   "agent/session_mgr.go": {

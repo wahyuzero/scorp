@@ -24,9 +24,9 @@
     "semantic_hash": ""
   },
   "agent/loop.go": {
-    "mtime": 1788569162.9539518,
-    "seen": 1788569227.584716,
-    "ast_hash": "feab2cb3c910d27978bde158ae386b39",
+    "mtime": 1788614211.6651905,
+    "seen": 1788614289.4501655,
+    "ast_hash": "5f36a46ac31e1498ea79eb5900ca857c",
     "semantic_hash": ""
   },
   "agent/phase6_test.go": {
@@ -918,9 +918,9 @@
     "semantic_hash": ""
   },
   "agent/continuation.go": {
-    "mtime": 1788542090.4143987,
-    "seen": 1788542837.4716609,
-    "ast_hash": "39c21484c4f19840ed00c66c9c1603a5",
+    "mtime": 1788614163.5002437,
+    "seen": 1788614289.4501595,
+    "ast_hash": "e9fc17832c3c8a860b6cc1668abcf54b",
     "semantic_hash": ""
   },
   "agent/thinking.go": {
@@ -1101,6 +1101,18 @@
     "mtime": 1788569049.6757174,
     "seen": 1788569227.5851274,
     "ast_hash": "8a5b41cc7c1cbbdd5e41aaf72308fc77",
+    "semantic_hash": ""
+  },
+  "agent/continuation_test.go": {
+    "mtime": 1788614170.1802363,
+    "seen": 1788614289.4501631,
+    "ast_hash": "76615d5cff514e13f4db4a855bed75bf",
+    "semantic_hash": ""
+  },
+  "docs/INCIDENT_20260905_runaway_cli_verify_session.md": {
+    "mtime": 1788592119.2737684,
+    "seen": 1788614289.4505014,
+    "ast_hash": "2e4f4bd6e5e1aef06da7109fb0d73870",
     "semantic_hash": ""
   }
 }

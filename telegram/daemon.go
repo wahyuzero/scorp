@@ -637,21 +637,26 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 		}
 
 		// Check if user is clarifying a question
+		activeSess := GetActiveSessionID(chatIDStr)
 		if tools.HasPendingClarify(chatIDStr) {
 			tools.ResolveClarify(action, chatIDStr, "")
 			return
 		}
+		if tools.HasPendingClarify(activeSess) {
+			tools.ResolveClarify(action, activeSess, "")
+			return
+		}
 
 		// Real-time Steering Queue check: if agent loop is active for this chat, queue as steering message!
-		if agent.IsLoopActive(chatIDStr) {
+		if agent.IsLoopActive(chatIDStr) || agent.IsLoopActive(activeSess) {
 			agent.QueueSteeringMessage(chatIDStr, action)
+			agent.QueueSteeringMessage(activeSess, action)
 			SendMessage("⚡ <i>Instruction received — steering agent mid-run...</i>", nil)
 			return
 		}
 
 		// Check if session is in agent mode, default to agent loop using current active session!
-		activeSess := GetActiveSessionID(chatIDStr)
 		agent.EnterAgentMode(activeSess)
-		agent.RunAgentSessionLoop(activeSess, chatID, action, 0)
+		go agent.RunAgentSessionLoop(activeSess, chatID, action, 0)
 	}
 }

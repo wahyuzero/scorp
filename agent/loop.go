@@ -75,9 +75,14 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 	})
 	appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: userMessage})
 
-	// Mark session as active
+	// Mark session and chat as active
 	setLoopActive(chatIDStr, true)
 	defer setLoopActive(chatIDStr, false)
+	rawChatIDStr := fmt.Sprintf("%d", chatID)
+	if rawChatIDStr != chatIDStr && chatID != 0 {
+		setLoopActive(rawChatIDStr, true)
+		defer setLoopActive(rawChatIDStr, false)
+	}
 
 	// Auto-title session in background if unnamed and on turn 1
 	if ShouldAutoTitleSession(sessionID) && len(history) <= 3 {
@@ -246,7 +251,11 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 
 		for _, tc := range toolCalls {
 			// Real-time Steering Queue check (PicoClaw Parity)
-			if steerMsg, hasSteer := PopSteeringMessage(chatIDStr); hasSteer {
+			steerMsg, hasSteer := PopSteeringMessage(chatIDStr)
+			if !hasSteer && rawChatIDStr != chatIDStr && chatID != 0 {
+				steerMsg, hasSteer = PopSteeringMessage(rawChatIDStr)
+			}
+			if hasSteer {
 				log.Printf("[steering] User redirected execution mid-run: %s", steerMsg)
 				thinkingLines = append(thinkingLines, fmt.Sprintf("⚡ [INTERRUPT] Steered: %s", helpers.TruncateStr(steerMsg, 50)))
 				steerTurnMsg := fmt.Sprintf("⚡ [USER INTERRUPT]: %s", steerMsg)
