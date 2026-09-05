@@ -113,17 +113,22 @@ func InstallUpstreamSpec(spec string) (string, bool) {
 	}
 	command, pkg := m[1], m[2]
 
+	// Everything after the package name becomes runtime arguments
+	// (npx:@org/server /tmp → npx -y @org/server /tmp).
+	parts := strings.Fields(pkg)
+	if len(parts) == 0 {
+		return "❌ Empty package spec.", false
+	}
+
 	var args []string
 	switch command {
 	case "npx", "bunx":
-		args = []string{"-y", pkg}
-	case "uvx":
-		args = []string{pkg}
+		args = append([]string{"-y"}, parts...)
 	default:
-		args = strings.Fields(pkg)
+		args = parts
 	}
 
-	name := deriveSpecName(command, pkg)
+	name := deriveSpecName(command, parts[0])
 	return mcp.AddServerEntry(name, mcp.MCPServerConfig{Command: command, Args: args})
 }
 
