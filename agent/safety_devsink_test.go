@@ -9,6 +9,7 @@ func TestDevNullRedirectionNotDangerous(t *testing.T) {
 		"ps aux --sort=-%mem 2>/dev/null || true",
 		"command 2>/dev/null 1>/dev/null",
 		"curl -s https://x >/dev/null",
+		"dd if=/root/f of=/dev/null bs=1M",
 	}
 	for _, cmd := range safe {
 		if IsDangerousCommand(cmd) {
@@ -19,7 +20,6 @@ func TestDevNullRedirectionNotDangerous(t *testing.T) {
 		"dd if=/dev/zero of=/dev/sda",
 		"echo x > /dev/sda",
 		"echo x >/dev/sdb1",
-		"dd if=/root/f of=/dev/null bs=1M",
 	}
 	for _, cmd := range unsafe {
 		if !IsDangerousCommand(cmd) {
