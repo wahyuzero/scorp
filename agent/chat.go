@@ -94,7 +94,7 @@ var (
 	italicRe = regexp.MustCompile(`(?:^|[^*])\*([^*]+?)\*(?:[^*]|$)`)
 	codeRe   = regexp.MustCompile("`([^`]+)`")
 	// telegramTagRe matches the small set of tags Telegram's HTML mode allows.
-	telegramTagRe = regexp.MustCompile(`(?i)</?(?:b|i|u|s|code|pre|a\s+href="[^"]*")\s*>`)
+	telegramTagRe = regexp.MustCompile(`(?i)</?(?:b|i|u|s|code|pre|a(\s+href="[^"]*")?)\s*>`)
 )
 
 // ──────────────────────────────────────────────
@@ -776,13 +776,11 @@ func convertInlineMarkdown(line string) string {
 		htmlTags = append(htmlTags, match)
 		return fmt.Sprintf("%%HTMLTAG_%d%%", len(htmlTags)-1)
 	})
-	if strings.ContainsAny(line, "<>&") {
-		line = strings.ReplaceAll(line, "&", "&amp;")
-		line = strings.ReplaceAll(line, "<", "&lt;")
-		line = strings.ReplaceAll(line, ">", "&gt;")
-	}
 
-	// 1. Protect inline code spans first so asterisks/markdown inside them are not touched
+	// 1. Protect inline code spans first so asterisks/markdown inside them are
+	// not touched. Content is escaped exactly once here — it must NOT be
+	// re-escaped by the whole-line pass below (that would double-escape & into
+	// &amp;amp; and render entities literally in Telegram).
 	var codeSpans []string
 	line = codeRe.ReplaceAllStringFunc(line, func(match string) string {
 		sub := codeRe.FindStringSubmatch(match)
@@ -792,6 +790,14 @@ func convertInlineMarkdown(line string) string {
 		}
 		return match
 	})
+
+	// 2. Escape raw HTML in the remaining text (placeholders contain only
+	// word chars and %, so they pass through untouched).
+	if strings.ContainsAny(line, "<>&") {
+		line = strings.ReplaceAll(line, "&", "&amp;")
+		line = strings.ReplaceAll(line, "<", "&lt;")
+		line = strings.ReplaceAll(line, ">", "&gt;")
+	}
 
 	// 2. Bold: **text** → <b>text</b>
 	line = boldRe.ReplaceAllString(line, "<b>$1</b>")
