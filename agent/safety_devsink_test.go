@@ -18,7 +18,7 @@ func TestDevNullRedirectionNotDangerous(t *testing.T) {
 	unsafe := []string{
 		"dd if=/dev/zero of=/dev/sda",
 		"echo x > /dev/sda",
-		"cp payload /dev/sdb",
+		"echo x >/dev/sdb1",
 	}
 	for _, cmd := range unsafe {
 		if !IsDangerousCommand(cmd) {
