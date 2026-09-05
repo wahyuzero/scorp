@@ -65,7 +65,7 @@ func writeFixtureRegistry(t *testing.T) (indexURL string, root string) {
 				Health:      "partial",
 				Tools:       []string{"fetch"},
 				Drift:       "synchronized",
-				ManifestURL: "https://raw.githubusercontent.com/wahyuzero/scorp-mcp-registry/main/servers/fetch/manifest.json",
+				ManifestURL: "https://127.0.0.1:1/mcp-test/manifest.json", // unreachable on purpose: exercises local-checkout fallback
 			},
 			{
 				ID:          "scorp.mcp.sqlite",

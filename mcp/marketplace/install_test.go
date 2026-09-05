@@ -80,7 +80,7 @@ func TestInstallUpstreamSpec(t *testing.T) {
 	if err != nil {
 		t.Fatalf("mcp.json not written: %v", err)
 	}
-	if !strings.Contains(string(data), "npx-") || !strings.Contains(string(data), "server-filesystem") || !strings.Contains(string(data), "\\"/tmp\\"") {
+	if !strings.Contains(string(data), "npx-") || !strings.Contains(string(data), "server-filesystem") || !strings.Contains(string(data), `"/tmp"`) {
 		t.Fatalf("mcp.json missing upstream entry:\n%s", data)
 	}
 
