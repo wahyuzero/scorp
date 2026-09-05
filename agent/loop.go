@@ -343,17 +343,18 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 					// never called complete_task — deliver that text instead of a
 					// truncated summary or an empty bubble.
 					cleanReply = lastFullThought + "\n\n_(diselesaikan otomatis: model tidak memanggil complete_task)_"
+				} else {
+					summary := "[NO-FINAL-REPORT] Model tidak menghasilkan laporan akhir. Ringkasan eksekusi yang terjadi:"
+					tail := thinkingLines
+					if len(tail) > 12 {
+						tail = tail[len(tail)-12:]
+					}
+					for _, l := range tail {
+						summary += "\n" + l
+					}
+					summary += "\n\n💡 Coba ulangi perintah atau lanjutkan dengan \"lanjutkan\"."
+					cleanReply = summary
 				}
-				summary := "[NO-FINAL-REPORT] Model tidak menghasilkan laporan akhir. Ringkasan eksekusi yang terjadi:"
-				tail := thinkingLines
-				if len(tail) > 12 {
-					tail = tail[len(tail)-12:]
-				}
-				for _, l := range tail {
-					summary += "\n" + l
-				}
-				summary += "\n\n💡 Coba ulangi perintah atau lanjutkan dengan \"lanjutkan\"."
-				cleanReply = summary
 			}
 
 			sendScorpReply(chatID, msgID, cleanReply)
