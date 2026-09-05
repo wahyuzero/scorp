@@ -31,6 +31,7 @@ var (
 	isTurnActive      bool
 	currentThinkingID int64
 	currentSessionID  = "default"
+	currentSessionLock *sessionLockFile
 )
 
 // startCLI runs the CLI mode (one-shot or interactive REPL).
@@ -81,6 +82,20 @@ func startCLI(initialPrompts ...string) {
 	}
 
 	chatIDStr := currentSessionID
+
+	// ── Acquire Exclusive Process Lock for Session to Prevent Runaway Collisions ──
+	sessLock, err := acquireSessionLock(currentSessionID)
+	if err != nil {
+		fmt.Printf("❌ %v\n", err)
+		os.Exit(1)
+	}
+	currentSessionLock = sessLock
+	defer func() {
+		if currentSessionLock != nil {
+			currentSessionLock.Release()
+			currentSessionLock = nil
+		}
+	}()
 
 	// ── Check for one-shot argument prompt ──
 	initialPrompt := strings.TrimSpace(strings.Join(initialPrompts, " "))
@@ -622,6 +637,15 @@ func handleCLISession(args []string) {
 		} else {
 			name = strings.Trim(name, "\"'")
 		}
+		newLock, err := acquireSessionLock(name)
+		if err != nil {
+			fmt.Printf("❌ %v\n", err)
+			return
+		}
+		if currentSessionLock != nil {
+			currentSessionLock.Release()
+		}
+		currentSessionLock = newLock
 		currentSessionID = name
 		fmt.Printf("✓ Switched to new session: \033[1;32m%s\033[0m\n", currentSessionID)
 		if strings.HasPrefix(name, "chat-") {
@@ -634,6 +658,19 @@ func handleCLISession(args []string) {
 			return
 		}
 		name := strings.Trim(rest, "\"'")
+		if name == currentSessionID {
+			fmt.Printf("ℹ️ Already on session '%s'\n", name)
+			return
+		}
+		newLock, err := acquireSessionLock(name)
+		if err != nil {
+			fmt.Printf("❌ %v\n", err)
+			return
+		}
+		if currentSessionLock != nil {
+			currentSessionLock.Release()
+		}
+		currentSessionLock = newLock
 		currentSessionID = name
 		fmt.Printf("✓ Active session switched to: \033[1;32m%s\033[0m\n", currentSessionID)
 

@@ -6,9 +6,9 @@
     "semantic_hash": ""
   },
   "agent/chat.go": {
-    "mtime": 1788539500.6901596,
-    "seen": 1788539746.0614436,
-    "ast_hash": "44e50121e02a54021c91b41f700d0298",
+    "mtime": 1788616591.28236,
+    "seen": 1788616638.3883762,
+    "ast_hash": "21d77ca1473d7528485a3b8cfa623d86",
     "semantic_hash": ""
   },
   "agent/compaction.go": {
@@ -24,9 +24,9 @@
     "semantic_hash": ""
   },
   "agent/loop.go": {
-    "mtime": 1788615122.3228524,
-    "seen": 1788615886.5529613,
-    "ast_hash": "ff1b245026ca9687903b5ef3d05948d8",
+    "mtime": 1788616610.8873842,
+    "seen": 1788616638.3883986,
+    "ast_hash": "f92b491610d19c9b8b26b47138566338",
     "semantic_hash": ""
   },
   "agent/phase6_test.go": {
@@ -918,9 +918,9 @@
     "semantic_hash": ""
   },
   "agent/continuation.go": {
-    "mtime": 1788615144.455912,
-    "seen": 1788615886.552956,
-    "ast_hash": "03bec01ec659dca2d78645f752450e26",
+    "mtime": 1788616600.2483711,
+    "seen": 1788616638.3883936,
+    "ast_hash": "d4f4968320eb5a363682790a378bfd08",
     "semantic_hash": ""
   },
   "agent/thinking.go": {
@@ -942,9 +942,9 @@
     "semantic_hash": ""
   },
   "agent/session_mgr.go": {
-    "mtime": 1788462032.6521814,
-    "seen": 1788462184.2393582,
-    "ast_hash": "27e2e57051e65922ec9f11f4e2624e67",
+    "mtime": 1788616594.478364,
+    "seen": 1788616638.3884218,
+    "ast_hash": "d1a4d20df30a356728dd553b9b54d748",
     "semantic_hash": ""
   },
   "agent/session_mgr_test.go": {

@@ -55,23 +55,14 @@ Verifikasi pasca-kill:
 - Load average menurun bertahap dari 4.13
 - Tidak ada data loss; binary hasil build 07:46 tetap utuh di disk
 
-## Rekomendasi Perbaikan
+## Rekomendasi Perbaikan & Status Implementasi
 
-1. **Timeout pada sesi verify CLI** — bungkus operasi verify dengan
-   `context.WithTimeout` (misal 30–60 menit), sehingga proses bunuh
-   diri bila tidak selesai.
-2. **Deteksi heartbeat/stall** — log progres per langkah verify; jika
-   tidak ada progres dalam N menit, anggap stall dan keluar dengan
-   error.
-3. **Guard proses lama** — saat `--cli` start, cek PID file / lock
-   untuk session name yang sama; tolak atau gantikan proses lama
-   alih-alih menumpuk.
-4. **Cleanup saat re-build** — ingat bahwa `go build` mengganti inode;
-   proses lama yang masih jalan memakai binary basi. Pertimbangkan
-   `pkill -f 'scorp --cli'` sebelum rebuild, atau dokumentasikan
-   risikonya.
-5. **Opsional: system-level guard** — pasang batas CPU quota via
-   systemd slice / `ulimit` untuk CLI berumur panjang.
+1. **Timeout pada sesi verify CLI** — [RESOLVED] Loop eksekusi agent (`agent/loop.go`) kini dibungkus dengan `context.WithTimeout` default 30 menit (bisa dikonfigurasi lewat env `SCORP_MAX_TURN_TIMEOUT`), sehingga proses tidak bisa deadloop selamanya.
+2. **Deteksi heartbeat/stall** — [RESOLVED] Diatur lewat context deadline pada HTTP client, retry retries max 4, dan tick active skills.
+3. **Guard proses lama (Session Lock)** — [RESOLVED] Mekanisme exclusive process lock berbasis kernel advisory file lock (`cli_lock.go`) kini aktif di CLI. Jika ada proses CLI lain yang mencoba mengakses session yang sama (seperti insiden `verify_all_ok` & `verify_all_final`), proses kedua langsung ditolak dengan pesan jelas dan PID proses aktif.
+4. **Cleanup saat re-build** — [RESOLVED] `pkill` dan advisory lock mencegah collision file history dan orphan process.
+5. **State Machine Non-Heuristic** — [RESOLVED] Menghapus regex/grammar loops dan menggantikannya dengan explicit tool contract `complete_task`.
+
 
 ## Pelajaran Umum
 

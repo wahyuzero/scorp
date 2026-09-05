@@ -30,6 +30,17 @@ func maxIterations() int {
 	return defaultMax
 }
 
+// maxTurnTimeout returns the maximum wall-clock duration for a single agent run (default 30m)
+func maxTurnTimeout() time.Duration {
+	const defaultTimeout = 30 * time.Minute
+	if v := os.Getenv("SCORP_MAX_TURN_TIMEOUT"); v != "" {
+		if d, err := time.ParseDuration(v); err == nil && d > 0 {
+			return d
+		}
+	}
+	return defaultTimeout
+}
+
 type AgentMessage struct {
 	Role    string      `json:"role"`
 	Content interface{} `json:"content"`
@@ -48,7 +59,8 @@ func RunAgentLoop(chatID int64, userMessage string, msgID int64) {
 func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msgID int64) {
 	chatIDStr := sessionID
 
-	ctx, cancel := context.WithCancel(context.Background())
+	// Wrap execution with safety wall-clock timeout to prevent runaway deadloops (Incident 2026-09-05)
+	ctx, cancel := context.WithTimeout(context.Background(), maxTurnTimeout())
 	defer cancel()
 
 	// Load history
@@ -404,7 +416,8 @@ func cleanToolCallTags(reply string) string {
 func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 	chatIDStr := fmt.Sprintf("%d", chatID)
 
-	ctx, cancel := context.WithCancel(context.Background())
+	// Wrap resumed execution with safety wall-clock timeout
+	ctx, cancel := context.WithTimeout(context.Background(), maxTurnTimeout())
 	defer cancel()
 
 	if msgID == 0 {
