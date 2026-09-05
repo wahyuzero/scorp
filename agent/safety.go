@@ -45,8 +45,10 @@ func IsDangerousCommand(cmd string) bool {
 				continue
 			}
 
-			// Global device overwrite check
-			if strings.Contains(tokenCmd, "> /dev/") || strings.Contains(tokenCmd, ">/dev/") {
+			// Global device overwrite check — but redirection sinks like
+			// /dev/null, /dev/stdout, /dev/stderr, /dev/tty are harmless and
+			// extremely common (`2>/dev/null`), so they never confirm-gate.
+			if devOverwriteTarget(tokenCmd) != "" && !isHarmlessDevSink(devOverwriteTarget(tokenCmd)) {
 				return true
 			}
 
@@ -184,5 +186,33 @@ func IsDangerousCommand(cmd string) bool {
 		}
 	}
 
+	return false
+}
+
+// devOverwriteTarget extracts the device path a redirect writes to, if any
+// (e.g. "2>/dev/null" → "null", "dd of=/dev/sda" is handled separately).
+func devOverwriteTarget(token string) string {
+	lower := strings.ToLower(token)
+	for _, marker := range []string{"> /dev/", ">/dev/"} {
+		if idx := strings.Index(lower, marker); idx >= 0 {
+			rest := strings.TrimSpace(lower[idx+len(marker):])
+			end := strings.IndexAny(rest, " \t\"';&)")
+			if end >= 0 {
+				rest = rest[:end]
+			}
+			if rest != "" {
+				return rest
+			}
+		}
+	}
+	return ""
+}
+
+// isHarmlessDevSink reports whether the device is a standard stream sink.
+func isHarmlessDevSink(name string) bool {
+	switch name {
+	case "null", "stdout", "stderr", "tty", "zero", "full":
+		return true
+	}
 	return false
 }
