@@ -335,8 +335,28 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 			appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: cleanReply})
 
 			// Never deliver an empty bubble: if the model exhausted its
-			// no-tool retries without producing a report, summarize what was
-			// actually executed so the user gets a transparent outcome.
+			// no-tool retries without producing a report, first try one
+			// tool-free synthesis call, then fall back to its last full
+			// thought, then to a transparent execution summary.
+			if strings.TrimSpace(cleanReply) == "" {
+				if toolCount > 0 {
+					// The model did real work but stopped narrating. Ask it to
+					// summarize WITHOUT the tools schema so it must answer in text.
+					log.Printf("[agent] Running tool-free synthesis call for final report (%d tools executed)", toolCount)
+					synthMsgs := make([]models.ChatMessage, 0, len(history)+1)
+					for _, m := range history {
+						if c, ok := m.Content.(string); ok {
+							synthMsgs = append(synthMsgs, models.ChatMessage{Role: m.Role, Content: c})
+						}
+					}
+					synthMsgs = append(synthMsgs, models.ChatMessage{Role: "user", Content: "Semua tool di atas SUDAH dieksekusi. Tulis ringkasan akhir (3-8 kalimat) berupa hasil NYATA yang dicapai berdasarkan tool results. Jangan memanggil tool apa pun — balas teks ringkasan saja."})
+					synthCtx, synthCancel := context.WithTimeout(context.Background(), 90*time.Second)
+					if reply2, _, err2 := models.CallModelWithFallback(synthCtx, "chat", synthMsgs); err2 == nil && strings.TrimSpace(reply2) != "" {
+						cleanReply = strings.TrimSpace(reply2)
+					}
+					synthCancel()
+				}
+			}
 			if strings.TrimSpace(cleanReply) == "" {
 				if strings.TrimSpace(lastFullThought) != "" {
 					// The model already WROTE its final report as thought text but
