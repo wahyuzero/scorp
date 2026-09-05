@@ -93,6 +93,8 @@ var (
 	boldRe   = regexp.MustCompile(`\*\*(.+?)\*\*`)
 	italicRe = regexp.MustCompile(`(?:^|[^*])\*([^*]+?)\*(?:[^*]|$)`)
 	codeRe   = regexp.MustCompile("`([^`]+)`")
+	// telegramTagRe matches the small set of tags Telegram's HTML mode allows.
+	telegramTagRe = regexp.MustCompile(`(?i)</?(?:b|i|u|s|code|pre|a\s+href="[^"]*")\s*>`)
 )
 
 // ──────────────────────────────────────────────
@@ -765,6 +767,21 @@ func safeIndex(slice []string, i int) string {
 
 // convertInlineMarkdown converts inline markdown: `code`, **bold**, *italic*
 func convertInlineMarkdown(line string) string {
+	// 0. Protect native Telegram HTML tags the model may already emit, then
+	// escape every other raw <, >, & — an invalid tag (e.g. "<name>") would
+	// otherwise make Telegram reject the whole message and force the
+	// no-parse-mode fallback that shows raw markup.
+	var htmlTags []string
+	line = telegramTagRe.ReplaceAllStringFunc(line, func(match string) string {
+		htmlTags = append(htmlTags, match)
+		return fmt.Sprintf("%%HTMLTAG_%d%%", len(htmlTags)-1)
+	})
+	if strings.ContainsAny(line, "<>&") {
+		line = strings.ReplaceAll(line, "&", "&amp;")
+		line = strings.ReplaceAll(line, "<", "&lt;")
+		line = strings.ReplaceAll(line, ">", "&gt;")
+	}
+
 	// 1. Protect inline code spans first so asterisks/markdown inside them are not touched
 	var codeSpans []string
 	line = codeRe.ReplaceAllStringFunc(line, func(match string) string {
@@ -803,6 +820,11 @@ func convertInlineMarkdown(line string) string {
 	for idx, code := range codeSpans {
 		placeholder := fmt.Sprintf("%%CODESPAN_%d%%", idx)
 		line = strings.Replace(line, placeholder, "<code>"+code+"</code>", 1)
+	}
+
+	// 5. Restore protected native HTML tags
+	for idx, tag := range htmlTags {
+		line = strings.Replace(line, fmt.Sprintf("%%HTMLTAG_%d%%", idx), tag, 1)
 	}
 
 	return line
