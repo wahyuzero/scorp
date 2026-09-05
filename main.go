@@ -13,6 +13,8 @@ import (
 	"scorp-agent/config"
 	"scorp-agent/gateway"
 	"scorp-agent/mcp"
+	"scorp-agent/mcp/marketplace"
+	"scorp-agent/mcp/transpiler"
 	"scorp-agent/models"
 	"scorp-agent/sop"
 	"scorp-agent/telegram"
@@ -22,6 +24,9 @@ import (
 
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime)
+
+	// Marketplace Option 2 (local rebuild) delegates to the AI transpiler.
+	marketplace.RebuildHook = transpiler.Rebuild
 
 	// In CLI mode, redirect diagnostic logs to ~/.scorp/scorp.log unless SCORP_DEBUG or --debug
 	if isCLIMode() && os.Getenv("SCORP_DEBUG") == "" && !hasDebugFlag() {

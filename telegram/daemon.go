@@ -16,6 +16,7 @@ import (
 	"scorp-agent/collectors"
 	"scorp-agent/config"
 	"scorp-agent/mcp"
+	"scorp-agent/mcp/marketplace"
 	"scorp-agent/metrics"
 	"scorp-agent/models"
 	"scorp-agent/rag"
@@ -425,9 +426,36 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 			} else {
 				SendMessage(fmt.Sprintf("✓ MCP server <code>%s</code> successfully restarted!", target), nil)
 			}
+		} else if len(sub) >= 2 && sub[1] == "search" {
+			term := strings.Join(sub[2:], " ")
+			out, err := marketplace.CLISearch(term)
+			if err != nil {
+				SendMessage(fmt.Sprintf("❌ Marketplace search failed: %v", err), BackButtonKeyboard())
+			} else {
+				SendMessage(out, BackButtonKeyboard())
+			}
+		} else if len(sub) >= 3 && sub[1] == "install" {
+			name := sub[2]
+			opt := ""
+			if len(sub) >= 4 {
+				opt = sub[3]
+			}
+			handleTelegramMarketplaceInstall(chatID, messageID, name, opt, isCallback)
 		} else {
 			SendMessage(mcp.GetServerHealthStatus(), BackButtonKeyboard())
 		}
+
+	case strings.HasPrefix(action, "mcpm:"):
+		// Marketplace install callbacks: mcpm:<name>:<1|2|3>
+		payload := strings.TrimPrefix(action, "mcpm:")
+		seg := strings.SplitN(payload, ":", 2)
+		name := seg[0]
+		opt := ""
+		if len(seg) > 1 {
+			opt = seg[1]
+		}
+		AnswerCallback(callbackID, "🛒 Processing…")
+		handleTelegramMarketplaceInstall(chatID, messageID, name, opt, edit)
 
 	case action == "/skills" || action == "/skill" || strings.HasPrefix(action, "/skill "):
 		sub := strings.Fields(action)

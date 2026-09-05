@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"scorp-agent/config"
 	"scorp-agent/internal/helpers"
 	"strings"
 )
@@ -26,6 +27,104 @@ func ExecuteMCPManage(args map[string]interface{}) (string, bool) {
 	default:
 		return fmt.Sprintf("Unknown action '%s'. Use: list, add, remove, reload", action), false
 	}
+}
+
+// AddServerEntry writes a new server entry to ~/.scorp/mcp.json and hot-reloads
+// so the new server (and its native tools) come online immediately. This is the
+// terminal state of every installation path — mcp_manage add, the marketplace
+// Tri-Option installer, and transpiler rebuilds all converge here.
+func AddServerEntry(name string, cfg MCPServerConfig) (string, bool) {
+	if name == "" {
+		return "Error: server name is required", false
+	}
+	if cfg.Command == "" && cfg.URL == "" {
+		return "Error: command or url is required", false
+	}
+
+	configPath := config.MCPConfigFilePath()
+	mcpcfg, err := LoadMCPConfig()
+	if err != nil {
+		return fmt.Sprintf("Error loading config: %v", err), false
+	}
+
+	if mcpcfg.MCPServers == nil {
+		mcpcfg.MCPServers = make(map[string]MCPServerConfig)
+	}
+
+	if _, exists := mcpcfg.MCPServers[name]; exists {
+		return fmt.Sprintf("Error: MCP server '%s' already exists. Remove it first or use reload.", name), false
+	}
+
+	// Verify command exists (stdio servers only; remote URLs have no command)
+	if cfg.Command != "" {
+		if _, err := exec.LookPath(cfg.Command); err != nil {
+			log.Printf("[mcp] Warning: command '%s' not in PATH: %v", cfg.Command, err)
+		}
+	}
+
+	mcpcfg.MCPServers[name] = cfg
+
+	data, err := json.MarshalIndent(mcpcfg, "", "  ")
+	if err != nil {
+		return fmt.Sprintf("Error encoding config: %v", err), false
+	}
+	if err := os.MkdirAll(config.ScorpDir(), 0o755); err != nil {
+		return fmt.Sprintf("Error creating config dir: %v", err), false
+	}
+	if err := os.WriteFile(configPath, data, 0o644); err != nil {
+		return fmt.Sprintf("Error writing config: %v", err), false
+	}
+
+	sb := fmt.Sprintf("✅ Added MCP server '%s' to config.\n", name)
+	sb += fmt.Sprintf("   Command: %s %s\n", cfg.Command, strings.Join(cfg.Args, " "))
+
+	sb += "\n🔄 Reloading MCP servers...\n"
+	ReloadMCPServers()
+
+	mcpServersMu.RLock()
+	srv, ok := mcpServers[name]
+	mcpServersMu.RUnlock()
+
+	if ok {
+		sb += fmt.Sprintf("\n✅ Server '%s' is running with %d tools:\n", name, len(srv.tools))
+		for _, t := range srv.tools {
+			nativeName := "mcp_" + sanitizeMCPName(name) + "_" + sanitizeMCPName(t.Name)
+			sb += fmt.Sprintf("  • %s\n", nativeName)
+		}
+	} else {
+		sb += fmt.Sprintf("\n⚠️ Server '%s' failed to start. Check logs: journalctl -u scorp-agent -n 20\n", name)
+	}
+
+	return sb, true
+}
+
+// RemoveServerEntry deletes a server entry from ~/.scorp/mcp.json and reloads.
+func RemoveServerEntry(name string) (string, bool) {
+	configPath := config.MCPConfigFilePath()
+	mcpcfg, err := LoadMCPConfig()
+	if err != nil {
+		return fmt.Sprintf("Error loading config: %v", err), false
+	}
+
+	if _, exists := mcpcfg.MCPServers[name]; !exists {
+		return fmt.Sprintf("Error: MCP server '%s' not found in config", name), false
+	}
+
+	delete(mcpcfg.MCPServers, name)
+
+	data, err := json.MarshalIndent(mcpcfg, "", "  ")
+	if err != nil {
+		return fmt.Sprintf("Error encoding config: %v", err), false
+	}
+	if err := os.WriteFile(configPath, data, 0o644); err != nil {
+		return fmt.Sprintf("Error writing config: %v", err), false
+	}
+
+	sb := fmt.Sprintf("✅ Removed MCP server '%s' from config.\n", name)
+	sb += "\n🔄 Reloading MCP servers...\n"
+	ReloadMCPServers()
+	sb += "\n✅ Done. Remaining servers reloaded.\n"
+	return sb, true
 }
 
 // mcpManageList shows all configured MCP servers (from config + running state)
@@ -101,68 +200,22 @@ func mcpManageAdd(args map[string]interface{}) (string, bool) {
 		}
 	}
 
-	// Load existing config
-	configPath := os.ExpandEnv("$HOME") + "/.scorp/mcp.json"
-	cfg, err := LoadMCPConfig()
-	if err != nil {
-		return fmt.Sprintf("Error loading config: %v", err), false
+	// Also accept remote URL configs (SSE/HTTP transport)
+	url := helpers.GetStringArg(args, "url", "")
+	transport := helpers.GetStringArg(args, "transport", "")
+
+	cfg := MCPServerConfig{
+		Command:   command,
+		Args:      cmdArgs,
+		Env:       envMap,
+		URL:       url,
+		Transport: transport,
+	}
+	if url != "" {
+		cfg.Command = ""
 	}
 
-	if cfg.MCPServers == nil {
-		cfg.MCPServers = make(map[string]MCPServerConfig)
-	}
-
-	// Check for duplicate
-	if _, exists := cfg.MCPServers[name]; exists {
-		return fmt.Sprintf("Error: MCP server '%s' already exists. Remove it first or use reload.", name), false
-	}
-
-	// Verify command exists
-	if _, err := exec.LookPath(command); err != nil {
-		log.Printf("[mcp] Warning: command '%s' not in PATH: %v", command, err)
-	}
-
-	// Add the new server
-	cfg.MCPServers[name] = MCPServerConfig{
-		Command: command,
-		Args:    cmdArgs,
-		Env:     envMap,
-	}
-
-	// Preserve mcpServerMode if it exists
-	// Write back
-	data, err := json.MarshalIndent(cfg, "", "  ")
-	if err != nil {
-		return fmt.Sprintf("Error encoding config: %v", err), false
-	}
-
-	if err := os.WriteFile(configPath, data, 0644); err != nil {
-		return fmt.Sprintf("Error writing config: %v", err), false
-	}
-
-	sb := fmt.Sprintf("✅ Added MCP server '%s' to config.\n", name)
-	sb += fmt.Sprintf("   Command: %s %s\n", command, strings.Join(cmdArgs, " "))
-
-	// Hot reload
-	sb += "\n🔄 Reloading MCP servers...\n"
-	ReloadMCPServers()
-
-	// Check if the new server started successfully
-	mcpServersMu.RLock()
-	srv, ok := mcpServers[name]
-	mcpServersMu.RUnlock()
-
-	if ok {
-		sb += fmt.Sprintf("\n✅ Server '%s' is running with %d tools:\n", name, len(srv.tools))
-		for _, t := range srv.tools {
-			nativeName := "mcp_" + sanitizeMCPName(name) + "_" + sanitizeMCPName(t.Name)
-			sb += fmt.Sprintf("  • %s\n", nativeName)
-		}
-	} else {
-		sb += fmt.Sprintf("\n⚠️ Server '%s' failed to start. Check logs: journalctl -u scorp-agent -n 20\n", name)
-	}
-
-	return sb, true
+	return AddServerEntry(name, cfg)
 }
 
 // mcpManageRemove removes an MCP server from config, then hot-reloads
@@ -171,37 +224,7 @@ func mcpManageRemove(args map[string]interface{}) (string, bool) {
 	if name == "" {
 		return "Error: 'name' is required", false
 	}
-
-	// Load config
-	configPath := os.ExpandEnv("$HOME") + "/.scorp/mcp.json"
-	cfg, err := LoadMCPConfig()
-	if err != nil {
-		return fmt.Sprintf("Error loading config: %v", err), false
-	}
-
-	if _, exists := cfg.MCPServers[name]; !exists {
-		return fmt.Sprintf("Error: MCP server '%s' not found in config", name), false
-	}
-
-	// Remove it
-	delete(cfg.MCPServers, name)
-
-	// Write back
-	data, err := json.MarshalIndent(cfg, "", "  ")
-	if err != nil {
-		return fmt.Sprintf("Error encoding config: %v", err), false
-	}
-
-	if err := os.WriteFile(configPath, data, 0644); err != nil {
-		return fmt.Sprintf("Error writing config: %v", err), false
-	}
-
-	sb := fmt.Sprintf("✅ Removed MCP server '%s' from config.\n", name)
-	sb += "\n🔄 Reloading MCP servers...\n"
-	ReloadMCPServers()
-	sb += "\n✅ Done. Remaining servers reloaded.\n"
-
-	return sb, true
+	return RemoveServerEntry(name)
 }
 
 // mcpManageReload hot-reloads all MCP servers without restarting scorp-agent

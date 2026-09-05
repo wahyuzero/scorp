@@ -9,8 +9,10 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"scorp-agent/config"
 	"scorp-agent/internal/helpers"
 	"scorp-agent/registry"
+	"scorp-agent/tools"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -104,7 +106,7 @@ var (
 
 // LoadMCPConfig reads ~/.scorp/mcp.json
 func LoadMCPConfig() (*MCPConfig, error) {
-	path := os.ExpandEnv("$HOME") + "/.scorp/mcp.json"
+	path := config.MCPConfigFilePath()
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -297,7 +299,9 @@ func registerMCPToolsAsNative() {
 					if err != nil {
 						return fmt.Sprintf("MCP tool error: %v", err), false
 					}
-					return helpers.TruncOutputTool(result), true
+					// Layer 5: redact credentials before the payload reaches
+					// the LLM context or chat history.
+					return helpers.TruncOutputTool(tools.RedactSecrets(result)), true
 				},
 			})
 			registered++
@@ -432,6 +436,17 @@ func startMCPServer(name string, cfg MCPServerConfig) (*MCPServer, error) {
 	srv.tools = tools
 
 	return srv, nil
+}
+
+// ProbeServer spawns an ephemeral MCP server for contract probing (used by
+// the AI transpiler to capture a tools/list benchmark). The caller owns the
+// returned server's lifetime and must Close it when done.
+func ProbeServer(name string, cfg MCPServerConfig) (*MCPServer, []MCPTool, error) {
+	srv, err := startMCPServer(name, cfg)
+	if err != nil {
+		return nil, nil, err
+	}
+	return srv, srv.tools, nil
 }
 
 // Close shuts down the MCP server process gracefully

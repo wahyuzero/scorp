@@ -118,7 +118,7 @@ func SystemMenuKeyboard() map[string]interface{} {
 			},
 			[]interface{}{
 				map[string]string{"text": "🔌 MCP", "callback_data": "/mcp"},
-				map[string]string{"text": "⏰ Cron", "callback_data": "/cron"},
+				map[string]string{"text": "🛒 Marketplace", "callback_data": "mcpm:menu"},
 			},
 			[]interface{}{
 				map[string]string{"text": "📋 Sessions", "callback_data": "/sessions"},

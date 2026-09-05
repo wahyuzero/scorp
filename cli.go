@@ -14,7 +14,6 @@ import (
 	"scorp-agent/agent"
 	"scorp-agent/bootstrap"
 	"scorp-agent/config"
-	"scorp-agent/mcp"
 	"scorp-agent/models"
 	"scorp-agent/registry"
 	"scorp-agent/scheduler"
@@ -276,17 +275,7 @@ func startCLI(initialPrompts ...string) {
 				}
 				continue
 			case "/mcp":
-				if len(parts) > 2 && parts[1] == "restart" {
-					targetServer := parts[2]
-					fmt.Printf("🔄 Restarting MCP server '%s'...\n", targetServer)
-					if err := mcp.RestartServer(targetServer); err != nil {
-						fmt.Printf("❌ %v\n", err)
-					} else {
-						fmt.Printf("✓ MCP server '%s' successfully restarted and healthy!\n", targetServer)
-					}
-				} else {
-					fmt.Println(formatTerminalText(mcp.GetServerHealthStatus()))
-				}
+				handleMCPCommand(parts)
 				continue
 			case "/receipts":
 				printReceipts()
@@ -368,6 +357,9 @@ func executeOneShot(chatIDStr, prompt string) {
 			return
 		case "/receipts":
 			printReceipts()
+			return
+		case "/mcp":
+			handleMCPCommand(parts)
 			return
 		case "/session", "/sessions":
 			handleCLISession(parts[1:])
@@ -459,6 +451,10 @@ Commands:
   /queue         — Inspect real-time agent steering queue
   /receipts      — View recent cryptographic tool execution receipts
   /tools         — List all registered agent tools
+  /mcp           — Show MCP server health status
+  /mcp search [term]            — Search the Scorp MCP Marketplace
+  /mcp install <name> [1|2|3]   — Tri-Option install (prebuilt / rebuild / upstream)
+  /mcp share <name>             — Package a local rebuild for a marketplace PR
   /status        — Show agent session status and working directory
   /cost          — Show today's token usage and estimated cost
   /clear         — Clear conversation history
