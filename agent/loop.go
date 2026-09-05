@@ -183,6 +183,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 	lastThinkingUpdate := time.Now()
 	noToolRetries := 0
 	completeTaskGateNudged := false
+	lastFullThought := "" // full text of the last non-empty thought-only reply
 	recentToolSignatures := make(map[string]int)
 
 	isPureInfo := IsPureInformationalQuery(userMessage)
@@ -310,6 +311,9 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 
 			if shouldRetry {
 				noToolRetries++
+				if strings.TrimSpace(cleanReply) != "" {
+					lastFullThought = cleanReply
+				}
 				log.Printf("[agent] Model emitted intermediate thought without tool calls (retry %d/4): %s", noToolRetries, helpers.TruncateStr(cleanReply, 80))
 
 				// Display intermediate thought in thinking stream instead of terminating!
@@ -334,6 +338,12 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 			// no-tool retries without producing a report, summarize what was
 			// actually executed so the user gets a transparent outcome.
 			if strings.TrimSpace(cleanReply) == "" {
+				if strings.TrimSpace(lastFullThought) != "" {
+					// The model already WROTE its final report as thought text but
+					// never called complete_task — deliver that text instead of a
+					// truncated summary or an empty bubble.
+					cleanReply = lastFullThought + "\n\n_(diselesaikan otomatis: model tidak memanggil complete_task)_"
+				}
 				summary := "[NO-FINAL-REPORT] Model tidak menghasilkan laporan akhir. Ringkasan eksekusi yang terjadi:"
 				tail := thinkingLines
 				if len(tail) > 12 {
