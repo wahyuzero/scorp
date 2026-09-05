@@ -94,12 +94,16 @@ func IsDangerousCommand(cmd string) bool {
 				return true
 			}
 
-			// 3. Raw byte device overwrites (dd)
+			// 3. Raw byte device overwrites (dd) — writing to /dev/null (and
+			// other standard sinks) is harmless; only real devices gate.
 			if bin == "dd" {
 				for _, rawArg := range fields[1:] {
 					arg := strings.ToLower(rawArg)
 					if strings.HasPrefix(arg, "of=/dev/") {
-						return true
+						target := strings.TrimPrefix(arg, "of=/dev/")
+						if !isHarmlessDevSink(target) {
+							return true
+						}
 					}
 				}
 			}

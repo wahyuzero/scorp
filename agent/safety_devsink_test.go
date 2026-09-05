@@ -19,6 +19,7 @@ func TestDevNullRedirectionNotDangerous(t *testing.T) {
 		"dd if=/dev/zero of=/dev/sda",
 		"echo x > /dev/sda",
 		"echo x >/dev/sdb1",
+		"dd if=/root/f of=/dev/null bs=1M",
 	}
 	for _, cmd := range unsafe {
 		if !IsDangerousCommand(cmd) {
