@@ -14,6 +14,7 @@ import (
 	"scorp-agent/models"
 	"scorp-agent/rag"
 	"scorp-agent/registry"
+	"scorp-agent/session"
 	"scorp-agent/skills"
 	"scorp-agent/tools"
 )
@@ -35,7 +36,7 @@ type AgentMessage struct {
 }
 
 // ──────────────────────────────────────────────
-// ReAct Agent Execution Loop
+// ReAct Agent Execution Loop with Task State Machine
 // ──────────────────────────────────────────────
 
 // RunAgentLoop executes the multi-turn agent loop for a chat ID.
@@ -61,11 +62,11 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 		})
 	}
 
-	// Check if this is an explicit continuation directive from user (e.g. "Lanjutkan", "continue")
-	isContinuation := isContinuationDirective(userMessage)
+	// Check if user issued an explicit continuation directive (e.g. "Lanjutkan", "continue")
+	isContinuation := IsContinuationDirective(userMessage)
 	activeUserPrompt := userMessage
 	if isContinuation {
-		activeUserPrompt = fmt.Sprintf("%s\n\n[⚡ MANDATORY INSTRUCTION: You are resuming an in-progress task. DO NOT chat or output narrative promises of what you will do. You MUST IMMEDIATELY call the relevant tool(s) to execute the next step. Only return text when the task is completely finished and verified.]", userMessage)
+		activeUserPrompt = fmt.Sprintf("%s\n\n[⚡ SYSTEM DIRECTIVE: The user instructed you to CONTINUE (Lanjutkan). You were in the middle of executing a task. DO NOT output conversational text or narrative promises. You MUST IMMEDIATELY invoke the required action tool(s). If all actions and verifications are 100%% complete, conclude by calling tool 'complete_task'.]", userMessage)
 	}
 
 	// Add user message
@@ -87,7 +88,6 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 	// Auto-title session in background if unnamed and on turn 1
 	if ShouldAutoTitleSession(sessionID) && len(history) <= 3 {
 		go func(oldID string, prompt string, targetChatID int64) {
-			// Wait 3.5 seconds so debounced history disk save completes first
 			time.Sleep(3500 * time.Millisecond)
 			newTitle := GenerateContextualSessionTitle(prompt)
 			if newTitle != "" && newTitle != oldID {
@@ -137,16 +137,21 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 		}
 	}
 
-	// ── Compact history if getting long ──
-	history = maybeCompactHistory(chatIDStr, history)
-
-	// Send initial thinking message
-	start := time.Now()
-	if msgID == 0 {
-		msgID = tools.SendMessageGetID("🧠 <b>Agent</b>\n\n⏳ <i>berpikir...</i>", chatID)
+	// ── Session Search context (SQLite FTS5) ──
+	if sessionCtx := getSessionSearchContext(chatIDStr, userMessage); sessionCtx != "" {
+		if len(history) > 0 && history[0].Role == "system" {
+			if sysStr, ok := history[0].Content.(string); ok {
+				history[0].Content = sysStr + sessionCtx
+			}
+		}
 	}
 
-	// ── Real-time typing indicator ──
+	// Send initial thinking indicator
+	if msgID == 0 {
+		msgID = tools.SendMessageGetID("🧠 <b>Agent</b>\n\n⏳ <i>memproses...</i>", chatID)
+	}
+
+	start := time.Now()
 	tools.SendChatAction(chatID, "typing")
 	typingTicker := time.NewTicker(4 * time.Second)
 	go func() {
@@ -167,7 +172,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 	noToolRetries := 0
 	recentToolSignatures := make(map[string]int)
 
-	expectedSteps := countStepsInMessage(userMessage)
+	isPureInfo := IsPureInformationalQuery(userMessage)
 
 	for iter := 0; iter < maxIterations(); iter++ {
 		// Convert history to ChatMessage format
@@ -193,51 +198,85 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 			log.Printf("[agent] Using model: %s", modelUsed)
 		}
 
-		// Check if done (no tool calls)
-		if len(toolCalls) == 0 {
+		// ── Check if Model Invoked 'complete_task' ──
+		var explicitFinalResult string
+		isTaskExplicitlyCompleted := false
+
+		var actionToolCalls []ToolCall
+		for _, tc := range toolCalls {
+			if tc.Name == "complete_task" {
+				isTaskExplicitlyCompleted = true
+				if res, ok := tc.Args["result"].(string); ok && res != "" {
+					explicitFinalResult = res
+				} else if sum, ok := tc.Args["summary"].(string); ok && sum != "" {
+					explicitFinalResult = sum
+				}
+			} else {
+				actionToolCalls = append(actionToolCalls, tc)
+			}
+		}
+
+		// If complete_task was explicitly called, conclude task immediately!
+		if isTaskExplicitlyCompleted {
+			finalOutput := explicitFinalResult
+			if finalOutput == "" {
+				finalOutput = cleanToolCallTags(reply)
+			}
+			if finalOutput == "" {
+				finalOutput = "Task completed successfully."
+			}
+
+			history = append(history, AgentMessage{Role: "assistant", Content: reply})
+			appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: finalOutput})
+
+			sendScorpReply(chatID, msgID, finalOutput)
+			maybeRunSelfReview(chatID, chatIDStr)
+			return
+		}
+
+		// ── State Machine Check: Model emitted NO tool calls ──
+		if len(actionToolCalls) == 0 {
 			cleanReply := cleanToolCallTags(reply)
 
 			shouldRetry := false
 			retryReason := ""
 
-			if noToolRetries < 5 {
-				if isContinuation && iter == 0 && !hasCompletionIndicators(cleanReply) {
-					shouldRetry = true
-					retryReason = "⚠️ ACTION-FIRST PROTOCOL: The user commanded you to CONTINUE (Lanjutkan), but you emitted text without calling any tools. You MUST call the appropriate tool(s) to execute the next step immediately."
-				} else if !isPureInformationalQuery(userMessage) {
-					if mentionsBrowserTask(userMessage) && !screenshotWasTaken(history) {
-						shouldRetry = true
-						retryReason = "⚠️ INCOMPLETE TASK: The user asked for a browser task. You MUST take a screenshot (browser action=screenshot) before completing."
-					} else if looksLikeContinuation(cleanReply) {
-						shouldRetry = true
-						retryReason = "⚠️ ACTION-FIRST PROTOCOL: You stated an intended action in text without calling the tool. Do not narrate future actions — execute the tool call immediately."
-					} else if toolCount > 0 && expectedSteps >= 2 && toolCount < expectedSteps && !looksLikeContinuation(cleanReply) && !hasCompletionIndicators(cleanReply) {
-						shouldRetry = true
-						retryReason = fmt.Sprintf("⚠️ TASK PROGRESSION: The user requested a sequence of %d distinct steps, but only %d operation(s) have executed so far. Continue and execute the next requested operation now.", expectedSteps, toolCount)
-					}
+			// If user asked a simple informational/conceptual question (e.g. "What is Docker?"), allow direct text answer.
+			if isPureInfo && toolCount == 0 && iter == 0 {
+				shouldRetry = false
+			} else if noToolRetries < 4 {
+				// Otherwise, this is an action task where model emitted thought text without calling an action tool or complete_task!
+				shouldRetry = true
+				if isContinuation {
+					retryReason = "⚠️ ACTION-FIRST PROTOCOL: The user commanded you to CONTINUE. You emitted conversational thought without calling any tools. You MUST call the required action tool(s) now, or call 'complete_task' if the task is completely finished."
+				} else {
+					retryReason = "⚠️ TASK IN-PROGRESS: You outputted intermediate thought without calling any tools. In Agent Mode, you must either call an action tool to continue execution, or call 'complete_task' with your final report if all requested work is finished and verified."
 				}
 			}
 
 			if shouldRetry {
 				noToolRetries++
-				log.Printf("[agent] Model responded without tool calls (retry %d/5): %s", noToolRetries, retryReason)
-				thinkingLines = append(thinkingLines, fmt.Sprintf("⚠️ Retry %d/5: %s", noToolRetries, strings.Split(retryReason, ":")[0]))
+				log.Printf("[agent] Model emitted intermediate thought without tool calls (retry %d/4): %s", noToolRetries, helpers.TruncateStr(cleanReply, 80))
+
+				// Display intermediate thought in thinking stream instead of terminating!
+				thoughtPreview := cleanReply
+				if len(thoughtPreview) > 80 {
+					thoughtPreview = thoughtPreview[:77] + "..."
+				}
+				thoughtPreview = strings.ReplaceAll(thoughtPreview, "\n", " ")
+				thinkingLines = append(thinkingLines, fmt.Sprintf("💭 %s", thoughtPreview))
 				tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
+
 				history = append(history, AgentMessage{Role: "assistant", Content: reply})
 				history = append(history, AgentMessage{Role: "user", Content: retryReason})
-				appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: reply})
-				appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: retryReason})
 				continue
 			}
 
-			// Final answer
+			// Max retries reached or pure informational query: output clean response as final
 			history = append(history, AgentMessage{Role: "assistant", Content: reply})
-			appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: reply})
+			appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: cleanReply})
 
-			// Send final answer
 			sendScorpReply(chatID, msgID, cleanReply)
-
-			// Trigger self-review in background
 			maybeRunSelfReview(chatID, chatIDStr)
 			return
 		}
@@ -245,11 +284,12 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 		// Reset retry counter on successful tool call
 		noToolRetries = 0
 
-		// Execute tools
+		// Record assistant message with tool calls
 		history = append(history, AgentMessage{Role: "assistant", Content: reply})
 		appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: reply})
 
-		for _, tc := range toolCalls {
+		// ── Execute Action Tools ──
+		for _, tc := range actionToolCalls {
 			// Real-time Steering Queue check (PicoClaw Parity)
 			steerMsg, hasSteer := PopSteeringMessage(chatIDStr)
 			if !hasSteer && rawChatIDStr != chatIDStr && chatID != 0 {
@@ -395,32 +435,48 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 			return
 		}
 
-		if len(toolCalls) == 0 {
+		var actionToolCalls []ToolCall
+		isTaskCompleted := false
+		var explicitFinalResult string
+
+		for _, tc := range toolCalls {
+			if tc.Name == "complete_task" {
+				isTaskCompleted = true
+				if res, ok := tc.Args["result"].(string); ok && res != "" {
+					explicitFinalResult = res
+				}
+			} else {
+				actionToolCalls = append(actionToolCalls, tc)
+			}
+		}
+
+		if isTaskCompleted {
+			finalOutput := explicitFinalResult
+			if finalOutput == "" {
+				finalOutput = cleanToolCallTags(reply)
+			}
+			messages = append(messages, AgentMessage{Role: "assistant", Content: reply})
+			appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: finalOutput})
+			sendScorpReply(chatID, msgID, finalOutput)
+			maybeRunSelfReview(chatID, chatIDStr)
+			return
+		}
+
+		if len(actionToolCalls) == 0 {
 			cleanReply := cleanToolCallTags(reply)
 
-			shouldRetry := false
-			retryReason := ""
-
-			if noToolRetries < 5 {
-				if looksLikeContinuation(cleanReply) {
-					shouldRetry = true
-					retryReason = "⚠️ ACTION-FIRST PROTOCOL: You stated an intended action in text without calling the tool. Do not narrate future actions — execute the tool call immediately."
-				}
-			}
-
-			if shouldRetry {
+			if noToolRetries < 4 {
 				noToolRetries++
-				thinkingLines = append(thinkingLines, fmt.Sprintf("⚠️ Retry %d/5: %s", noToolRetries, strings.Split(retryReason, ":")[0]))
+				retryReason := "⚠️ TASK IN-PROGRESS: In Agent Mode, you must call an action tool to continue, or call 'complete_task' with your final answer if finished."
+				thinkingLines = append(thinkingLines, fmt.Sprintf("💭 %s", helpers.TruncateStr(cleanReply, 60)))
 				tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
 				messages = append(messages, AgentMessage{Role: "assistant", Content: reply})
 				messages = append(messages, AgentMessage{Role: "user", Content: retryReason})
-				appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: reply})
-				appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: retryReason})
 				continue
 			}
 
 			messages = append(messages, AgentMessage{Role: "assistant", Content: reply})
-			appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: reply})
+			appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: cleanReply})
 			sendScorpReply(chatID, msgID, cleanReply)
 			maybeRunSelfReview(chatID, chatIDStr)
 			return
@@ -429,17 +485,7 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 		messages = append(messages, AgentMessage{Role: "assistant", Content: reply})
 		appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: reply})
 
-		for _, tc := range toolCalls {
-			// Real-time Steering Queue check (PicoClaw Parity)
-			if steerMsg, hasSteer := PopSteeringMessage(chatIDStr); hasSteer {
-				log.Printf("[steering] User redirected execution mid-run: %s", steerMsg)
-				thinkingLines = append(thinkingLines, fmt.Sprintf("⚡ [INTERRUPT] Steered: %s", helpers.TruncateStr(steerMsg, 50)))
-				steerTurnMsg := fmt.Sprintf("⚡ [USER INTERRUPT]: %s", steerMsg)
-				messages = append(messages, AgentMessage{Role: "user", Content: steerTurnMsg})
-				appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: steerTurnMsg})
-				break
-			}
-
+		for _, tc := range actionToolCalls {
 			toolCount++
 			desc := toolDescription(tc)
 			thinkingLines = append(thinkingLines, desc)
@@ -489,10 +535,41 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 			lastThinkingUpdate = time.Now()
 		}
 
-		// Tick dynamic tool discovery TTLs (PicoClaw Parity)
 		registry.TickToolTTL()
 		skills.TickActiveSkills()
 	}
 
 	tools.EditMessageByID(chatID, msgID, "⚠️ Agent reached maximum iterations.", nil)
+}
+
+func getSessionSearchContext(sessionID string, userMessage string) string {
+	queryTokens := strings.Fields(userMessage)
+	var meaningful []string
+	for _, t := range queryTokens {
+		t = strings.ToLower(strings.Trim(t, `.,!?:;"'()[]{}/*`))
+		if len(t) > 2 {
+			meaningful = append(meaningful, t)
+		}
+	}
+	if len(meaningful) == 0 {
+		return ""
+	}
+	query := strings.Join(meaningful, " OR ")
+	results := session.SearchSessions(query, 3)
+	if len(results) == 0 {
+		return ""
+	}
+	var sb strings.Builder
+	for _, r := range results {
+		content := r.Content
+		if len(content) > 200 {
+			content = content[:200] + "..."
+		}
+		sb.WriteString(fmt.Sprintf("[%s]: %s\n", r.Role, content))
+	}
+	formatted := sb.String()
+	if len(formatted) > 800 {
+		formatted = formatted[:800] + "..."
+	}
+	return fmt.Sprintf("\n\n### Relevant Past Session Messages\n%s\n", formatted)
 }

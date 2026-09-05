@@ -10581,7 +10581,7 @@
       "file_type": "code",
       "norm_label": "cleantoolcalltags()",
       "source_file": "agent/loop.go",
-      "source_location": "L332"
+      "source_location": "L341"
     },
     {
       "id": "agent_loop_maxiterations",
@@ -10603,7 +10603,7 @@
       "file_type": "code",
       "norm_label": "resumeagentloop()",
       "source_file": "agent/loop.go",
-      "source_location": "L338"
+      "source_location": "L347"
     },
     {
       "id": "agent_loop_runagentloop",
@@ -17138,7 +17138,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L333",
+      "source_location": "L342",
       "weight": 1.0
     },
     {
@@ -17150,7 +17150,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L372",
+      "source_location": "L381",
       "weight": 1.0
     },
     {
@@ -17162,7 +17162,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L383",
+      "source_location": "L392",
       "weight": 1.0
     },
     {
@@ -17174,7 +17174,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L390",
+      "source_location": "L399",
       "weight": 1.0
     },
     {
@@ -17186,7 +17186,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L427",
+      "source_location": "L436",
       "weight": 1.0
     },
     {
@@ -17198,7 +17198,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L438",
+      "source_location": "L447",
       "weight": 1.0
     },
     {
@@ -17210,7 +17210,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L438",
+      "source_location": "L447",
       "weight": 1.0
     },
     {
@@ -17222,7 +17222,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L445",
+      "source_location": "L454",
       "weight": 1.0
     },
     {
@@ -17234,7 +17234,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L484",
+      "source_location": "L493",
       "weight": 1.0
     },
     {
@@ -17246,7 +17246,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L485",
+      "source_location": "L494",
       "weight": 1.0
     },
     {
@@ -17270,7 +17270,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L102",
+      "source_location": "L107",
       "weight": 1.0
     },
     {
@@ -17282,7 +17282,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L103",
+      "source_location": "L108",
       "weight": 1.0
     },
     {
@@ -17294,7 +17294,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L105",
+      "source_location": "L110",
       "weight": 1.0
     },
     {
@@ -17306,7 +17306,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L106",
+      "source_location": "L111",
       "weight": 1.0
     },
     {
@@ -17318,7 +17318,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L112",
+      "source_location": "L117",
       "weight": 1.0
     },
     {
@@ -17330,7 +17330,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L167",
+      "source_location": "L172",
       "weight": 1.0
     },
     {
@@ -17342,7 +17342,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L180",
+      "source_location": "L185",
       "weight": 1.0
     },
     {
@@ -17354,7 +17354,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L193",
+      "source_location": "L198",
       "weight": 1.0
     },
     {
@@ -17366,7 +17366,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L251",
+      "source_location": "L260",
       "weight": 1.0
     },
     {
@@ -17378,7 +17378,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L264",
+      "source_location": "L273",
       "weight": 1.0
     },
     {
@@ -17390,7 +17390,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L264",
+      "source_location": "L273",
       "weight": 1.0
     },
     {
@@ -17402,7 +17402,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L276",
+      "source_location": "L285",
       "weight": 1.0
     },
     {
@@ -17414,7 +17414,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L324",
+      "source_location": "L333",
       "weight": 1.0
     },
     {
@@ -17426,7 +17426,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L325",
+      "source_location": "L334",
       "weight": 1.0
     },
     {
@@ -25538,7 +25538,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L640",
+      "source_location": "L641",
       "weight": 1.0
     },
     {
@@ -25550,7 +25550,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L641",
+      "source_location": "L642",
       "weight": 1.0
     },
     {
@@ -25562,7 +25562,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L646",
+      "source_location": "L651",
       "weight": 1.0
     },
     {
@@ -25574,7 +25574,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L647",
+      "source_location": "L652",
       "weight": 1.0
     },
     {
@@ -25586,7 +25586,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "telegram/daemon.go",
-      "source_location": "L655",
+      "source_location": "L660",
       "weight": 1.0
     },
     {
@@ -32366,7 +32366,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "agent/loop.go",
-      "source_location": "L338",
+      "source_location": "L347",
       "weight": 1.0
     },
     {
@@ -38861,7 +38861,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "agent/loop.go",
-      "source_location": "L332",
+      "source_location": "L341",
       "weight": 1.0
     },
     {
@@ -38872,7 +38872,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "agent/loop.go",
-      "source_location": "L338",
+      "source_location": "L347",
       "weight": 1.0
     },
     {
@@ -51592,24 +51592,12 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L369",
+      "source_location": "L378",
       "weight": 1.0
     },
     {
       "source": "agent_loop_resumeagentloop",
       "target": "agent_continuation_lookslikecontinuation",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "call",
-      "source_file": "agent/loop.go",
-      "source_location": "L396",
-      "weight": 1.0
-    },
-    {
-      "source": "agent_loop_resumeagentloop",
-      "target": "agent_thinking_buildthinkingmessage",
       "relation": "calls",
       "_origin": "ast",
       "confidence": "INFERRED",
@@ -51621,6 +51609,18 @@
     },
     {
       "source": "agent_loop_resumeagentloop",
+      "target": "agent_thinking_buildthinkingmessage",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "call",
+      "source_file": "agent/loop.go",
+      "source_location": "L414",
+      "weight": 1.0
+    },
+    {
+      "source": "agent_loop_resumeagentloop",
       "target": "agent_chat_appendsessionhistory",
       "relation": "calls",
       "_origin": "ast",
@@ -51628,7 +51628,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L408",
+      "source_location": "L417",
       "weight": 1.0
     },
     {
@@ -51640,24 +51640,12 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L415",
+      "source_location": "L424",
       "weight": 1.0
     },
     {
       "source": "agent_loop_resumeagentloop",
       "target": "agent_self_improve_mayberunselfreview",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "call",
-      "source_file": "agent/loop.go",
-      "source_location": "L416",
-      "weight": 1.0
-    },
-    {
-      "source": "agent_loop_resumeagentloop",
-      "target": "agent_steering_popsteeringmessage",
       "relation": "calls",
       "_origin": "ast",
       "confidence": "INFERRED",
@@ -51669,6 +51657,18 @@
     },
     {
       "source": "agent_loop_resumeagentloop",
+      "target": "agent_steering_popsteeringmessage",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "call",
+      "source_file": "agent/loop.go",
+      "source_location": "L434",
+      "weight": 1.0
+    },
+    {
+      "source": "agent_loop_resumeagentloop",
       "target": "agent_thinking_tooldescription",
       "relation": "calls",
       "_origin": "ast",
@@ -51676,7 +51676,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L435",
+      "source_location": "L444",
       "weight": 1.0
     },
     {
@@ -51688,7 +51688,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L438",
+      "source_location": "L447",
       "weight": 1.0
     },
     {
@@ -51700,7 +51700,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L446",
+      "source_location": "L455",
       "weight": 1.0
     },
     {
@@ -51712,7 +51712,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L448",
+      "source_location": "L457",
       "weight": 1.0
     },
     {
@@ -51724,7 +51724,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L452",
+      "source_location": "L461",
       "weight": 1.0
     },
     {
@@ -51736,7 +51736,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L460",
+      "source_location": "L469",
       "weight": 1.0
     },
     {
@@ -51748,7 +51748,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L465",
+      "source_location": "L474",
       "weight": 1.0
     },
     {
@@ -51760,7 +51760,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L136",
+      "source_location": "L141",
       "weight": 1.0
     },
     {
@@ -51772,7 +51772,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L165",
+      "source_location": "L170",
       "weight": 1.0
     },
     {
@@ -51784,7 +51784,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L199",
+      "source_location": "L204",
       "weight": 1.0
     },
     {
@@ -51796,7 +51796,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L202",
+      "source_location": "L207",
       "weight": 1.0
     },
     {
@@ -51808,7 +51808,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L203",
+      "source_location": "L208",
       "weight": 1.0
     },
     {
@@ -51820,7 +51820,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L203",
+      "source_location": "L208",
       "weight": 1.0
     },
     {
@@ -51832,7 +51832,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L206",
+      "source_location": "L211",
       "weight": 1.0
     },
     {
@@ -51844,7 +51844,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L220",
+      "source_location": "L225",
       "weight": 1.0
     },
     {
@@ -51856,7 +51856,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L233",
+      "source_location": "L238",
       "weight": 1.0
     },
     {
@@ -51868,7 +51868,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L236",
+      "source_location": "L241",
       "weight": 1.0
     },
     {
@@ -51880,7 +51880,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L249",
+      "source_location": "L254",
       "weight": 1.0
     },
     {
@@ -51892,7 +51892,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L259",
+      "source_location": "L268",
       "weight": 1.0
     },
     {
@@ -51904,7 +51904,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L264",
+      "source_location": "L273",
       "weight": 1.0
     },
     {
@@ -51916,7 +51916,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L266",
+      "source_location": "L275",
       "weight": 1.0
     },
     {
@@ -51928,7 +51928,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L277",
+      "source_location": "L286",
       "weight": 1.0
     },
     {
@@ -51940,7 +51940,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L279",
+      "source_location": "L288",
       "weight": 1.0
     },
     {
@@ -51952,7 +51952,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L284",
+      "source_location": "L293",
       "weight": 1.0
     },
     {
@@ -51964,7 +51964,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L299",
+      "source_location": "L308",
       "weight": 1.0
     },
     {
@@ -52036,7 +52036,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L83",
+      "source_location": "L88",
       "weight": 1.0
     },
     {
@@ -52048,7 +52048,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L87",
+      "source_location": "L92",
       "weight": 1.0
     },
     {
@@ -52060,7 +52060,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "agent/loop.go",
-      "source_location": "L89",
+      "source_location": "L94",
       "weight": 1.0
     },
     {
@@ -56793,5 +56793,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "9a1574cde174dfabc1bc8bc428911d0e5cd02850"
+  "built_at_commit": "51e4bdae079d2cf852c25e4ded0597f611675598"
 }

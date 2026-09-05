@@ -26,8 +26,8 @@ func TestContinuationDirectives(t *testing.T) {
 	}
 
 	for _, p := range positives {
-		if !isContinuationDirective(p) {
-			t.Errorf("Expected isContinuationDirective(%q) = true, got false", p)
+		if !IsContinuationDirective(p) {
+			t.Errorf("Expected IsContinuationDirective(%q) = true, got false", p)
 		}
 	}
 
@@ -40,41 +40,34 @@ func TestContinuationDirectives(t *testing.T) {
 	}
 
 	for _, n := range negatives {
-		if isContinuationDirective(n) {
-			t.Errorf("Expected isContinuationDirective(%q) = false, got true", n)
+		if IsContinuationDirective(n) {
+			t.Errorf("Expected IsContinuationDirective(%q) = false, got true", n)
 		}
 	}
 }
 
-func TestSemanticForwardIntent(t *testing.T) {
-	// The exact phrases from the real-world Telegram incident
-	telegramIncidentPhrases := []string{
-		"Aku mulai melihat gambaran. Proses utama server (node) memakai 32% memori — itu cukup tinggi. Sekarang aku lihat log server untuk lihat detil entri dekat dengan waktu pesan 'lanjutkan' (sekitar 14:20–14:32) dan ada nggak error/timeout di situ.",
-		"Aku lanjutkan investigasi. Lihat log sistem/server untuk cari jejak yang terkait dengan penghentian alur saat pesan 'lanjutkan' diproses.",
-		"Aku sudah menemukan akar masalahnya... Aku coba satu cara langsung: fetch URL Twitter-nya lewat read_url biar dapat output nyata dan bukan dead-end seperti sebelumnya.",
-		"Ada temuan penting: URL yang kupakai (status ID palsu 1850000000000000000) ternyata 404 — itu bukan URL asli dari postingan yang kita baca tadi. Aku perlu ambil URL yang benar dari riwayat sesi biar tidak dead-end terus. Aku cari URL postingan asli tadi di riwayat sesi.",
-		"Mari kita periksa file config.json untuk melihat variabel environment.",
-		"Next I will inspect the docker container logs to find the root cause.",
-		"Sekarang saya akan buat file hello.txt",
-		"Kucari URL di riwayat sesi.",
+func TestPureInformationalQuery(t *testing.T) {
+	info := []string{
+		"Jelaskan apa itu Docker container",
+		"Explain what is Kubernetes",
+		"Apa perbedaan PostgreSQL dan MySQL?",
+		"Kenapa Go sangat cepat?",
 	}
-
-	for _, phrase := range telegramIncidentPhrases {
-		if !looksLikeContinuation(phrase) {
-			t.Errorf("Expected looksLikeContinuation = true for phrase:\n%s\nGot false", phrase)
+	for _, q := range info {
+		if !IsPureInformationalQuery(q) {
+			t.Errorf("Expected IsPureInformationalQuery(%q) = true, got false", q)
 		}
 	}
 
-	completedPhrases := []string{
-		"Berikut hasil analisanya: Server berjalan normal, RAM terpakai 40%, load average 0.2. Semua proses sudah selesai diverifikasi.",
-		"File /tmp/data.txt sudah berhasil dibuat dan terverifikasi.",
-		"Semua tugas selesai. Tidak ada tindakan lebih lanjut yang diperlukan.",
-		"All done. The container is running and healthy.",
+	action := []string{
+		"Buat file /tmp/test.py",
+		"Jalankan command df -h",
+		"Hapus direktori /tmp/test",
+		"Cek status git dan edit code",
 	}
-
-	for _, phrase := range completedPhrases {
-		if looksLikeContinuation(phrase) {
-			t.Errorf("Expected looksLikeContinuation = false for completed phrase:\n%s\nGot true", phrase)
+	for _, a := range action {
+		if IsPureInformationalQuery(a) {
+			t.Errorf("Expected IsPureInformationalQuery(%q) = false, got true", a)
 		}
 	}
 }
