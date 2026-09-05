@@ -959,12 +959,6 @@
     "ast_hash": "a02d8509d1e82527833652392625091d",
     "semantic_hash": ""
   },
-  "MODERNIZATION_NOTES.md": {
-    "mtime": 1788462298.6958063,
-    "seen": 1788462352.1410694,
-    "ast_hash": "6c0565a2b81e5000386d83908d5c8fc3",
-    "semantic_hash": ""
-  },
   "docs/COMPARISON_SCORP_PICOCLAW_ZEROCLAW.md": {
     "mtime": 1788482737.0954845,
     "seen": 1788482742.592161,
@@ -1107,12 +1101,6 @@
     "mtime": 1788569049.6757174,
     "seen": 1788569227.5851274,
     "ast_hash": "8a5b41cc7c1cbbdd5e41aaf72308fc77",
-    "semantic_hash": ""
-  },
-  "docs/MCP_MARKETPLACE_BLUEPRINT.md": {
-    "mtime": 1788570192.548165,
-    "seen": 1788570200.3882828,
-    "ast_hash": "9558d0e86107c47cae0ec7b223008a23",
     "semantic_hash": ""
   }
 }

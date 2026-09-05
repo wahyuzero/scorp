@@ -61,10 +61,17 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 		})
 	}
 
+	// Check if this is an explicit continuation directive from user (e.g. "Lanjutkan", "continue")
+	isContinuation := isContinuationDirective(userMessage)
+	activeUserPrompt := userMessage
+	if isContinuation {
+		activeUserPrompt = fmt.Sprintf("%s\n\n[⚡ MANDATORY INSTRUCTION: You are resuming an in-progress task. DO NOT chat or output narrative promises of what you will do. You MUST IMMEDIATELY call the relevant tool(s) to execute the next step. Only return text when the task is completely finished and verified.]", userMessage)
+	}
+
 	// Add user message
 	history = append(history, AgentMessage{
 		Role:    "user",
-		Content: userMessage,
+		Content: activeUserPrompt,
 	})
 	appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: userMessage})
 
@@ -188,16 +195,21 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 			shouldRetry := false
 			retryReason := ""
 
-			if noToolRetries < 5 && !isPureInformationalQuery(userMessage) {
-				if mentionsBrowserTask(userMessage) && !screenshotWasTaken(history) {
+			if noToolRetries < 5 {
+				if isContinuation && iter == 0 && !hasCompletionIndicators(cleanReply) {
 					shouldRetry = true
-					retryReason = "⚠️ INCOMPLETE TASK: The user asked for a browser task. You MUST take a screenshot (browser action=screenshot) before completing."
-				} else if looksLikeContinuation(cleanReply) {
-					shouldRetry = true
-					retryReason = "⚠️ ACTION-FIRST PROTOCOL: You stated an intended action in text without calling the tool. Do not narrate future actions — execute the tool call immediately."
-				} else if toolCount > 0 && expectedSteps >= 2 && toolCount < expectedSteps && !looksLikeContinuation(cleanReply) && !hasCompletionIndicators(cleanReply) {
-					shouldRetry = true
-					retryReason = fmt.Sprintf("⚠️ TASK PROGRESSION: The user requested a sequence of %d distinct steps, but only %d operation(s) have executed so far. Continue and execute the next requested operation now.", expectedSteps, toolCount)
+					retryReason = "⚠️ ACTION-FIRST PROTOCOL: The user commanded you to CONTINUE (Lanjutkan), but you emitted text without calling any tools. You MUST call the appropriate tool(s) to execute the next step immediately."
+				} else if !isPureInformationalQuery(userMessage) {
+					if mentionsBrowserTask(userMessage) && !screenshotWasTaken(history) {
+						shouldRetry = true
+						retryReason = "⚠️ INCOMPLETE TASK: The user asked for a browser task. You MUST take a screenshot (browser action=screenshot) before completing."
+					} else if looksLikeContinuation(cleanReply) {
+						shouldRetry = true
+						retryReason = "⚠️ ACTION-FIRST PROTOCOL: You stated an intended action in text without calling the tool. Do not narrate future actions — execute the tool call immediately."
+					} else if toolCount > 0 && expectedSteps >= 2 && toolCount < expectedSteps && !looksLikeContinuation(cleanReply) && !hasCompletionIndicators(cleanReply) {
+						shouldRetry = true
+						retryReason = fmt.Sprintf("⚠️ TASK PROGRESSION: The user requested a sequence of %d distinct steps, but only %d operation(s) have executed so far. Continue and execute the next requested operation now.", expectedSteps, toolCount)
+					}
 				}
 			}
 
