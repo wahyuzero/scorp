@@ -37,3 +37,5 @@ Thumbs.db
 # Example/template files ARE tracked
 !models.example.json
 !.env.example
+docs/MCP_MARKETPLACE_BLUEPRINT.md
+MODERNIZATION_NOTES.md
