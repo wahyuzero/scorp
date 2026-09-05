@@ -162,7 +162,7 @@ func BuildSessionMenuKeyboard(chatIDStr string) map[string]interface{} {
 
 	// Action row
 	rows = append(rows, []map[string]string{
-		{"text": "➕ Sesi Baru", "callback_data": "sess:new"},
+		{"text": "➕ New Session", "callback_data": "sess:new"},
 		{"text": "🗜️ Compact", "callback_data": "sess:compact"},
 		{"text": "🔄 Refresh", "callback_data": "sess:refresh"},
 		{"text": "🧹 Reset", "callback_data": "sess:clear"},
@@ -197,7 +197,7 @@ func HandleSessionCallback(action, chatIDStr string) (string, map[string]interfa
 	case "new":
 		newSess := fmt.Sprintf("chat-%s", time.Now().Format("0102-150405"))
 		SetActiveSessionID(chatIDStr, newSess)
-		return fmt.Sprintf("✓ Started new conversation: 🟢 <b>%s</b>\n<i>Topik sesi ini akan otomatis dinamai sesuai pesan pertamamu.</i>\n\n%s", newSess, FormatSessionMenuText(chatIDStr)),
+		return fmt.Sprintf("✓ Started new conversation: 🟢 <b>%s</b>\n<i>This session will be auto-named after your first message.</i>\n\n%s", newSess, FormatSessionMenuText(chatIDStr)),
 			BuildSessionMenuKeyboard(chatIDStr), true
 
 	case "use":

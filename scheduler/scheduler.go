@@ -588,7 +588,7 @@ func FormatTasksList() string {
 	defer scheduledTasksMu.Unlock()
 
 	if len(scheduledTasks) == 0 {
-		return "📋 <b>Scheduled Tasks</b>\n\nBelum ada jadwal. Buat via agent:\n<i>\"setiap jam cek status docker\"</i>"
+		return "📋 <b>Scheduled Tasks</b>\n\nNo tasks yet. Create one via the agent:\n<i>\"check docker status every hour\"</i>"
 	}
 
 	var sb strings.Builder

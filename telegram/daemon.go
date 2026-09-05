@@ -504,7 +504,7 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 				newSess = fmt.Sprintf("chat-%s", time.Now().Format("0102-150405"))
 			}
 			SetActiveSessionID(chatIDStr, newSess)
-			SendMessage(fmt.Sprintf("✓ Started new conversation: 🟢 <b>%s</b>\n<i>Topik sesi ini akan otomatis dinamai sesuai pesan pertamamu.</i>", newSess), BuildSessionMenuKeyboard(chatIDStr))
+			SendMessage(fmt.Sprintf("✓ Started new conversation: 🟢 <b>%s</b>\n<i>This session will be auto-named after your first message.</i>", newSess), BuildSessionMenuKeyboard(chatIDStr))
 		case "switch", "use":
 			if len(subArgs) < 2 {
 				SendMessage("⚠️ Usage: <code>/session use &lt;name&gt;</code>", nil)

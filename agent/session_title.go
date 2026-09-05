@@ -47,7 +47,7 @@ func GenerateContextualSessionTitle(userMessage string) string {
 		msg = msg[:300]
 	}
 
-	prompt := fmt.Sprintf("Buatkan judul singkat 2-4 kata dengan huruf kapital di awal kata dan spasi biasa (contoh: 'Setup Nginx SSL', 'Hitung Volume Bola', 'Debug Memory Leak') yang menggambarkan topik percakapan berikut. Berikan HANYA judulnya saja tanpa tanda petik, tanda baca, atau pengantar:\n\n%s", msg)
+	prompt := fmt.Sprintf("Generate a short 2-4 word title in Title Case with plain spaces (examples: 'Setup Nginx SSL', 'Calculate Sphere Volume', 'Debug Memory Leak') describing the topic of the following conversation. Reply with ONLY the title itself — no quotes, no punctuation, no preamble:\n\n%s", msg)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()

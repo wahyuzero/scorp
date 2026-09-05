@@ -74,11 +74,11 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 		})
 	}
 
-	// Check if user issued an explicit continuation directive (e.g. "Lanjutkan", "continue")
+	// Check if user issued an explicit continuation directive (e.g. "continue", "lanjutkan")
 	isContinuation := IsContinuationDirective(userMessage)
 	activeUserPrompt := userMessage
 	if isContinuation {
-		activeUserPrompt = fmt.Sprintf("%s\n\n[⚡ SYSTEM DIRECTIVE: The user instructed you to CONTINUE (Lanjutkan). You were in the middle of executing a task. DO NOT output conversational text or narrative promises. You MUST IMMEDIATELY invoke the required action tool(s). If all actions and verifications are 100%% complete, conclude by calling tool 'complete_task'.]", userMessage)
+		activeUserPrompt = fmt.Sprintf("%s\n\n[⚡ SYSTEM DIRECTIVE: The user instructed you to CONTINUE. You were in the middle of executing a task. DO NOT output conversational text or narrative promises. You MUST IMMEDIATELY invoke the required action tool(s). If all actions and verifications are 100%% complete, conclude by calling tool 'complete_task'.]", userMessage)
 	}
 
 	// Add user message
@@ -349,7 +349,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 							synthMsgs = append(synthMsgs, models.ChatMessage{Role: m.Role, Content: c})
 						}
 					}
-					synthMsgs = append(synthMsgs, models.ChatMessage{Role: "user", Content: "Semua tool di atas SUDAH dieksekusi. Tulis ringkasan akhir (3-8 kalimat) berupa hasil NYATA yang dicapai berdasarkan tool results. Jangan memanggil tool apa pun — balas teks ringkasan saja."})
+					synthMsgs = append(synthMsgs, models.ChatMessage{Role: "user", Content: "All tools above have ALREADY been executed. Write the final summary (3-8 sentences) describing the REAL results achieved, based on the tool results. Do NOT call any tools — reply with the summary text only."})
 					synthCtx, synthCancel := context.WithTimeout(context.Background(), 90*time.Second)
 					if reply2, _, err2 := models.CallModelWithFallback(synthCtx, "chat", synthMsgs); err2 == nil && strings.TrimSpace(reply2) != "" {
 						cleanReply = strings.TrimSpace(reply2)
@@ -362,9 +362,9 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 					// The model already WROTE its final report as thought text but
 					// never called complete_task — deliver that text instead of a
 					// truncated summary or an empty bubble.
-					cleanReply = lastFullThought + "\n\n_(diselesaikan otomatis: model tidak memanggil complete_task)_"
+					cleanReply = lastFullThought + "\n\n_(auto-completed: model did not call complete_task)_"
 				} else {
-					summary := "[NO-FINAL-REPORT] Model tidak menghasilkan laporan akhir. Ringkasan eksekusi yang terjadi:"
+					summary := "[NO-FINAL-REPORT] The model did not produce a final report. Summary of what actually executed:"
 					tail := thinkingLines
 					if len(tail) > 12 {
 						tail = tail[len(tail)-12:]
@@ -372,7 +372,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 					for _, l := range tail {
 						summary += "\n" + l
 					}
-					summary += "\n\n💡 Coba ulangi perintah atau lanjutkan dengan \"lanjutkan\"."
+					summary += "\n\n💡 Retry the command or continue with \"continue\"."
 					cleanReply = summary
 				}
 			}
@@ -493,7 +493,7 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 	defer cancel()
 
 	if msgID == 0 {
-		msgID = tools.SendMessageGetID("🧠 <b>Agent</b>\n\n⏳ <i>melanjutkan...</i>", chatID)
+		msgID = tools.SendMessageGetID("🧠 <b>Agent</b>\n\n⏳ <i>continuing...</i>", chatID)
 	}
 
 	tools.SendChatAction(chatID, "typing")

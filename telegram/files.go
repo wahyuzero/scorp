@@ -313,7 +313,7 @@ func SendFolderAsZip(chatID string, folderPath string) bool {
 	if zipSize <= maxTGFile {
 		ok := SendFile(chatID, zipPath)
 		if ok {
-			SendMessage(fmt.Sprintf("✅ <b>%s.zip</b> terkirim (%s)", folderName, HumanSize(zipSize)), nil)
+			SendMessage(fmt.Sprintf("✅ <b>%s.zip</b> sent (%s)", folderName, HumanSize(zipSize)), nil)
 		}
 		return ok
 	}

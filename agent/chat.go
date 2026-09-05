@@ -25,9 +25,8 @@ import (
 type chatSession struct {
 	agentActive    bool // Agent mode active (tools enabled)
 	lastUsed       time.Time
-	history        []AgentMessage     // Conversation history for context
-	autoStopCancel context.CancelFunc // Cancel previous auto-stop goroutine
-	loopActive     bool               // True while runAgentLoop is executing — prevents async summarization
+	history    []AgentMessage // Conversation history for context
+	loopActive bool           // True while runAgentLoop is executing — prevents async summarization
 }
 
 // Sharded session map to reduce lock contention
@@ -103,44 +102,9 @@ var (
 
 func EnterAgentMode(chatID string) {
 	sess := getOrCreateSession(chatID)
-	// Cancel previous auto-stop goroutine to prevent leaks
-	if sess.autoStopCancel != nil {
-		sess.autoStopCancel()
-	}
 	sess.agentActive = true
 	sess.lastUsed = time.Now()
-	ctx, cancel := context.WithCancel(context.Background())
-	sess.autoStopCancel = cancel
 	setSession(chatID, sess)
-
-	go agentAutoStop(ctx, chatID)
-}
-
-// agentAutoStop monitors agent idle time and auto-stops after 30 min (cancellable)
-func agentAutoStop(ctx context.Context, chatID string) {
-	const idleTimeout = 30 * time.Minute
-	ticker := time.NewTicker(1 * time.Minute)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return // Cancelled — another enter*Mode was called
-		case <-ticker.C:
-		}
-		sess := getSession(chatID)
-		if sess == nil || !sess.agentActive {
-			return
-		}
-		idle := time.Since(sess.lastUsed)
-
-		if idle >= idleTimeout {
-			ExitAgentMode(chatID)
-			log.Printf("[agent] Auto-stopped for %s after %s idle", chatID, idle.Round(time.Second))
-			tools.SendMessage("⏰ Agent mode otomatis dimatikan karena 30 menit tidak aktif.", nil)
-			return
-		}
-	}
 }
 
 // IsAgentMode returns true if the chat session is currently in agent mode

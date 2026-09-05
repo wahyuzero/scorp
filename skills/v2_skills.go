@@ -259,7 +259,7 @@ func ListSkillsOverview() string {
 		sb.WriteString(fmt.Sprintf("   %s\n", meta.Description))
 		sb.WriteString(fmt.Sprintf("   ↳ Path: <code>%s</code>\n\n", meta.SourcePath))
 	}
-	sb.WriteString("💡 <i>Gunakan: <code>/skill &lt;name&gt;</code> atau panggil saat dibutuhkan.</i>")
+	sb.WriteString("💡 <i>Use: <code>/skill &lt;name&gt;</code> or invoke it when needed.</i>")
 	return sb.String()
 }
 

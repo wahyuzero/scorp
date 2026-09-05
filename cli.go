@@ -462,9 +462,9 @@ Commands:
   /exit          — Quit scorp
 
 Usage Examples:
-  scorp> Jelaskan isi file main.go dan cari fungsi yang menangani CLI
-  scorp> Buat file hello.py yang mencetak angka genap 1-20 lalu jalankan dengan python
-  scorp> Cek penggunaan disk dan memori sistem saat ini
+  scorp> Explain what main.go contains and find the function that handles the CLI
+  scorp> Create hello.py that prints even numbers 1-20, then run it with python
+  scorp> Check current disk and memory usage on this system
   scorp> /sop run health_audit
 `)
 }
@@ -645,7 +645,7 @@ func handleCLISession(args []string) {
 		currentSessionID = name
 		fmt.Printf("✓ Switched to new session: \033[1;32m%s\033[0m\n", currentSessionID)
 		if strings.HasPrefix(name, "chat-") {
-			fmt.Println("\033[2mℹ️ Topik sesi ini akan otomatis dinamai sesuai pesan pertamamu.\033[0m")
+			fmt.Println("\033[2mℹ️ This session will be auto-named after your first message.\033[0m")
 		}
 
 	case "use", "switch":

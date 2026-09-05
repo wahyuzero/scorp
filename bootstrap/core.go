@@ -10,7 +10,7 @@ func init() {
 	// ── Shell ──
 	registry.RegisterTool(registry.ToolDef{
 		Name:        "shell",
-		Description: "Jalankan shell command. Mengembalikan stdout+stderr. Gunakan timeout untuk command lama.",
+		Description: "Run a shell command. Returns stdout+stderr. Use timeout for long-running commands.",
 		Category:    "shell",
 		Native:      true,
 		Execute:     tools.ExecuteShell,

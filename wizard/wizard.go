@@ -172,7 +172,7 @@ func handleModelWizardText(text string, chatID int64) bool {
 
 	if text == "/cancel" || text == "/model cancel" {
 		ClearModelWizard(chatID)
-		tools.SendMessage("❌ <b>Wizard dibatalkan.</b>", ModelMenuKeyboard())
+		tools.SendMessage("❌ <b>Wizard cancelled.</b>", ModelMenuKeyboard())
 		return true
 	}
 
@@ -341,7 +341,7 @@ func finalizeProviderKeySave(w *modelWizard, chatID int64) bool {
 		sb.WriteString("\nTap a model to set it as Primary/Agent/Delegation.")
 		tools.SendMessage(sb.String(), ModelMenuKeyboard())
 	} else {
-		tools.SendMessage(fmt.Sprintf("✅ <b>%s</b> API key disimpan!\n\nProvider ini tidak punya model catalog. Gunakan \"Tambah Model\" untuk menambah", ProviderDisplayName(w.Provider)), ModelMenuKeyboard())
+		tools.SendMessage(fmt.Sprintf("✅ <b>%s</b> API key saved!\n\nThis provider has no model catalog. Use \"Add Model\" to add one", ProviderDisplayName(w.Provider)), ModelMenuKeyboard())
 	}
 	return true
 }

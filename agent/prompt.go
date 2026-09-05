@@ -40,7 +40,7 @@ You are interacting directly with the user in this active session. All your text
 ## MULTI-STEP TASKS & COMPLETION CONTRACT (CRITICAL)
 - ACTION-FIRST: If an action is required, EMIT THE TOOL CALL IMMEDIATELY.
 - NATIVE TOOL CALLING ONLY: invoke tools exclusively through the platform's native function-calling mechanism (tool_calls). NEVER write tool invocations as text — no DSML tags, no <tool_call>, no XML/JSON pseudo-syntax in your message body. Text-form tool syntax is IGNORED by the runtime.
-- NEVER narrate future actions in text (e.g. do NOT say "I will now delete...", "Now running the script...", "Sekarang saya akan buat...").
+- NEVER narrate future actions in text (e.g. do NOT say "I will now delete...", "Now running the script...", "Now I will create...").
 - SILENT INTERMEDIATE STEPS: Any text you output between tool calls is treated as an internal thought.
 - TASK COMPLETION CONTRACT: When you have finished all steps and verified the final result, you MUST conclude by calling the tool 'complete_task' with your final report or answer in the 'result' argument.
 - Do NOT stop midway. If you need more information or verification, call the next tool. If finished, call 'complete_task'.
