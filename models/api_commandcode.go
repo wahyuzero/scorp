@@ -363,6 +363,7 @@ func CallCommandCodeWithTools(ctx context.Context, model *ModelConfig, messages 
 	activeCalls := make(map[string]*activeToolCall)
 	var toolCalls []ToolCall
 	var promptTokens, completionTokens, cachedTokens int
+	streamEventCounts := map[string]int{}
 
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
@@ -382,6 +383,7 @@ func CallCommandCodeWithTools(ctx context.Context, model *ModelConfig, messages 
 		}
 
 		evtType, _ := evt["type"].(string)
+		streamEventCounts[evtType]++
 
 		switch evtType {
 		case "text-delta":
@@ -506,6 +508,12 @@ func CallCommandCodeWithTools(ctx context.Context, model *ModelConfig, messages 
 	}
 
 	reply := textBuilder.String()
+	if strings.TrimSpace(reply) == "" {
+		// Diagnostic: capture which event types actually arrived so empty
+		// completions are explainable (reasoning models vs stream cut).
+		log.Printf("[models/command-code] empty stream — events seen: %v (reasoning chars: %d)",
+			streamEventCounts, reasoningBuilder.Len())
+	}
 	if strings.TrimSpace(reply) == "" && reasoningBuilder.Len() > 0 {
 		// The model spent its whole completion reasoning (deepseek-v4 style)
 		// without emitting user-facing text. Surface the reasoning as the
