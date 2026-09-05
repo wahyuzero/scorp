@@ -14,6 +14,7 @@ import (
 	"scorp-agent/models"
 	"scorp-agent/rag"
 	"scorp-agent/registry"
+	"scorp-agent/skills"
 	"scorp-agent/tools"
 )
 
@@ -309,6 +310,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 
 		// Tick dynamic tool discovery TTLs (PicoClaw Parity)
 		registry.TickToolTTL()
+		skills.TickActiveSkills()
 	}
 
 	// Max iterations reached
@@ -468,6 +470,7 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 
 		// Tick dynamic tool discovery TTLs (PicoClaw Parity)
 		registry.TickToolTTL()
+		skills.TickActiveSkills()
 	}
 
 	tools.EditMessageByID(chatID, msgID, "⚠️ Agent reached maximum iterations.", nil)

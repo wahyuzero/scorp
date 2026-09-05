@@ -14,6 +14,7 @@ import (
 	"scorp-agent/agent"
 	"scorp-agent/bootstrap"
 	"scorp-agent/config"
+	"scorp-agent/mcp"
 	"scorp-agent/models"
 	"scorp-agent/registry"
 	"scorp-agent/scheduler"
@@ -47,6 +48,8 @@ func startCLI(initialPrompts ...string) {
 	models.LoadCostTracker()
 
 	// ── Skills ──
+	skills.EnsureBuiltinSkills()
+	skills.LoadAllSkills()
 	skills.Load()
 
 	// ── Bootstrap tool registry ──
@@ -244,6 +247,31 @@ func startCLI(initialPrompts ...string) {
 				continue
 			case "/sop":
 				handleCLISOP(parts[1:], chatIDStr)
+				continue
+			case "/skills", "/skill":
+				if len(parts) > 1 && parts[1] != "list" {
+					skillName := parts[1]
+					if _, err := skills.ActivateSkill(skillName, 5); err != nil {
+						fmt.Printf("❌ Failed to activate skill: %v\n", err)
+					} else {
+						fmt.Printf("✓ Skill '%s' activated for 5 turns!\n", skillName)
+					}
+				} else {
+					fmt.Println(formatTerminalText(skills.ListSkillsOverview()))
+				}
+				continue
+			case "/mcp":
+				if len(parts) > 2 && parts[1] == "restart" {
+					targetServer := parts[2]
+					fmt.Printf("🔄 Restarting MCP server '%s'...\n", targetServer)
+					if err := mcp.RestartServer(targetServer); err != nil {
+						fmt.Printf("❌ %v\n", err)
+					} else {
+						fmt.Printf("✓ MCP server '%s' successfully restarted and healthy!\n", targetServer)
+					}
+				} else {
+					fmt.Println(formatTerminalText(mcp.GetServerHealthStatus()))
+				}
 				continue
 			case "/receipts":
 				printReceipts()

@@ -29,6 +29,8 @@ var availableSlashCommands = []SlashCommand{
 	{Command: "/sop", Args: "[list|run <name>]", Description: "Run Standard Operating Procedures"},
 	{Command: "/cron", Args: "[list|run|del]", Description: "View and manage scheduled background cron tasks"},
 	{Command: "/queue", Args: "", Description: "View real-time agent steering & message queue"},
+	{Command: "/skills", Args: "[list|<name>]", Description: "Inspect and activate specialized agent skills"},
+	{Command: "/mcp", Args: "[list|restart <server>]", Description: "Monitor MCP server health and crash recovery"},
 	{Command: "/receipts", Args: "", Description: "View cryptographic tool execution receipts"},
 	{Command: "/compact", Args: "", Description: "Manually compact and summarize current session history"},
 	{Command: "/clear", Args: "", Description: "Clear current conversation session history"},

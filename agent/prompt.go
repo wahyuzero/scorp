@@ -96,9 +96,14 @@ func getAgentSystemPrompt(chatID ...int64) string {
 	}
 
 	// 4. Dynamic Context (Skills & Memory at tail to keep prefix stable)
-	skillDesc := skills.GetPromptForMessage("")
-	if skillDesc != "" {
-		sb.WriteString("\n## ACTIVE SKILLS\n" + skillDesc + "\n")
+	skillsIndex := skills.FormatSkillsIndexForSystemPrompt()
+	if skillsIndex != "" {
+		sb.WriteString(skillsIndex + "\n")
+	}
+
+	activeSkillsCtx := skills.GetActiveSkillsContext()
+	if activeSkillsCtx != "" {
+		sb.WriteString(activeSkillsCtx + "\n")
 	}
 
 	memSummary := tools.GetMemorySummary()

@@ -24,9 +24,9 @@
     "semantic_hash": ""
   },
   "agent/loop.go": {
-    "mtime": 1788543153.10565,
-    "seen": 1788543483.4011955,
-    "ast_hash": "543595873e4b91fb47f2fcaf03a2a0c5",
+    "mtime": 1788569162.9539518,
+    "seen": 1788569227.584716,
+    "ast_hash": "feab2cb3c910d27978bde158ae386b39",
     "semantic_hash": ""
   },
   "agent/phase6_test.go": {
@@ -42,9 +42,9 @@
     "semantic_hash": ""
   },
   "agent/prompt.go": {
-    "mtime": 1788538593.2764158,
-    "seen": 1788538742.356116,
-    "ast_hash": "2a1e00f8b373d36464abd377b9bbb66f",
+    "mtime": 1788569069.0397573,
+    "seen": 1788569227.584732,
+    "ast_hash": "1481ccdd2cfed5aaed2a9bcea721f1bd",
     "semantic_hash": ""
   },
   "agent/prompt_test.go": {
@@ -144,9 +144,9 @@
     "semantic_hash": "08acac7901e0265f06c97b0554494354"
   },
   "cli.go": {
-    "mtime": 1788564558.0393074,
-    "seen": 1788564618.5510287,
-    "ast_hash": "bdd7031bdebc37afec17a9fa3994a696",
+    "mtime": 1788569194.857018,
+    "seen": 1788569227.5848277,
+    "ast_hash": "5e34f7da7fb6aef073d54e7a621bf750",
     "semantic_hash": ""
   },
   "cli_test.go": {
@@ -294,9 +294,9 @@
     "semantic_hash": ""
   },
   "mcp/client.go": {
-    "mtime": 1788485109.8878357,
-    "seen": 1788485134.5620174,
-    "ast_hash": "7968df613cd710f8a1418232810d72e8",
+    "mtime": 1788569062.8467445,
+    "seen": 1788569227.5849402,
+    "ast_hash": "7ce6232e38ced79470c72a64e33e1543",
     "semantic_hash": ""
   },
   "mcp/manage.go": {
@@ -936,9 +936,9 @@
     "semantic_hash": ""
   },
   "telegram/daemon.go": {
-    "mtime": 1788564565.3773208,
-    "seen": 1788564618.5513556,
-    "ast_hash": "726d71e1a7f2c7fe584a5c64edad71e6",
+    "mtime": 1788569130.9918857,
+    "seen": 1788569227.5850475,
+    "ast_hash": "f4984b9e14121473e7d39e864de2c20e",
     "semantic_hash": ""
   },
   "agent/session_mgr.go": {
@@ -1020,9 +1020,9 @@
     "semantic_hash": ""
   },
   "tui_input.go": {
-    "mtime": 1788564549.7572923,
-    "seen": 1788564618.5515516,
-    "ast_hash": "8de7198ef4e1184ab7f4f2d641decae5",
+    "mtime": 1788569091.024803,
+    "seen": 1788569227.5851457,
+    "ast_hash": "e155b2dae8e2f4e9da7e6e75dbb0bd2f",
     "semantic_hash": ""
   },
   "tui_status.go": {
@@ -1083,6 +1083,30 @@
     "mtime": 1788564581.8253505,
     "seen": 1788564618.550889,
     "ast_hash": "786faeb9152dece39b494610e42eb587",
+    "semantic_hash": ""
+  },
+  "mcp/watchdog.go": {
+    "mtime": 1788569149.3949237,
+    "seen": 1788569227.5849497,
+    "ast_hash": "c6d83014bc6075acaa6cb7f1f24c9a2f",
+    "semantic_hash": ""
+  },
+  "skills/builtin_skills.go": {
+    "mtime": 1788569044.9957075,
+    "seen": 1788569227.5850353,
+    "ast_hash": "0541eec3d58dfc90298a0c8ffce350db",
+    "semantic_hash": ""
+  },
+  "skills/v2_skills.go": {
+    "mtime": 1788569038.2106936,
+    "seen": 1788569227.5850415,
+    "ast_hash": "43cae1a9bf2c417544b63f3df17fb98d",
+    "semantic_hash": ""
+  },
+  "tools/skill_activate.go": {
+    "mtime": 1788569049.6757174,
+    "seen": 1788569227.5851274,
+    "ast_hash": "8a5b41cc7c1cbbdd5e41aaf72308fc77",
     "semantic_hash": ""
   }
 }

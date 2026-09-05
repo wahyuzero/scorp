@@ -144,9 +144,9 @@
     "semantic_hash": "08acac7901e0265f06c97b0554494354"
   },
   "cli.go": {
-    "mtime": 1788544068.2634172,
-    "seen": 1788544140.7665672,
-    "ast_hash": "4a116dbadba03b4d44dc39f71b9657e0",
+    "mtime": 1788564558.0393074,
+    "seen": 1788564618.5510287,
+    "ast_hash": "bdd7031bdebc37afec17a9fa3994a696",
     "semantic_hash": ""
   },
   "cli_test.go": {
@@ -936,9 +936,9 @@
     "semantic_hash": ""
   },
   "telegram/daemon.go": {
-    "mtime": 1788543456.1501815,
-    "seen": 1788543483.4015014,
-    "ast_hash": "6ddb9a19714b059749834f9905a45418",
+    "mtime": 1788564565.3773208,
+    "seen": 1788564618.5513556,
+    "ast_hash": "726d71e1a7f2c7fe584a5c64edad71e6",
     "semantic_hash": ""
   },
   "agent/session_mgr.go": {
@@ -1020,9 +1020,9 @@
     "semantic_hash": ""
   },
   "tui_input.go": {
-    "mtime": 1788544102.4614897,
-    "seen": 1788544140.767009,
-    "ast_hash": "5322c99cd5e53b56d8524e5c0d4a3c14",
+    "mtime": 1788564549.7572923,
+    "seen": 1788564618.5515516,
+    "ast_hash": "8de7198ef4e1184ab7f4f2d641decae5",
     "semantic_hash": ""
   },
   "tui_status.go": {
@@ -1062,9 +1062,9 @@
     "semantic_hash": ""
   },
   "telegram/session_ui.go": {
-    "mtime": 1788542885.0762718,
-    "seen": 1788542898.7471607,
-    "ast_hash": "99f0a74e47a3825c46aaad715a2d465d",
+    "mtime": 1788564575.1833386,
+    "seen": 1788564618.551364,
+    "ast_hash": "71512ab02ca16b5dc8b470acb4c2065e",
     "semantic_hash": ""
   },
   "agent/session_title.go": {
@@ -1077,6 +1077,12 @@
     "mtime": 1788544109.1165037,
     "seen": 1788544140.767013,
     "ast_hash": "339bf834981938be0aff47f6b86ffb1e",
+    "semantic_hash": ""
+  },
+  "agent/compact_manual.go": {
+    "mtime": 1788564581.8253505,
+    "seen": 1788564618.550889,
+    "ast_hash": "786faeb9152dece39b494610e42eb587",
     "semantic_hash": ""
   }
 }

@@ -97,6 +97,8 @@ func StartDaemon() {
 	tools.RunAutonomousCycle = agent.RunAutonomousCycle
 
 	// Load dynamic skills
+	skills.EnsureBuiltinSkills()
+	skills.LoadAllSkills()
 	skills.Load()
 
 	// Bootstrap tool registry
@@ -414,9 +416,31 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 			}
 		}
 
-	case action == "/mcp":
-		text, _ := mcp.ExecuteMCPManage(map[string]interface{}{"action": "list"})
-		SendMessage(text, BackButtonKeyboard())
+	case action == "/mcp" || strings.HasPrefix(action, "/mcp "):
+		sub := strings.Fields(action)
+		if len(sub) > 2 && sub[1] == "restart" {
+			target := sub[2]
+			if err := mcp.RestartServer(target); err != nil {
+				SendMessage(fmt.Sprintf("❌ Failed to restart MCP server '%s': %v", target, err), nil)
+			} else {
+				SendMessage(fmt.Sprintf("✓ MCP server <code>%s</code> successfully restarted!", target), nil)
+			}
+		} else {
+			SendMessage(mcp.GetServerHealthStatus(), BackButtonKeyboard())
+		}
+
+	case action == "/skills" || action == "/skill" || strings.HasPrefix(action, "/skill "):
+		sub := strings.Fields(action)
+		if len(sub) > 1 && sub[1] != "list" {
+			target := sub[1]
+			if _, err := skills.ActivateSkill(target, 5); err != nil {
+				SendMessage(fmt.Sprintf("❌ Failed to activate skill: %v", err), nil)
+			} else {
+				SendMessage(fmt.Sprintf("✅ Skill <code>%s</code> activated for 5 turns!", target), nil)
+			}
+		} else {
+			SendMessage(skills.ListSkillsOverview(), BackButtonKeyboard())
+		}
 
 	case action == "/sops":
 		text, _ := tools.ExecuteSOP(map[string]interface{}{"action": "list"})

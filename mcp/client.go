@@ -140,6 +140,9 @@ func StartMCPServers() {
 		mcpServers[name] = srv
 		mcpServersMu.Unlock()
 
+		// Register watchdog monitor for automatic crash recovery
+		RegisterWatchdog(name, srv)
+
 		// Track each server in wait group for graceful shutdown
 		mcpShutdownWG.Add(1)
 		go func(s *MCPServer) {
