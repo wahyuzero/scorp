@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"scorp-agent/config"
 	"scorp-agent/internal/helpers"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -102,13 +104,42 @@ func ExecuteShell(args map[string]interface{}, chatID int64) (string, bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "bash", "-c", command)
+	cmd := exec.Command("bash", "-c", command)
+	// Own process group so the timeout can kill backgrounded grandchildren —
+	// otherwise `server &` inherits the stdout pipe and CombinedOutput blocks
+	// forever even after the direct child exits.
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
-	output, err := cmd.CombinedOutput()
-	result := string(output)
+	var buf bytes.Buffer
+	cmd.Stdout = &buf
+	cmd.Stderr = &buf
 
-	if ctx.Err() == context.DeadlineExceeded {
-		return fmt.Sprintf("Command timed out after %ds:\n%s", timeout, helpers.TruncOutput(result, helpers.MaxToolOutput)), false
+	if err := cmd.Start(); err != nil {
+		return fmt.Sprintf("Command failed to start: %v", err), false
+	}
+
+	done := make(chan error, 1)
+	go func() { done <- cmd.Wait() }()
+
+	var err error
+	timedOut := false
+	select {
+	case <-ctx.Done():
+		timedOut = true
+		if cmd.Process != nil {
+			// Negative PID kills the whole group (bash + backgrounded children).
+			syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		}
+		<-done // copiers finish once every group member released the pipe
+		err = fmt.Errorf("timeout")
+	case err = <-done:
+	}
+
+	result := buf.String()
+
+	if timedOut {
+		return fmt.Sprintf("Command timed out after %ds (background processes holding the pipe are killed — for daemons use: nohup CMD >/tmp/log 2>&1 & disown):\n%s",
+			timeout, helpers.TruncOutput(result, helpers.MaxToolOutput)), false
 	}
 
 	if err != nil {
