@@ -359,6 +359,7 @@ func CallCommandCodeWithTools(ctx context.Context, model *ModelConfig, messages 
 	scanner.Buffer(make([]byte, 64*1024), 2*1024*1024)
 
 	var textBuilder strings.Builder
+	var reasoningBuilder strings.Builder
 	activeCalls := make(map[string]*activeToolCall)
 	var toolCalls []ToolCall
 	var promptTokens, completionTokens, cachedTokens int
@@ -386,6 +387,14 @@ func CallCommandCodeWithTools(ctx context.Context, model *ModelConfig, messages 
 		case "text-delta":
 			if txt, ok := evt["text"].(string); ok {
 				textBuilder.WriteString(txt)
+			}
+		case "reasoning-delta", "reasoning":
+			// Reasoning models stream their thinking separately; accumulate it
+			// so a reasoning-only completion still yields usable content.
+			if txt, ok := evt["delta"].(string); ok && txt != "" {
+				reasoningBuilder.WriteString(txt)
+			} else if txt, ok := evt["text"].(string); ok && txt != "" {
+				reasoningBuilder.WriteString(txt)
 			}
 		case "tool-input-start":
 			id, _ := evt["id"].(string)
@@ -497,6 +506,16 @@ func CallCommandCodeWithTools(ctx context.Context, model *ModelConfig, messages 
 	}
 
 	reply := textBuilder.String()
+	if strings.TrimSpace(reply) == "" && reasoningBuilder.Len() > 0 {
+		// The model spent its whole completion reasoning (deepseek-v4 style)
+		// without emitting user-facing text. Surface the reasoning as the
+		// reply instead of returning an empty string that reads as silence.
+		reply = reasoningBuilder.String()
+		if len(reply) > 4000 {
+			reply = reply[:4000] + "\n… (reasoning truncated)"
+		}
+		log.Printf("[models/command-code] empty text stream — using %d chars of reasoning as reply", len(reply))
+	}
 
 	// ── Auto-Healing Fallback Parser: DSML, XML, or pseudo bracket tool calls ──
 	fallbackCalls, cleanReply := extractFallbackToolCalls(reply)

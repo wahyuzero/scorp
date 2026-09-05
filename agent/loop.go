@@ -305,6 +305,22 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 			history = append(history, AgentMessage{Role: "assistant", Content: reply})
 			appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: cleanReply})
 
+			// Never deliver an empty bubble: if the model exhausted its
+			// no-tool retries without producing a report, summarize what was
+			// actually executed so the user gets a transparent outcome.
+			if strings.TrimSpace(cleanReply) == "" {
+				summary := "[NO-FINAL-REPORT] Model tidak menghasilkan laporan akhir. Ringkasan eksekusi yang terjadi:"
+				tail := thinkingLines
+				if len(tail) > 12 {
+					tail = tail[len(tail)-12:]
+				}
+				for _, l := range tail {
+					summary += "\n" + l
+				}
+				summary += "\n\n💡 Coba ulangi perintah atau lanjutkan dengan \"lanjutkan\"."
+				cleanReply = summary
+			}
+
 			sendScorpReply(chatID, msgID, cleanReply)
 			maybeRunSelfReview(chatID, chatIDStr)
 			return
