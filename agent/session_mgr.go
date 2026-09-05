@@ -91,6 +91,9 @@ func RenameSession(oldID, newID string) error {
 		return nil
 	}
 
+	// Flush memory to disk first to ensure the old file is up-to-date
+	FlushSessionHistory(oldID)
+
 	oldPath := historyFilePath(oldID)
 	newPath := historyFilePath(newID)
 

@@ -326,6 +326,16 @@ func historyWriterLoop() {
 	}
 }
 
+// FlushSessionHistory immediately forces saving a session's in-memory history to disk.
+func FlushSessionHistory(chatID string) {
+	sess := getSession(chatID)
+	if sess != nil && len(sess.history) > 0 {
+		snapshot := make([]AgentMessage, len(sess.history))
+		copy(snapshot, sess.history)
+		saveHistoryToDisk(chatID, snapshot)
+	}
+}
+
 // scheduleHistorySave marks a session as dirty and triggers a delayed save via channel
 func scheduleHistorySave(chatID string) {
 	historyDirtyMu.Lock()

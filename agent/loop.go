@@ -175,6 +175,23 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 	isPureInfo := IsPureInformationalQuery(userMessage)
 
 	for iter := 0; iter < maxIterations(); iter++ {
+		// Real-time Steering Queue check at the start of each iteration
+		steerMsg, hasSteer := PopSteeringMessage(chatIDStr)
+		if !hasSteer && rawChatIDStr != chatIDStr && chatID != 0 {
+			steerMsg, hasSteer = PopSteeringMessage(rawChatIDStr)
+		}
+		if hasSteer {
+			log.Printf("[steering] User redirected execution before iteration %d: %s", iter, steerMsg)
+			thinkingLines = append(thinkingLines, fmt.Sprintf("⚡ [INTERRUPT] Steered: %s", helpers.TruncateStr(steerMsg, 50)))
+			steerTurnMsg := fmt.Sprintf("⚡ [USER INTERRUPT]: %s", steerMsg)
+			history = append(history, AgentMessage{Role: "user", Content: steerTurnMsg})
+			appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: steerTurnMsg})
+			tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
+			userMessage = steerMsg
+			isPureInfo = IsPureInformationalQuery(userMessage)
+			noToolRetries = 0
+		}
+
 		// Convert history to ChatMessage format
 		chatMsgs := make([]models.ChatMessage, len(history))
 		for i, m := range history {

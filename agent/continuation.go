@@ -58,6 +58,18 @@ func IsPureInformationalQuery(msg string) bool {
 		}
 	}
 
+	// Conversational greetings or casual remarks that require no actions
+	greetings := []string{
+		"hai", "halo", "hello", "hi", "hey", "hei", "pagi", "siang", "sore", "malam",
+		"selamat pagi", "selamat siang", "selamat sore", "selamat malam", "assalamualaikum",
+		"tes", "test", "ping", "hola", "sup", "yo",
+	}
+	for _, g := range greetings {
+		if lower == g {
+			return true
+		}
+	}
+
 	infoPrefixes := []string{
 		"jelaskan ", "apa itu ", "kenapa ", "mengapa ", "bagaimana cara ", "apa saja ",
 		"explain ", "what is ", "why ", "how does ", "how to ", "what are ",
