@@ -182,6 +182,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 	toolCount := 0
 	lastThinkingUpdate := time.Now()
 	noToolRetries := 0
+	completeTaskGateNudged := false
 	recentToolSignatures := make(map[string]int)
 
 	isPureInfo := IsPureInformationalQuery(userMessage)
@@ -247,6 +248,21 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 
 		// If complete_task was explicitly called, conclude task immediately!
 		if isTaskExplicitlyCompleted {
+			// Anti-fabrication gate: on an action task, reject complete_task
+			// when ZERO tools were executed this turn — the most common shape
+			// of a hallucinated "Done" report is concluding from stale history
+			// without doing the work. Allow one immediate re-conclusion so
+			// genuinely tool-free action tasks are not bricked.
+			if toolCount == 0 && !isPureInfo && !completeTaskGateNudged {
+				completeTaskGateNudged = true
+				noToolRetries = 0
+				log.Printf("[agent] complete_task rejected — no tools executed this turn (anti-fabrication gate)")
+				gateNudge := "⚠️ COMPLETE_TASK REJECTED: You concluded the task WITHOUT executing any tools this turn, and the user's request is an action task. Fabricating or reusing previous results is FORBIDDEN. Execute the required tools now and verify real outputs; only then call complete_task with evidence-backed results. (If — and only if — the task genuinely requires no system action, call complete_task again with the final answer.)"
+				history = append(history, AgentMessage{Role: "assistant", Content: reply})
+				history = append(history, AgentMessage{Role: "user", Content: gateNudge})
+				continue
+			}
+
 			finalOutput := explicitFinalResult
 			if finalOutput == "" {
 				finalOutput = cleanToolCallTags(reply)
