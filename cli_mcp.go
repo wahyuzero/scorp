@@ -60,10 +60,7 @@ func handleMCPCommand(parts []string) {
 				return
 			}
 			name := parts[2]
-			opt := ""
-			if len(parts) >= 4 {
-				opt = parts[3]
-			}
+			opt := strings.Join(parts[3:], " ") // keep multi-token specs intact
 			for {
 				out, ok, needsSelection := marketplace.CLIInstall(name, opt)
 				fmt.Println(formatTerminalText(out))

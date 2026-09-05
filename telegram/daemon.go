@@ -436,10 +436,7 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 			}
 		} else if len(sub) >= 3 && sub[1] == "install" {
 			name := sub[2]
-			opt := ""
-			if len(sub) >= 4 {
-				opt = sub[3]
-			}
+			opt := strings.Join(sub[3:], " ") // keep multi-token specs intact (e.g. "upstream npx:pkg /tmp")
 			handleTelegramMarketplaceInstall(chatID, messageID, name, opt, isCallback)
 		} else {
 			SendMessage(mcp.GetServerHealthStatus(), BackButtonKeyboard())
