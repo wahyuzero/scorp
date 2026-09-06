@@ -114,7 +114,23 @@ func deploymentEnv() ([]string, error) {
 	for _, path := range candidates {
 		kv, err := godotenv.Read(path)
 		if err != nil {
-			continue
+			// Lenient fallback: godotenv rejects the whole file on one
+			// malformed line; recover the simple KEY=VALUE lines instead of
+			// losing every API key over one bad quoting.
+			data, rerr := os.ReadFile(path)
+			if rerr != nil {
+				continue
+			}
+			kv = map[string]string{}
+			for _, line := range strings.Split(string(data), "\n") {
+				line = strings.TrimSpace(line)
+				if line == "" || strings.HasPrefix(line, "#") {
+					continue
+				}
+				if i := strings.Index(line, "="); i > 0 {
+					kv[strings.TrimSpace(line[:i])] = strings.Trim(strings.TrimSpace(line[i+1:]), "\"'")
+				}
+			}
 		}
 		for k, v := range kv {
 			if !existing[k] {
