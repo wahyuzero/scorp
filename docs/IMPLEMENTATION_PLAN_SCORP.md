@@ -3,14 +3,14 @@
 > Prinsip penyusunan: setiap item wajib punya (a) bukti komunitas, (b) desain konkret untuk
 > arsitektur scorp, (c) estimasi effort S (<1 hari) / M (1-3 hari) / L (>3 hari).
 
-> **STATUS (2026-09-06): terlaksana & terverifikasi live di tencent-vps —**
+> **STATUS (2026-09-06): SEMUA ITEM TERLAKSANA & terverifikasi live di tencent-vps —**
 > P0.1 sandbox bwrap + daemon non-root ✅ · P0.2 deny-rule engine ✅ · P0.3 test-integrity gate ✅ ·
 > P1.4 plan mode ✅ · P1.5 ledger persisten ✅ · P1.6 checkpoint/rewind ✅ · P1.7 auto memory ✅ ·
 > P2.8 delegate (audit + routing lewat gate stack) ✅ · P2.9 MCP deferred ✅ · P2.10 compaction
-> preservation ✅ · P4.15 `scorp eval` (arena + gerbang pra-deploy otomatis via `scripts/deploy.sh`) ✅ ·
-> P3.12 hooks PreToolUse/PostToolUse (exit-2 blok, stdout = konteks, SCORP_HOOKS_PRE/POST) ✅ —
-> komit a1bb393..db5c75a.
-> Tersisa: P3.13 auto-classifier · P3.14 MCP contract watch · P4.16 klaim berbasis bukti.
+> preservation ✅ · P4.15 `scorp eval` (arena 14 kasus + gerbang pra-deploy otomatis via
+> `scripts/deploy.sh`) ✅ · P3.12 hooks ✅ · P3.13 auto-classifier (mode `auto`, PermissionDecision)
+> ✅ · P3.14 MCP contract watch (fingerprint + warning) ✅ · P4.16 klaim berbasis bukti (claim
+> gate) ✅ — komit a1bb393..5310066.
 
 ## PRINSIP PENGEMBANGAN (dari konsensus riset)
 
@@ -132,16 +132,27 @@ env `SCORP_HOOK_EVENT/TOOL/SESSION`; exit 0 → stdout jadi konteks tambahan, ex
 di jalankan resume terkonfirmasi. Uji: config/tools/agent test suite + kasus arena
 `hooks_block_and_context` (11 kasus core).
 
-### 13. Auto-mode classifier (effort M/L, impact H)
+### 13. Auto-mode classifier (effort M/L, impact H) — ✅ 2026-09-06
 **Bukti**: data Anthropic — manusia menangkap 13.6% perintah berbahaya vs classifier 89%; auto mode
 jadi default Agu 2026. **Desain**: tingkat ke-4 `auto` di antara supervised↔yolo: model murah
 mengklasifikasi tiap tool call (safe → jalan, risky → confirm gate yang sudah ada, destructive →
 hard-deny kecuali allowlist); fallback manual setelah N keputusan meragukan; statistik keputusan ke
 receipts. `ConfirmationRequired()` diperluas jadi `PermissionDecision(tool, args) -> allow|ask|deny`.
+**Realisasi**: `agent/auto.go` — lapisan: read-only deterministic → heuristik shell read-only →
+destructive hard-deny (escape: `SCORP_AUTO_ALLOW` regex) → model murah `RouteModel("chat")`
+(JSON ketat, 15s); uncertain fail-closed ke ask; 3× uncertain berturut → fallback gaya supervised
+sampai batas task. Enforcement di kedua loop (ask = keyboard konfirmasi + pause + resume dengan
+history) dan `ExecuteTool` (subagent: ask gagal jadi deny). Konfirmasi auto membawa args penuh —
+semua tool bisa dieksekusi setelah approval. Keputusan tercatat di receipt meta `auto_decision`.
+Arena: `auto_mode_classifier_gates`.
 
-### 14. MCP contract watch (effort S, impact M)
+### 14. MCP contract watch (effort S, impact M) — ✅ 2026-09-06
 **Desain**: fingerprint (hash nama+skema tool) per server MCP; perubahan diam-diam → warning
 (pola mcpwatch: "uptime bilang server menjawab, tidak bilang ia masih melakukan yang agen harapkan").
+**Realisasi**: `mcp/contract.go` — fingerprint sha256 (nama|deskripsi|inputSchema, sorted) per
+server, persisten di `~/.scorp/mcp_contracts.json`; cek tiap startup; perubahan → warning sekali
+(log + notice di /status); server yang menghilang dari registry terus memperingatkan. Arena:
+`mcp_contract_watch`.
 
 ---
 
@@ -153,9 +164,13 @@ receipts. `ConfirmationRequired()` diperluas jadi `PermissionDecision(tool, args
 (persistence, safety-gate, plan, MCP, sandbox) + pemeriksa artefak independen; dijalankan otomatis
 sebelum deploy; metrik: pass rate, klaim-vs-verifikasi delta, token/task.
 
-### 16. Bukti uji wajib untuk klaim (effort S, impact M)
+### 16. Bukti uji wajib untuk klaim (effort S, impact M) — ✅ 2026-09-06
 **Desain**: perluasan anti-fabrication gate — klaim "all tests pass" tanpa receipt eksekusi test
 pada sesi berjalan → ditolak dengan nudge. Receipts.json tinggal di-query.
+**Realisasi**: `tools/testgate.go` — `LooksLikeTestPassClaim` (pola EN+ID) + `HasGreenTestRun`
+(receipt test-run sukses dalam window task); complete_task dengan klaim pass tanpa bukti → nudge
+sekali, lalu lolos dengan advisory eksplisit "NOT receipt-backed" (kedua loop). Arena:
+`claim_gate_requires_receipt`.
 
 ---
 

@@ -129,10 +129,12 @@ func HandleConfirmation(chatID int64, confirmed bool, callbackMsgID ...int64) {
 	}
 
 	// P3.13: auto-mode confirmations carry full args and may target any tool.
-	// Execute via ExecuteTool so deny rules, hooks, receipts and the auto
-	// decision pipeline all apply on the confirmed path too.
+	// Execute via ExecuteTool so deny rules, hooks, receipts all apply. The
+	// user just approved THIS call — preset AutoDecision so ExecuteTool's auto
+	// gate trusts it instead of re-classifying (a re-grade could contradict
+	// the human's approval); deny rules and hooks still bind.
 	if pc.args != nil {
-		tc := ToolCall{Name: pc.toolName, Args: pc.args}
+		tc := ToolCall{Name: pc.toolName, Args: pc.args, AutoDecision: "auto:user-approved"}
 		result, ok := ExecuteTool(tc, chatID)
 		status := "✅"
 		if !ok {

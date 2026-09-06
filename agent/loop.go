@@ -569,30 +569,11 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 			log.Printf("[agent] Executing tool: %s", desc)
 			thinkingLines = append(thinkingLines, desc)
 
-			// Check for dangerous commands needing confirmation (bypassed in YOLO mode)
-			if tc.Name == "shell" && config.ConfirmationRequired() && IsDangerousCommand(helpers.GetStringArg(tc.Args, "command", "")) {
-				cmd := helpers.GetStringArg(tc.Args, "command", "")
-				if shouldUpdateThinking(toolCount, lastThinkingUpdate) {
-					tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
-					lastThinkingUpdate = time.Now()
-				}
-
-				thinkingLines = append(thinkingLines, "⚠️ Awaiting confirmation...")
-				tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
-				lastThinkingUpdate = time.Now()
-
-				promptMsgID := tools.SendMessageGetIDWithKeyboard(
-					fmt.Sprintf("⚠️ <b>Dangerous Command</b>\n\n<pre>%s</pre>\n\nAllow execution?", helpers.EscapeHTML(cmd)),
-					chatID, confirmKeyboard())
-
-				StorePendingConfirmation(fmt.Sprintf("%d", chatID), "shell", cmd, history, promptMsgID)
-				return
-			}
-
 			// Auto-mode classifier gate (P3.13): grade every call when
 			// SCORP_AUTONOMY=auto. deny → synthetic tool result; ask → inline
 			// confirmation + pause; allow → proceed with the decision preset
-			// so the receipt records it.
+			// so the receipt records it. Runs BEFORE the legacy dangerous gate
+			// so destructive calls are hard-denied, not offered a confirmation.
 			if config.GetAutonomyLevel() == config.AutonomyAuto {
 				decision, reason, source := PermissionDecision(tc.Name, tc.Args)
 				switch decision {
@@ -619,6 +600,27 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 				}
 				tc.AutoDecision = "auto:" + source
 				log.Printf("[auto] ALLOW %s (%s): %s", tc.Name, source, reason)
+			}
+
+			// Check for dangerous commands needing confirmation (bypassed in
+			// YOLO mode and in auto mode — the classifier gate above owns auto).
+			if config.GetAutonomyLevel() != config.AutonomyAuto && tc.Name == "shell" && config.ConfirmationRequired() && IsDangerousCommand(helpers.GetStringArg(tc.Args, "command", "")) {
+				cmd := helpers.GetStringArg(tc.Args, "command", "")
+				if shouldUpdateThinking(toolCount, lastThinkingUpdate) {
+					tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
+					lastThinkingUpdate = time.Now()
+				}
+
+				thinkingLines = append(thinkingLines, "⚠️ Awaiting confirmation...")
+				tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
+				lastThinkingUpdate = time.Now()
+
+				promptMsgID := tools.SendMessageGetIDWithKeyboard(
+					fmt.Sprintf("⚠️ <b>Dangerous Command</b>\n\n<pre>%s</pre>\n\nAllow execution?", helpers.EscapeHTML(cmd)),
+					chatID, confirmKeyboard())
+
+				StorePendingConfirmation(fmt.Sprintf("%d", chatID), "shell", cmd, history, promptMsgID)
+				return
 			}
 
 			// Check for repeated identical actions (loop prevention)
@@ -865,22 +867,10 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 			desc := toolDescription(tc)
 			thinkingLines = append(thinkingLines, desc)
 
-			if tc.Name == "shell" && config.ConfirmationRequired() && IsDangerousCommand(helpers.GetStringArg(tc.Args, "command", "")) {
-				cmd := helpers.GetStringArg(tc.Args, "command", "")
-				thinkingLines = append(thinkingLines, "⚠️ Awaiting confirmation...")
-				tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
-				lastThinkingUpdate = time.Now()
-
-				promptMsgID := tools.SendMessageGetIDWithKeyboard(
-					fmt.Sprintf("⚠️ <b>Dangerous Command</b>\n\n<pre>%s</pre>\n\nAllow execution?", helpers.EscapeHTML(cmd)),
-					chatID, confirmKeyboard())
-
-				StorePendingConfirmation(chatIDStr, "shell", cmd, messages, promptMsgID)
-				return
-			}
-
 			// Auto-mode classifier gate (P3.13), resume-loop site — same
-			// contract as the main loop.
+			// contract as the main loop. Runs BEFORE the legacy dangerous
+			// gate so destructive calls are hard-denied, not offered a
+			// confirmation.
 			if config.GetAutonomyLevel() == config.AutonomyAuto {
 				decision, reason, source := PermissionDecision(tc.Name, tc.Args)
 				switch decision {
@@ -907,6 +897,22 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 				}
 				tc.AutoDecision = "auto:" + source
 				log.Printf("[auto] ALLOW %s (%s): %s", tc.Name, source, reason)
+			}
+
+			// Check for dangerous commands needing confirmation (bypassed in
+			// YOLO mode and in auto mode — the classifier gate above owns auto).
+			if config.GetAutonomyLevel() != config.AutonomyAuto && tc.Name == "shell" && config.ConfirmationRequired() && IsDangerousCommand(helpers.GetStringArg(tc.Args, "command", "")) {
+				cmd := helpers.GetStringArg(tc.Args, "command", "")
+				thinkingLines = append(thinkingLines, "⚠️ Awaiting confirmation...")
+				tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
+				lastThinkingUpdate = time.Now()
+
+				promptMsgID := tools.SendMessageGetIDWithKeyboard(
+					fmt.Sprintf("⚠️ <b>Dangerous Command</b>\n\n<pre>%s</pre>\n\nAllow execution?", helpers.EscapeHTML(cmd)),
+					chatID, confirmKeyboard())
+
+				StorePendingConfirmation(chatIDStr, "shell", cmd, messages, promptMsgID)
+				return
 			}
 
 			tcSig := toolCallSignature(tc)
