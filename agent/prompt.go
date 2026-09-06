@@ -173,14 +173,32 @@ func ExecuteTool(tc ToolCall, chatID int64) (string, bool) {
 		}
 	}
 
-	// 3. Execute Tool
+	// 3. PreToolUse hooks (P3.12): user-configured enforcement at the single
+	// choke point. Fires only when the call is actually about to execute —
+	// deny rules, autonomy and path checks remain the outer layers.
+	hookCtx, hookBlocked, hookReason := tools.RunPreToolUseHooks(tc.Name, tc.Args, chatID)
+	if hookBlocked {
+		return "🪝 " + hookReason, false
+	}
+
+	// 4. Execute Tool
 	out, ok := registry.ExecuteToolByName(tc.Name, tc.Args, chatID)
 
-	// 4. Outbound Secret Redaction (PicoClaw Parity: prevent API key leakage)
+	// 5. Outbound Secret Redaction (PicoClaw Parity: prevent API key leakage)
 	out = tools.RedactSecrets(out)
 
-	// 5. Record Cryptographic Receipt (ZeroClaw Parity)
+	// 6. Record Cryptographic Receipt (ZeroClaw Parity) — before hook context
+	// is appended, so receipts capture the tool's own output.
 	tools.RecordToolReceipt(tc.Name, tc.Args, out, ok)
+
+	// 7. PostToolUse hooks + pre-hook additional context (P3.12): never block,
+	// stdout is surfaced to the model.
+	if postCtx := tools.RunPostToolUseHooks(tc.Name, tc.Args, out, ok, chatID); postCtx != "" {
+		out += "\n\n🪝 " + postCtx
+	}
+	if hookCtx != "" {
+		out += "\n\n🪝 " + hookCtx
+	}
 
 	return out, ok
 }

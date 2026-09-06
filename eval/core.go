@@ -11,6 +11,7 @@ import (
 
 	"scorp-agent/agent"
 	"scorp-agent/config"
+	"scorp-agent/registry"
 	"scorp-agent/tools"
 )
 
@@ -24,6 +25,7 @@ func CoreCases() []Case {
 		{Name: "sensitive_path_sandbox_all_modes", Category: "safety", Run: caseSensitivePath},
 		{Name: "plan_mode_blocks_writes_even_yolo", Category: "safety", Run: casePlanModeGate},
 		{Name: "danger_gate_supervised_needs_confirm", Category: "safety", Run: caseDangerGate},
+		{Name: "hooks_block_and_context", Category: "safety", Run: caseHooksBlockAndContext},
 		{Name: "ledger_persisted_to_disk", Category: "persistence", Run: caseLedgerPersisted},
 		{Name: "ledger_clear_removes_file", Category: "persistence", Run: caseLedgerClear},
 		{Name: "memory_md_dedup_and_quota", Category: "memory", Run: caseMemoryMD},
@@ -143,6 +145,46 @@ func caseDangerGate() error {
 	out, ok := tools.ExecuteShell(map[string]interface{}{"command": "eval-danger-op"}, 0)
 	if ok || !strings.Contains(out, "DANGEROUS COMMAND DETECTED") || stored == "" {
 		return fmt.Errorf("supervised danger gate broken: ok=%v stored=%q out=%.80q", ok, stored, out)
+	}
+	return nil
+}
+
+func caseHooksBlockAndContext() error {
+	// Deterministic probe tool so the case never depends on real tools.
+	registry.RegisterTool(registry.ToolDef{
+		Name:     "eval_hook_probe",
+		Category: "test",
+		Execute: func(map[string]interface{}, int64) (string, bool) {
+			return "eval-probe-ran", true
+		},
+	})
+	defer registry.UnregisterTool("eval_hook_probe")
+
+	// Phase 1: PreToolUse exit-2 must block the call, stderr = reason.
+	restore := withEnv("SCORP_HOOKS_PRE", "eval_hook_probe:echo 'eval hook policy' >&2 && exit 2")
+	config.ReloadHooks()
+	out, ok := agent.ExecuteTool(agent.ToolCall{Name: "eval_hook_probe"}, 0)
+	restore()
+	config.ReloadHooks()
+	if ok || !strings.Contains(out, "eval hook policy") {
+		return fmt.Errorf("pre-hook did not block: ok=%v out=%.120q", ok, out)
+	}
+
+	// Phase 2: exit-0 stdout (pre) and post-hook stdout surface as context.
+	r1 := withEnv("SCORP_HOOKS_PRE", "eval_hook_probe:echo pre-eval-ctx")
+	defer r1()
+	r2 := withEnv("SCORP_HOOKS_POST", "eval_hook_probe:echo post-eval-ctx")
+	defer r2()
+	config.ReloadHooks()
+	defer config.ReloadHooks()
+	out2, ok2 := agent.ExecuteTool(agent.ToolCall{Name: "eval_hook_probe"}, 0)
+	if !ok2 {
+		return fmt.Errorf("exit-0 hooks must not block: %q", out2)
+	}
+	for _, want := range []string{"eval-probe-ran", "pre-eval-ctx", "post-eval-ctx"} {
+		if !strings.Contains(out2, want) {
+			return fmt.Errorf("result missing %q: %.160q", want, out2)
+		}
 	}
 	return nil
 }

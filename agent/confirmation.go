@@ -122,10 +122,25 @@ func HandleConfirmation(chatID int64, confirmed bool, callbackMsgID ...int64) {
 
 	// User confirmed — execute command
 	shellArgs := map[string]interface{}{"command": pc.command, "timeout": 60, "confirmed": true}
+	// P3.12: PreToolUse hooks also bind user-confirmed resumes (same contract
+	// as deny rules) — user confirmation relaxes the danger gate, not hook
+	// policy.
+	if _, hookBlocked, hookReason := tools.RunPreToolUseHooks("shell", shellArgs, chatID); hookBlocked {
+		toolResult := fmt.Sprintf("[Tool Result: %s]\n🪝 BLOCKED by PreToolUse hook: %s\nThe user approved the command, but a hook policy blocked it. Please suggest an alternative approach.", pc.toolName, hookReason)
+		pc.messages = append(pc.messages, AgentMessage{Role: "user", Content: toolResult})
+		appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: toolResult})
+		tools.SendMessage(fmt.Sprintf("🪝 Blocked by hook policy: %s", hookReason), nil)
+		go resumeAgentLoop(chatID, pc.messages, 0)
+		return
+	}
 	result, ok := tools.ExecuteShell(shellArgs, chatID)
 	// Record the receipt here too: this path bypasses agent.ExecuteTool, and
 	// the test-integrity gate (P0.3) needs confirmed test runs as evidence.
 	tools.RecordToolReceipt("shell", shellArgs, result, ok)
+	// P3.12: post-tool-use hook context on the confirmed path as well.
+	if postCtx := tools.RunPostToolUseHooks("shell", shellArgs, result, ok, chatID); postCtx != "" {
+		result += "\n\n🪝 " + postCtx
+	}
 	status := "✅"
 	if !ok {
 		status = "❌"
