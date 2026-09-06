@@ -3,6 +3,13 @@
 > Prinsip penyusunan: setiap item wajib punya (a) bukti komunitas, (b) desain konkret untuk
 > arsitektur scorp, (c) estimasi effort S (<1 hari) / M (1-3 hari) / L (>3 hari).
 
+> **STATUS (2026-09-06): terlaksana & terverifikasi live di tencent-vps —**
+> P0.1 sandbox bwrap + daemon non-root ✅ · P0.2 deny-rule engine ✅ · P0.3 test-integrity gate ✅ ·
+> P1.4 plan mode ✅ · P1.5 ledger persisten ✅ · P1.6 checkpoint/rewind ✅ · P1.7 auto memory ✅ ·
+> P2.8 delegate (audit + routing lewat gate stack) ✅ · P2.9 MCP deferred ✅ · P2.10 compaction
+> preservation ✅ · P4.15 `scorp eval` (13 kasus, gerbang pra-deploy) ✅ — komit a1bb393..473d171.
+> Tersisa: P3.12 hooks · P3.13 auto-classifier · P3.14 MCP contract watch · P4.16 klaim berbasis bukti.
+
 ## PRINSIP PENGEMBANGAN (dari konsensus riset)
 
 1. **State di file, bukan chat** — "All progress not recorded in memory is at risk."
