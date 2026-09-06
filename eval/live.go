@@ -111,9 +111,11 @@ func deploymentEnv() ([]string, error) {
 		}
 	}
 	var extra []string
+	var readErrs []string
 	for _, path := range candidates {
 		kv, err := godotenv.Read(path)
 		if err != nil {
+			readErrs = append(readErrs, fmt.Sprintf("%s: %v", path, err))
 			// Lenient fallback: godotenv rejects the whole file on one
 			// malformed line; recover the simple KEY=VALUE lines instead of
 			// losing every API key over one bad quoting.
@@ -140,7 +142,7 @@ func deploymentEnv() ([]string, error) {
 		}
 	}
 	if extra == nil {
-		return nil, fmt.Errorf("no deployment .env found (tried %v)", candidates)
+		return nil, fmt.Errorf("no deployment .env found (tried %v; errors: %v)", candidates, readErrs)
 	}
 	return append(os.Environ(), extra...), nil
 }
