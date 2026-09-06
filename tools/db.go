@@ -73,7 +73,7 @@ func ExecuteSQL(args map[string]interface{}, chatID int64) (string, bool) {
 		strings.HasPrefix(trimmedQuery, "ALTER") ||
 		strings.HasPrefix(trimmedQuery, "TRUNCATE")
 
-	if isWrite {
+	if isWrite && config.ConfirmationRequired() {
 		chatIDStr := fmt.Sprintf("%d", chatID)
 		StorePendingConfirmation(chatIDStr, "sql", query, nil)
 		return fmt.Sprintf("⚠️ WRITE QUERY DETECTED:\n%s\n\nThis will modify the database. Please confirm execution.", query), false

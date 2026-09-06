@@ -53,3 +53,20 @@ func TestAutonomyLevels(t *testing.T) {
 	// Reset to supervised
 	SetAutonomyLevel("supervised")
 }
+
+func TestConfirmationRequired(t *testing.T) {
+	defer SetAutonomyLevel("supervised")
+
+	SetAutonomyLevel("supervised")
+	if !ConfirmationRequired() {
+		t.Errorf("supervised mode must require confirmation")
+	}
+	SetAutonomyLevel("readonly")
+	if !ConfirmationRequired() {
+		t.Errorf("readonly mode must require confirmation")
+	}
+	SetAutonomyLevel("yolo")
+	if ConfirmationRequired() {
+		t.Errorf("yolo mode must run unattended without confirmation")
+	}
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"scorp-agent/config"
 	"scorp-agent/internal/helpers"
 	"strings"
 	"time"
@@ -131,13 +132,16 @@ func ExecuteGit(args map[string]interface{}, chatID int64) (string, bool) {
 		branch := helpers.GetStringArg(args, "branch", "")
 		force := helpers.GetBoolArg(args, "force", false)
 
-		if force {
+		if force && config.ConfirmationRequired() {
 			chatIDStr := fmt.Sprintf("%d", chatID)
 			StorePendingConfirmation(chatIDStr, "git", fmt.Sprintf("git push --force %s %s (repo: %s)", remote, branch, repo), nil)
 			return "⚠️ FORCE PUSH requires confirmation.\nPlease confirm to proceed.", false
 		}
 
 		pushArgs := []string{"-C", repo, "push", remote}
+		if force {
+			pushArgs = append(pushArgs, "--force")
+		}
 		if branch != "" {
 			pushArgs = append(pushArgs, branch)
 		}

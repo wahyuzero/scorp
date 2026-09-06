@@ -92,9 +92,18 @@ func ExecuteShell(args map[string]interface{}, chatID int64) (string, bool) {
 		timeout = 300
 	}
 
-	// Check for dangerous commands (skip check if already explicitly confirmed by user)
+	// Sensitive-path sandbox applies in EVERY autonomy mode (including YOLO):
+	// structured tools are already blocked from touching protected credentials,
+	// so the shell must not become the bypass around them. Runs before the
+	// confirmation gate — even a human-confirmed command may not read these.
+	if restricted, reason := config.IsPathRestricted(command); restricted {
+		return "🛡️ " + reason, false
+	}
+
+	// Check for dangerous commands (skip if already explicitly confirmed by user,
+	// or when YOLO autonomy runs unattended — see config.ConfirmationRequired)
 	confirmed := helpers.GetBoolArg(args, "confirmed", false)
-	if !confirmed && IsDangerousCommand(command) {
+	if !confirmed && config.ConfirmationRequired() && IsDangerousCommand(command) {
 		// Store for confirmation
 		chatIDStr := fmt.Sprintf("%d", chatID)
 		StorePendingConfirmation(chatIDStr, "shell", command, nil)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"scorp-agent/config"
 	"scorp-agent/internal/helpers"
 	"strings"
 	"time"
@@ -52,11 +53,13 @@ func ExecuteProcess(args map[string]interface{}, chatID int64) (string, bool) {
 		if pid == "" {
 			return "Error: 'pid' argument required for kill", false
 		}
-		// Kill requires confirmation
-		chatIDStr := fmt.Sprintf("%d", chatID)
 		signal := helpers.GetStringArg(args, "signal", "TERM")
-		StorePendingConfirmation(chatIDStr, "process", fmt.Sprintf("kill -%s %s", signal, pid), nil)
-		return fmt.Sprintf("⚠️ KILL DETECTED:\nkill -%s %s\n\nThis will send signal to the process. Please confirm.", signal, pid), false
+		if config.ConfirmationRequired() {
+			chatIDStr := fmt.Sprintf("%d", chatID)
+			StorePendingConfirmation(chatIDStr, "process", fmt.Sprintf("kill -%s %s", signal, pid), nil)
+			return fmt.Sprintf("⚠️ KILL DETECTED:\nkill -%s %s\n\nThis will send signal to the process. Please confirm.", signal, pid), false
+		}
+		cmd = exec.CommandContext(ctx, "kill", "-"+signal, pid)
 
 	case "service_status":
 		service := helpers.GetStringArg(args, "service", "")
@@ -70,10 +73,12 @@ func ExecuteProcess(args map[string]interface{}, chatID int64) (string, bool) {
 		if service == "" {
 			return "Error: 'service' argument required", false
 		}
-		// Restart requires confirmation
-		chatIDStr := fmt.Sprintf("%d", chatID)
-		StorePendingConfirmation(chatIDStr, "process", fmt.Sprintf("systemctl restart %s", service), nil)
-		return fmt.Sprintf("⚠️ SERVICE RESTART:\nsystemctl restart %s\n\nThis will restart the service. Please confirm.", service), false
+		if config.ConfirmationRequired() {
+			chatIDStr := fmt.Sprintf("%d", chatID)
+			StorePendingConfirmation(chatIDStr, "process", fmt.Sprintf("systemctl restart %s", service), nil)
+			return fmt.Sprintf("⚠️ SERVICE RESTART:\nsystemctl restart %s\n\nThis will restart the service. Please confirm.", service), false
+		}
+		cmd = exec.CommandContext(ctx, "systemctl", "restart", service)
 
 	case "service_start":
 		service := helpers.GetStringArg(args, "service", "")
@@ -87,10 +92,12 @@ func ExecuteProcess(args map[string]interface{}, chatID int64) (string, bool) {
 		if service == "" {
 			return "Error: 'service' argument required", false
 		}
-		// Stop requires confirmation
-		chatIDStr := fmt.Sprintf("%d", chatID)
-		StorePendingConfirmation(chatIDStr, "process", fmt.Sprintf("systemctl stop %s", service), nil)
-		return fmt.Sprintf("⚠️ SERVICE STOP:\nsystemctl stop %s\n\nThis will stop the service. Please confirm.", service), false
+		if config.ConfirmationRequired() {
+			chatIDStr := fmt.Sprintf("%d", chatID)
+			StorePendingConfirmation(chatIDStr, "process", fmt.Sprintf("systemctl stop %s", service), nil)
+			return fmt.Sprintf("⚠️ SERVICE STOP:\nsystemctl stop %s\n\nThis will stop the service. Please confirm.", service), false
+		}
+		cmd = exec.CommandContext(ctx, "systemctl", "stop", service)
 
 	case "service_list":
 		cmd = exec.CommandContext(ctx, "bash", "-c",

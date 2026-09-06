@@ -477,7 +477,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 			thinkingLines = append(thinkingLines, desc)
 
 			// Check for dangerous commands needing confirmation (bypassed in YOLO mode)
-			if tc.Name == "shell" && config.GetAutonomyLevel() != config.AutonomyYOLO && IsDangerousCommand(helpers.GetStringArg(tc.Args, "command", "")) {
+			if tc.Name == "shell" && config.ConfirmationRequired() && IsDangerousCommand(helpers.GetStringArg(tc.Args, "command", "")) {
 				cmd := helpers.GetStringArg(tc.Args, "command", "")
 				if shouldUpdateThinking(toolCount, lastThinkingUpdate) {
 					tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
@@ -682,7 +682,7 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 			desc := toolDescription(tc)
 			thinkingLines = append(thinkingLines, desc)
 
-			if tc.Name == "shell" && config.GetAutonomyLevel() != config.AutonomyYOLO && IsDangerousCommand(helpers.GetStringArg(tc.Args, "command", "")) {
+			if tc.Name == "shell" && config.ConfirmationRequired() && IsDangerousCommand(helpers.GetStringArg(tc.Args, "command", "")) {
 				cmd := helpers.GetStringArg(tc.Args, "command", "")
 				thinkingLines = append(thinkingLines, "⚠️ Awaiting confirmation...")
 				tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)

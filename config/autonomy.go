@@ -79,6 +79,15 @@ func GetAutonomyLevel() AutonomyLevel {
 	return currentAutonomy
 }
 
+// ConfirmationRequired reports whether the active autonomy mode still routes
+// risky actions through human confirmation. Every confirmation gate (agent
+// loop, shell, sql, process, git) must consult this single predicate so the
+// autonomy contract stays uniform: only YOLO runs unattended; readonly and
+// supervised always require confirmation.
+func ConfirmationRequired() bool {
+	return GetAutonomyLevel() != AutonomyYOLO
+}
+
 // IsToolAllowed checks if a tool is permitted under the active autonomy mode
 func IsToolAllowed(toolName string) (bool, string) {
 	level := GetAutonomyLevel()

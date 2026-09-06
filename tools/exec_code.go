@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"scorp-agent/config"
 	"scorp-agent/models"
 	"scorp-agent/registry"
 	"strings"
@@ -140,6 +141,14 @@ func executeCodeTool(args map[string]interface{}, chatID int64) (string, bool) {
 	code, _ := args["code"].(string)
 	if code == "" {
 		return "Missing 'code' parameter", false
+	}
+
+	// Best-effort sandbox: block naive direct access to protected credentials
+	// from embedded scripts, mirroring the shell gate. Pattern matching cannot
+	// stop determined evasion (encoding, indirection) — OS-level confinement
+	// would be needed for that — but it closes the obvious vector.
+	if restricted, reason := config.IsPathRestricted(code); restricted {
+		return "🛡️ " + reason, false
 	}
 
 	// Create bridge directory for IPC
