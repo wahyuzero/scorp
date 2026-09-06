@@ -323,6 +323,7 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 		docker := collectors.CollectDocker()
 		stor := collectors.CollectStorage()
 		text := scheduler.FormatStatusResponse(sys, docker, stor)
+		text += tools.SandboxStatusNotice()
 		kb := BackAndRefreshKeyboard("status")
 		if edit {
 			EditMessage(chatID, messageID, text, kb)
@@ -624,7 +625,7 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 
 	case action == "/agent":
 		agent.EnterAgentMode(chatIDStr)
-		SendMessage("🛠 <b>Agent mode is always on</b> — every message already runs the full agent (shell, files, web, planning).\nJust tell me what you need. <code>/stop</code> interrupts a running task.", nil)
+		SendMessage("🛠 <b>Agent mode is always on</b> — every message already runs the full agent (shell, files, web, planning).\nJust tell me what you need. <code>/stop</code> interrupts a running task."+tools.SandboxStatusNotice(), nil)
 
 	case action == "/confirm_yes" || action == "confirm_yes":
 		agent.HandleConfirmation(chatID, true, messageID)

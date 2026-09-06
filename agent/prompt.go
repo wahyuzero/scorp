@@ -144,8 +144,15 @@ type ToolCall = models.ToolCall
 
 const maxToolOutput = 3000
 
-// ExecuteTool runs a tool via the registry with autonomy & sandbox enforcement
+// ExecuteTool runs a tool via the registry with deny-rule, autonomy & sandbox enforcement
 func ExecuteTool(tc ToolCall, chatID int64) (string, bool) {
+	// 0. Deny rules — the absolute outer layer (P0.2). Evaluated before
+	// autonomy/confirmation logic so they hold in readonly, supervised, YOLO,
+	// and on user-confirmed resumes alike.
+	if blocked, reason := config.CheckDenyRules(tc.Name, tc.Args); blocked {
+		return "🚫 " + reason, false
+	}
+
 	// 1. Check Autonomy Level permission (ReadOnly mode restrictions)
 	if allowed, reason := config.IsToolAllowed(tc.Name); !allowed {
 		return "⚠️ " + reason, false

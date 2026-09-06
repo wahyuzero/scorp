@@ -18,12 +18,13 @@ import (
 // ──────────────────────────────────────────────
 
 type ToolReceipt struct {
-	ReceiptID string    `json:"receipt_id"`
-	Tool      string    `json:"tool"`
-	ArgsHash  string    `json:"args_hash"`
-	OutHash   string    `json:"out_hash"`
-	Success   bool      `json:"success"`
-	Timestamp time.Time `json:"timestamp"`
+	ReceiptID string            `json:"receipt_id"`
+	Tool      string            `json:"tool"`
+	ArgsHash  string            `json:"args_hash"`
+	OutHash   string            `json:"out_hash"`
+	Success   bool              `json:"success"`
+	Timestamp time.Time         `json:"timestamp"`
+	Meta      map[string]string `json:"meta,omitempty"` // non-secret facts for gate queries (cmd, path)
 }
 
 var (
@@ -65,6 +66,23 @@ func RecordToolReceipt(toolName string, args map[string]interface{}, output stri
 	idH := sha256.Sum256([]byte(rawID))
 	receiptID := hex.EncodeToString(idH[:8]) // 16 hex chars
 
+	// Meta carries the few plaintext facts gates need (test-integrity gate,
+	// audit greps) without weakening the hash scheme: the hashes above still
+	// pin the exact args/output. Secrets are redacted before storage.
+	meta := map[string]string{}
+	if cmd, ok := args["command"].(string); ok && cmd != "" {
+		if len(cmd) > 300 {
+			cmd = cmd[:300]
+		}
+		meta["cmd"] = RedactSecrets(cmd)
+	}
+	for _, k := range []string{"path", "target_file", "file", "file_path"} {
+		if v, ok := args[k].(string); ok && v != "" {
+			meta["path"] = v
+			break
+		}
+	}
+
 	receipt := ToolReceipt{
 		ReceiptID: receiptID,
 		Tool:      toolName,
@@ -72,6 +90,7 @@ func RecordToolReceipt(toolName string, args map[string]interface{}, output stri
 		OutHash:   outHash[:16],
 		Success:   ok,
 		Timestamp: now,
+		Meta:      meta,
 	}
 
 	recentReceiptsMu.Lock()

@@ -59,6 +59,10 @@ func RunAgentLoop(chatID int64, userMessage string, msgID int64) {
 func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msgID int64) {
 	chatIDStr := sessionID
 
+	// Fresh task → fresh test-integrity window (P0.3): edits from previous
+	// tasks no longer gate this task's completion.
+	tools.MarkTaskBoundary()
+
 	// Wrap execution with safety wall-clock timeout to prevent runaway deadloops (Incident 2026-09-05)
 	ctx, cancel := context.WithTimeout(context.Background(), maxTurnTimeout())
 	defer cancel()
@@ -205,6 +209,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 	lastThinkingUpdate := time.Now()
 	noToolRetries := 0
 	completeTaskGateNudged := false
+	testGateNudged := false
 	autoResumes := 0      // Task Ledger auto-resume budget (see maxAutoResumes)
 	lastFullThought := "" // full text of the last non-empty thought-only reply
 	recentToolSignatures := make(map[string]int)
@@ -324,10 +329,33 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 					gateNudge := fmt.Sprintf("⚠️ COMPLETE_TASK REJECTED — the Task Ledger still has %d unfinished item(s):\n%s\nContinue executing them NOW with real tools (mark each 'in_progress' → 'done' via task_plan as you verify). complete_task is accepted ONLY when every item is done.", len(un), renderPlanItems(un))
 					history = append(history, AgentMessage{Role: "assistant", Content: reply})
 					history = append(history, AgentMessage{Role: "user", Content: gateNudge})
-					thinkingLines = append(thinkingLines, fmt.Sprintf("🛑 complete_task rejected: %d/%d plan items left", len(un), len(plan.Items)))
+					_, planTotal := plan.Progress()
+					thinkingLines = append(thinkingLines, fmt.Sprintf("🛑 complete_task rejected: %d/%d plan items left", len(un), planTotal))
 					continue
 				}
 				ClearTaskPlan(chatIDStr) // every item verified — contract fulfilled
+			}
+
+			// Test-integrity gate (P0.3): a task that modified test files or CI
+			// config may not conclude until a GREEN test-suite run was recorded
+			// after the last modification. Community evidence: 19/45 "all tests
+			// pass" claims were fabricated; agents weaken tests under pressure.
+			// Nudge once (a task may legitimately update broken tests and need
+			// guidance); on a second attempt pass through with an explicit
+			// unverified advisory instead of bricking the loop.
+			testGateAdvisory := ""
+			if touched, green := tools.TestIntegrityStatus(); touched && !green {
+				if !testGateNudged {
+					testGateNudged = true
+					noToolRetries = 0
+					log.Printf("[agent] complete_task rejected — test files modified without a green test run (test-integrity gate)")
+					gateNudge := "⚠️ COMPLETE_TASK REJECTED — you modified test file(s) or CI config during this task, but no SUCCESSFUL test-suite run was recorded AFTER those edits. Run the test suite now (shell: `go test ./...` / `npm test` / `pytest`, as appropriate) and confirm it is green, then call complete_task again. Weakening, skipping, or deleting tests to force a pass is FORBIDDEN — that is evidence of gaming, and the gate tracks receipts, not your word."
+					history = append(history, AgentMessage{Role: "assistant", Content: reply})
+					history = append(history, AgentMessage{Role: "user", Content: gateNudge})
+					thinkingLines = append(thinkingLines, "🛑 complete_task rejected: test files modified, no green run after")
+					continue
+				}
+				testGateAdvisory = "\n\n⚠️ <i>Advisory: test file(s) were modified during this task, but no green test-suite run was recorded after the last edit. This completion is NOT test-verified.</i>"
 			}
 
 			finalOutput := explicitFinalResult
@@ -337,6 +365,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 			if finalOutput == "" {
 				finalOutput = "Task completed successfully."
 			}
+			finalOutput += testGateAdvisory
 
 			history = append(history, AgentMessage{Role: "assistant", Content: reply})
 			appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: finalOutput})
@@ -405,7 +434,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 					autoResumes++
 					noToolRetries = 0
 					log.Printf("[agent] auto-resume %d/%d — %d unfinished plan items", autoResumes, maxAutoResumes, len(plan.Unfinished()))
-					thinkingLines = append(thinkingLines, fmt.Sprintf("🔄 Auto-resume: %d/%d plan items left", len(plan.Unfinished()), len(plan.Items)))
+					thinkingLines = append(thinkingLines, fmt.Sprintf("🔄 Auto-resume: %d/%d plan items left", len(plan.Unfinished()), plan.Total()))
 					resumeMsg := fmt.Sprintf("⚠️ AUTONOMOUS PERSISTENCE: The task is NOT finished — %d plan item(s) remain:\n%s\nDo NOT stop for conversation. Execute the next item now with real tools; keep task_plan statuses updated.", len(plan.Unfinished()), renderPlanItems(plan.Unfinished()))
 					history = append(history, AgentMessage{Role: "assistant", Content: reply})
 					history = append(history, AgentMessage{Role: "user", Content: resumeMsg})
@@ -615,6 +644,7 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 	toolCount := 0
 	lastThinkingUpdate := time.Now()
 	noToolRetries := 0
+	testGateNudged := false
 	recentToolSignatures := make(map[string]int)
 
 	setLoopActive(chatIDStr, true)
@@ -673,10 +703,28 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 				ClearTaskPlan(chatIDStr)
 			}
 
+			// Test-integrity gate (resume path): same contract as the main
+			// loop — nudged once, then pass through with an advisory.
+			testGateAdvisory := ""
+			if touched, green := tools.TestIntegrityStatus(); touched && !green {
+				if !testGateNudged {
+					testGateNudged = true
+					noToolRetries = 0
+					log.Printf("[agent] resume complete_task rejected — test files modified without a green test run (test-integrity gate)")
+					gateNudge := "⚠️ COMPLETE_TASK REJECTED — you modified test file(s) or CI config during this task, but no SUCCESSFUL test-suite run was recorded AFTER those edits. Run the test suite now (shell: `go test ./...` / `npm test` / `pytest`, as appropriate) and confirm it is green, then call complete_task again. Weakening, skipping, or deleting tests to force a pass is FORBIDDEN."
+					messages = append(messages, AgentMessage{Role: "assistant", Content: reply})
+					messages = append(messages, AgentMessage{Role: "user", Content: gateNudge})
+					thinkingLines = append(thinkingLines, "🛑 complete_task rejected: test files modified, no green run after")
+					continue
+				}
+				testGateAdvisory = "\n\n⚠️ <i>Advisory: test file(s) were modified during this task, but no green test-suite run was recorded after the last edit. This completion is NOT test-verified.</i>"
+			}
+
 			finalOutput := explicitFinalResult
 			if finalOutput == "" {
 				finalOutput = cleanToolCallTags(reply)
 			}
+			finalOutput += testGateAdvisory
 			messages = append(messages, AgentMessage{Role: "assistant", Content: reply})
 			appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: finalOutput})
 			sendScorpReply(chatID, msgID, finalOutput)

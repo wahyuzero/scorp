@@ -28,7 +28,13 @@ type PlanItem struct {
 }
 
 // TaskPlan is the session-scoped ledger for the current outermost request.
+// The mutex guards the struct contents (not just the taskPlans map): the
+// agent loop renders the plan on the model thread while task_plan tool calls
+// mutate it concurrently — a data race here can corrupt completion-gate
+// decisions, so every read/write of Goal/Items/UpdatedAt goes through the
+// locked accessors below.
 type TaskPlan struct {
+	mu        sync.RWMutex `json:"-"`
 	Goal      string     `json:"goal"`
 	Items     []PlanItem `json:"items"`
 	UpdatedAt time.Time  `json:"updated_at"`
@@ -41,7 +47,9 @@ var (
 
 // SetTaskPlan stores (or replaces) the ledger for a session.
 func SetTaskPlan(sessionID string, p *TaskPlan) {
+	p.mu.Lock()
 	p.UpdatedAt = time.Now()
+	p.mu.Unlock()
 	taskPlansMu.Lock()
 	defer taskPlansMu.Unlock()
 	taskPlans[sessionID] = p
@@ -61,10 +69,27 @@ func ClearTaskPlan(sessionID string) {
 	delete(taskPlans, sessionID)
 }
 
+// snapshot returns a copy of the items under the read lock — callers may keep
+// or pass around the result without holding any lock.
+func (p *TaskPlan) snapshot() []PlanItem {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	out := make([]PlanItem, len(p.Items))
+	copy(out, p.Items)
+	return out
+}
+
+// Total returns the number of ledger items.
+func (p *TaskPlan) Total() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return len(p.Items)
+}
+
 // Unfinished returns items not yet marked done, in plan order.
 func (p *TaskPlan) Unfinished() []PlanItem {
 	var out []PlanItem
-	for _, it := range p.Items {
+	for _, it := range p.snapshot() {
 		if it.Status != "done" {
 			out = append(out, it)
 		}
@@ -74,21 +99,28 @@ func (p *TaskPlan) Unfinished() []PlanItem {
 
 // Progress returns (done, total).
 func (p *TaskPlan) Progress() (int, int) {
+	items := p.snapshot()
 	done := 0
-	for _, it := range p.Items {
+	for _, it := range items {
 		if it.Status == "done" {
 			done++
 		}
 	}
-	return done, len(p.Items)
+	return done, len(items)
 }
 
 // Render is the compact checklist injected into model context.
 func (p *TaskPlan) Render() string {
+	p.mu.RLock()
+	goal := p.Goal
+	items := make([]PlanItem, len(p.Items))
+	copy(items, p.Items)
+	p.mu.RUnlock()
+
 	var sb strings.Builder
 	sb.WriteString("Goal: ")
-	sb.WriteString(p.Goal)
-	for _, it := range p.Items {
+	sb.WriteString(goal)
+	for _, it := range items {
 		mark := "[ ]"
 		switch it.Status {
 		case "done":
@@ -99,6 +131,32 @@ func (p *TaskPlan) Render() string {
 		sb.WriteString(fmt.Sprintf("\n%s #%s %s", mark, it.ID, it.Desc))
 	}
 	return sb.String()
+}
+
+// UpdateItemStatus applies a status change atomically and returns whether the
+// item exists, the resulting progress, and the unfinished items after the
+// change — all captured under the write lock.
+func (p *TaskPlan) UpdateItemStatus(id, status string) (found bool, done, total int, unfinished []PlanItem) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	for i := range p.Items {
+		if p.Items[i].ID == id {
+			p.Items[i].Status = status
+			p.UpdatedAt = time.Now()
+			for _, it := range p.Items {
+				if it.Status == "done" {
+					done++
+				}
+			}
+			for _, it := range p.Items {
+				if it.Status != "done" {
+					unfinished = append(unfinished, it)
+				}
+			}
+			return true, done, len(p.Items), unfinished
+		}
+	}
+	return false, 0, 0, nil
 }
 
 // maxAutoResumes bounds how many times the runtime may override a premature
@@ -144,21 +202,18 @@ func execTaskPlanTool(sessionID string, args map[string]interface{}) (string, bo
 		if status != "pending" && status != "in_progress" && status != "done" {
 			return "Error: 'status' must be one of: pending, in_progress, done", false
 		}
-		for i := range plan.Items {
-			if plan.Items[i].ID == id {
-				plan.Items[i].Status = status
-				SetTaskPlan(sessionID, plan)
-				done, total := plan.Progress()
-				out := fmt.Sprintf("Item #%s → %s. Progress: %d/%d done.", id, status, done, total)
-				if un := plan.Unfinished(); len(un) > 0 {
-					out += "\nStill unfinished:\n" + renderPlanItems(un)
-				} else {
-					out += "\nALL STEPS DONE — you may now call complete_task with the final verified report."
-				}
-				return out, true
-			}
+		found, done, total, un := plan.UpdateItemStatus(id, status)
+		if !found {
+			return fmt.Sprintf("Error: item #%s not found. Current plan:\n%s", id, plan.Render()), false
 		}
-		return fmt.Sprintf("Error: item #%s not found. Current plan:\n%s", id, plan.Render()), false
+		SetTaskPlan(sessionID, plan)
+		out := fmt.Sprintf("Item #%s → %s. Progress: %d/%d done.", id, status, done, total)
+		if len(un) > 0 {
+			out += "\nStill unfinished:\n" + renderPlanItems(un)
+		} else {
+			out += "\nALL STEPS DONE — you may now call complete_task with the final verified report."
+		}
+		return out, true
 
 	default:
 		return "Error: 'action' must be 'create' or 'update'", false

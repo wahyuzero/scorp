@@ -92,6 +92,13 @@ func ExecuteShell(args map[string]interface{}, chatID int64) (string, bool) {
 		timeout = 300
 	}
 
+	// Deny rules are the absolute outer layer (P0.2): they precede the
+	// sensitive-path sandbox, the confirmation gate and the autonomy level, so
+	// they hold in YOLO and on user-confirmed resumes too.
+	if blocked, reason := config.CheckDenyRules("shell", args); blocked {
+		return "🚫 " + reason, false
+	}
+
 	// Sensitive-path sandbox applies in EVERY autonomy mode (including YOLO):
 	// structured tools are already blocked from touching protected credentials,
 	// so the shell must not become the bypass around them. Runs before the
@@ -113,7 +120,13 @@ func ExecuteShell(args map[string]interface{}, chatID int64) (string, bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	defer cancel()
 
-	cmd := exec.Command("bash", "-c", command)
+	var cmd *exec.Cmd
+	if argv, wrapped := SandboxWrap(command); wrapped {
+		// P0.1: run inside the bubblewrap sandbox (system trees read-only).
+		cmd = exec.Command(argv[0], argv[1:]...)
+	} else {
+		cmd = exec.Command("bash", "-c", command)
+	}
 	// Own process group so the timeout can kill backgrounded grandchildren —
 	// otherwise `server &` inherits the stdout pipe and CombinedOutput blocks
 	// forever even after the direct child exits.

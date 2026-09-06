@@ -121,7 +121,11 @@ func HandleConfirmation(chatID int64, confirmed bool, callbackMsgID ...int64) {
 	}
 
 	// User confirmed — execute command
-	result, ok := tools.ExecuteShell(map[string]interface{}{"command": pc.command, "timeout": 60, "confirmed": true}, chatID)
+	shellArgs := map[string]interface{}{"command": pc.command, "timeout": 60, "confirmed": true}
+	result, ok := tools.ExecuteShell(shellArgs, chatID)
+	// Record the receipt here too: this path bypasses agent.ExecuteTool, and
+	// the test-integrity gate (P0.3) needs confirmed test runs as evidence.
+	tools.RecordToolReceipt("shell", shellArgs, result, ok)
 	status := "✅"
 	if !ok {
 		status = "❌"
