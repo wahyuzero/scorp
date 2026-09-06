@@ -27,3 +27,21 @@ func TestDevNullRedirectionNotDangerous(t *testing.T) {
 		}
 	}
 }
+
+func TestDevTcpPseudoDeviceAllowed(t *testing.T) {
+	safe := []string{
+		`timeout 2 bash -c 'echo > /dev/tcp/127.0.0.1/22'`,
+		`cat < /dev/null > /dev/tcp/google.com/443`,
+		`exec 3<>/dev/tcp/localhost/8080`,
+		`echo ping > /dev/udp/1.2.3.4/53`,
+	}
+	for _, cmd := range safe {
+		if IsDangerousCommand(cmd) {
+			t.Errorf("network pseudo-device should be allowed: %q", cmd)
+		}
+	}
+	// Real device overwrites must stay gated.
+	if !IsDangerousCommand("echo x > /dev/sda") {
+		t.Error("overwrite of /dev/sda must stay gated")
+	}
+}

@@ -218,5 +218,11 @@ func isHarmlessDevSink(name string) bool {
 	case "null", "stdout", "stderr", "tty", "zero", "full":
 		return true
 	}
+	// bash /dev/tcp/HOST/PORT and /dev/udp/HOST/PORT are pseudo-devices that
+	// open a network socket — no filesystem data is touched (verify26 turns
+	// 18/25: legitimate port-reachability checks kept getting gated).
+	if strings.HasPrefix(name, "tcp/") || strings.HasPrefix(name, "udp/") {
+		return true
+	}
 	return false
 }
