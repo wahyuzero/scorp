@@ -7,8 +7,10 @@
 > P0.1 sandbox bwrap + daemon non-root ✅ · P0.2 deny-rule engine ✅ · P0.3 test-integrity gate ✅ ·
 > P1.4 plan mode ✅ · P1.5 ledger persisten ✅ · P1.6 checkpoint/rewind ✅ · P1.7 auto memory ✅ ·
 > P2.8 delegate (audit + routing lewat gate stack) ✅ · P2.9 MCP deferred ✅ · P2.10 compaction
-> preservation ✅ · P4.15 `scorp eval` (13 kasus, gerbang pra-deploy) ✅ — komit a1bb393..473d171.
-> Tersisa: P3.12 hooks · P3.13 auto-classifier · P3.14 MCP contract watch · P4.16 klaim berbasis bukti.
+> preservation ✅ · P4.15 `scorp eval` (arena + gerbang pra-deploy otomatis via `scripts/deploy.sh`) ✅ ·
+> P3.12 hooks PreToolUse/PostToolUse (exit-2 blok, stdout = konteks, SCORP_HOOKS_PRE/POST) ✅ —
+> komit a1bb393..db5c75a.
+> Tersisa: P3.13 auto-classifier · P3.14 MCP contract watch · P4.16 klaim berbasis bukti.
 
 ## PRINSIP PENGEMBANGAN (dari konsensus riset)
 
@@ -118,11 +120,17 @@ Roll-Up/verify26). Tampilkan "🗜 compacted at N%" di thinking footer Telegram.
 
 ## P3 — EXTENSIBILITY & AUTONOMI UX (milestone v3.0)
 
-### 12. Hooks PreToolUse/PostToolUse (effort M, impact M/H)
+### 12. Hooks PreToolUse/PostToolUse (effort M, impact M/H) — ✅ 2026-09-06
 **Bukti**: "CLAUDE.md bilang 'tolong', hooks bilang 'harus'" — enforcement deterministik dipuji
 enterprise. **Desain**: config `hooks: {pre_tool_use: [...]}`; dieksekusi di titik gerbang
 konfirmasi di kedua loop (satu titik: `ExecuteTool`); exit code 2 = blok, stdout = additional
 context ke model. Non-blocking untuk audit/logging.
+**Realisasi**: `SCORP_HOOKS_PRE`/`SCORP_HOOKS_POST` (entri `tool_pattern:shell_command`,
+`;`-separated, glob matcher, spek invalid di-skip); payload JSON di stdin (secret di-redact) +
+env `SCORP_HOOK_EVENT/TOOL/SESSION`; exit 0 → stdout jadi konteks tambahan, exit 2 → blok
+(stderr = alasan), exit lain non-blocking, hook macet dibunuh 10s tanpa memblokir; berlaku juga
+di jalankan resume terkonfirmasi. Uji: config/tools/agent test suite + kasus arena
+`hooks_block_and_context` (11 kasus core).
 
 ### 13. Auto-mode classifier (effort M/L, impact H)
 **Bukti**: data Anthropic — manusia menangkap 13.6% perintah berbahaya vs classifier 89%; auto mode
