@@ -98,29 +98,34 @@ func LiveCases() []Case {
 	return cases
 }
 
-// deploymentEnv builds the subprocess environment: the parent env plus the
-// deployment .env candidates (same order as config.LoadConfig). Without this,
-// a one-shot spawned outside systemd lacks the API keys systemd injects for
-// the daemon.
+// deploymentEnv builds the subprocess environment: the parent env (which
+// already carries the deployment keys — LoadConfig godotenv-loads the
+// deployment .env at startup) plus any deployment .env keys not yet present.
+// Returns an error only when neither the env nor any .env candidate provides
+// the minimum the agent needs.
 func deploymentEnv() ([]string, error) {
-	candidates := []string{config.ScorpPath(".env"), filepath.Join(config.HomeDir(), "scorp", ".env")}
+	env := os.Environ()
 	existing := map[string]bool{}
-	for _, kv := range os.Environ() {
+	for _, kv := range env {
 		if i := strings.Index(kv, "="); i > 0 {
 			existing[kv[:i]] = true
 		}
 	}
-	var extra []string
+	if existing["TELEGRAM_BOT_TOKEN"] || existing["OPENCODE_API_KEY"] || existing["COMMAND_CODE_API_KEY"] {
+		return env, nil // keys already live in this process env
+	}
+
+	candidates := []string{config.ScorpPath(".env"), filepath.Join(config.HomeDir(), "scorp", ".env")}
 	var readErrs []string
 	for _, path := range candidates {
 		kv, err := godotenv.Read(path)
 		if err != nil {
-			readErrs = append(readErrs, fmt.Sprintf("%s: %v", path, err))
 			// Lenient fallback: godotenv rejects the whole file on one
 			// malformed line; recover the simple KEY=VALUE lines instead of
 			// losing every API key over one bad quoting.
 			data, rerr := os.ReadFile(path)
 			if rerr != nil {
+				readErrs = append(readErrs, fmt.Sprintf("%s: %v", path, rerr))
 				continue
 			}
 			kv = map[string]string{}
@@ -135,16 +140,17 @@ func deploymentEnv() ([]string, error) {
 			}
 		}
 		for k, v := range kv {
-			if !existing[k] {
+			if !existing[k] && v != "" {
 				existing[k] = true
-				extra = append(extra, k+"="+v)
+				env = append(env, k+"="+v)
 			}
 		}
+		if existing["TELEGRAM_BOT_TOKEN"] {
+			return env, nil
+		}
 	}
-	if extra == nil {
-		return nil, fmt.Errorf("no deployment .env found (tried %v; errors: %v)", candidates, readErrs)
-	}
-	return append(os.Environ(), extra...), nil
+	readErrs = append(readErrs, "no TELEGRAM_BOT_TOKEN found in env or .env candidates")
+	return env, fmt.Errorf("deployment env incomplete: %v", readErrs)
 }
 
 // runLiveCase spawns `scorp -p <task> -s scorp-eval-<name>` in a fresh sandbox
