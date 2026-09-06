@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"strings"
@@ -12,6 +13,30 @@ import (
 
 // wireCLICallbacks replaces Telegram callbacks with clean terminal output
 func wireCLICallbacks() {
+	// Plan Mode approval — stdin prompt replaces the Telegram inline keyboard.
+	// Runs inside the planning loop's presentation call, so EndPlanning must
+	// be called before executing (the loop's own defer is idempotent).
+	agent.PresentPlanHook = func(sessionID string, chatID int64, goal string, plan *agent.TaskPlan) {
+		if goal != "" {
+			fmt.Printf("\n🧭 PLAN READY — goal: %s\n", goal)
+		} else {
+			fmt.Println("\n🧭 PLAN READY (revised)")
+		}
+		fmt.Println(plan.Render())
+		fmt.Print("\nExecute this plan with full tools? (y = execute / n = cancel): ")
+		reader := bufio.NewReader(os.Stdin)
+		ans, _ := reader.ReadString('\n')
+		agent.EndPlanning()
+		switch strings.ToLower(strings.TrimSpace(ans)) {
+		case "y", "yes":
+			fmt.Println("✅ Plan approved — executing…")
+			agent.RunAgentSessionLoop(sessionID, chatID, "[✅ PLAN APPROVED] Execute every step of the task ledger now — mark each step done via task_plan as you verify it, then complete_task with the final verified report.", 0)
+		default:
+			agent.CancelPlan(sessionID)
+			fmt.Println("❌ Plan cancelled — nothing will execute.")
+		}
+	}
+
 	// SendMessage → print cleanly to terminal
 	tools.SendMessage = func(text string, keyboard map[string]interface{}) bool {
 		cliMu.Lock()

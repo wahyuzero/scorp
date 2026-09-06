@@ -41,7 +41,13 @@ var (
 		"session_search": true,
 		"analyze_image":  true,
 		"uptime":         true,
+		"clarify":        true,
 	}
+
+	// Plan Mode (P1.4): while a /plan draft runs, IsToolAllowed restricts
+	// every tool dispatch to the read-only set regardless of autonomy level.
+	planningMode   bool
+	planningModeMu sync.RWMutex
 
 	// Paths strictly forbidden from access across all modes (Sandboxing)
 	sensitivePathPatterns = []string{
@@ -88,6 +94,23 @@ func ConfirmationRequired() bool {
 	return GetAutonomyLevel() != AutonomyYOLO
 }
 
+// SetPlanningMode toggles Plan Mode (P1.4): while a /plan draft is running,
+// IsToolAllowed restricts every tool dispatch to the read-only set regardless
+// of the autonomy level. task_plan and complete_task never reach this gate —
+// both are intercepted inside the agent loop.
+func SetPlanningMode(on bool) {
+	planningModeMu.Lock()
+	defer planningModeMu.Unlock()
+	planningMode = on
+}
+
+// PlanningModeActive reports whether a plan draft is restricting tools.
+func PlanningModeActive() bool {
+	planningModeMu.RLock()
+	defer planningModeMu.RUnlock()
+	return planningMode
+}
+
 // IsToolAllowed checks if a tool is permitted under the active autonomy mode
 func IsToolAllowed(toolName string) (bool, string) {
 	level := GetAutonomyLevel()
@@ -95,6 +118,9 @@ func IsToolAllowed(toolName string) (bool, string) {
 		if !readOnlyTools[toolName] {
 			return false, "Blocked by ReadOnly mode: tool '" + toolName + "' can modify system or files"
 		}
+	}
+	if PlanningModeActive() && !readOnlyTools[toolName] {
+		return false, "Blocked by Plan Mode: only read-only tools while drafting a plan — execution starts after the plan is approved"
 	}
 	return true, ""
 }

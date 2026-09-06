@@ -623,6 +623,45 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 			SendMessage("Nothing is running right now. Every message you send runs the agent automatically — there is no separate mode to switch.", nil)
 		}
 
+	case strings.HasPrefix(action, "/plan"):
+		goal := strings.TrimSpace(strings.TrimPrefix(action, "/plan"))
+		if goal == "" {
+			SendMessage("🧭 <b>Plan Mode</b>\nUsage: <code>/plan &lt;goal&gt;</code>\n\nThe agent explores <b>read-only</b>, drafts a step-by-step ledger, and waits for your ✅ approval before executing anything.", BackButtonKeyboard())
+			return
+		}
+		activeSess := GetActiveSessionID(chatIDStr)
+		if agent.IsLoopActive(chatIDStr) || agent.IsLoopActive(activeSess) {
+			SendMessage("⏳ A task is running — <code>/stop</code> it first, then plan.", nil)
+			return
+		}
+		msgID := tools.SendMessageGetID("🧭 <b>Drafting plan (read-only)</b>…", chatID)
+		go agent.RunPlanningLoop(activeSess, chatID, goal, msgID)
+
+	case strings.HasPrefix(action, "plan:"):
+		sub := strings.TrimPrefix(action, "plan:")
+		activeSess := GetActiveSessionID(chatIDStr)
+		switch sub {
+		case "approve":
+			AnswerCallback(callbackID, "✅ Plan approved")
+			if !agent.ApprovePlan(activeSess, chatID) {
+				EditMessage(chatID, messageID, "⚠️ No pending plan — it may have been cancelled or already executed.", nil)
+				return
+			}
+			EditMessage(chatID, messageID, "✅ <b>Plan approved</b> — executing with full tools…", nil)
+		case "revise":
+			AnswerCallback(callbackID, "✏️ Re-drafting")
+			EditMessage(chatID, messageID, "✏️ <b>Plan revision</b> — re-drafting read-only…", nil)
+			msgID := tools.SendMessageGetID("🧭 <b>Re-drafting plan (read-only)</b>…", chatID)
+			if !agent.RevisePlan(activeSess, chatID, msgID) {
+				EditMessage(chatID, messageID, "⚠️ No pending plan to revise.", nil)
+			}
+		case "cancel":
+			AnswerCallback(callbackID, "❌ Cancelled")
+			agent.CancelPlan(activeSess)
+			agent.CancelPlan(chatIDStr)
+			EditMessage(chatID, messageID, "❌ <b>Plan cancelled</b> — nothing will execute.", nil)
+		}
+
 	case action == "/agent":
 		agent.EnterAgentMode(chatIDStr)
 		SendMessage("🛠 <b>Agent mode is always on</b> — every message already runs the full agent (shell, files, web, planning).\nJust tell me what you need. <code>/stop</code> interrupts a running task."+tools.SandboxStatusNotice(), nil)

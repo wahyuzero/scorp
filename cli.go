@@ -227,6 +227,16 @@ func startCLI(initialPrompts ...string) {
 				agent.RequestStop(currentSessionID)
 				fmt.Println("⏹ Stop requested — the agent wraps up at the next step (or nothing was running).")
 				continue
+			case "/plan":
+				goal := strings.TrimSpace(strings.Join(parts[1:], " "))
+				if goal == "" {
+					fmt.Println("🧭 Plan Mode — usage: /plan <goal>")
+					fmt.Println("   The agent explores read-only, drafts a step ledger, then asks for approval.")
+					continue
+				}
+				fmt.Println("🧭 Drafting plan (read-only)…")
+				agent.RunPlanningLoop(currentSessionID, 0, goal, 0)
+				continue
 			case "/models":
 				printModelList()
 				continue
