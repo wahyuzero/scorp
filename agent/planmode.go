@@ -236,9 +236,17 @@ func CancelPlan(sessionID string) {
 }
 
 func presentPlanTelegram(sessionID string, chatID int64, goal string, plan *TaskPlan) {
+	// Fresh drafts show the goal in the header — strip Render's duplicate
+	// "Goal:" line. Revisions (goal == "") keep it since their header is generic.
+	rendered := plan.Render()
+	if goal != "" {
+		if lines := strings.SplitN(rendered, "\n", 2); len(lines) == 2 && strings.HasPrefix(lines[0], "Goal:") {
+			rendered = strings.TrimSpace(lines[1])
+		}
+	}
 	text := "🧭 <b>Plan ready</b>\n" +
 		"Goal: " + helpers.EscapeHTML(goal) + "\n\n" +
-		"<pre>" + helpers.EscapeHTML(plan.Render()) + "</pre>\n\n" +
+		"<pre>" + helpers.EscapeHTML(rendered) + "</pre>\n\n" +
 		"✅ <b>Approve</b> → execute with full tools · ✏️ <b>Revise</b> → re-draft · ❌ <b>Cancel</b> → discard"
 	kb := map[string]interface{}{
 		"inline_keyboard": [][]map[string]string{
