@@ -92,6 +92,11 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 		}
 	}
 
+	// New-Request Roll-Up: a new request on a session saturated by a previous
+	// CLOSED task gets a compact history + hard turn boundary (verify26 turn-19
+	// lesson: without it the model re-executed the previous task).
+	history = prepareNewTurnHistory(chatIDStr, history, isContinuation)
+
 	// Add user message
 	history = append(history, AgentMessage{
 		Role:    "user",
