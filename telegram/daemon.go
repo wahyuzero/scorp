@@ -262,9 +262,9 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 	switch {
 	case action == "/start" || action == "mn:main":
 		text := "🤖 <b>Scorp Agent (v2.0)</b>\n\n" +
-			"💬 Just type — I'll chat, plan, and execute autonomously.\n" +
-			"🛠 <code>/agent</code> forces agent mode, <code>/stop</code> halts it.\n" +
-			"☰ The bottom menu is active — tap <b>Menu</b> (left of the input field) anytime.\n" +
+			"💬 Every message runs the full agent — shell, files, web, planning, persistence.\n" +
+			"☰ Bottom menu + ≡ command panel are always available.\n" +
+			"⏹ <code>/stop</code> interrupts a running task.\n" +
 			"━━━━━━━━━━━━━━━━━━━"
 		if edit {
 			EditMessage(chatID, messageID, text, MainMenuKeyboard())
@@ -613,12 +613,18 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 		SendMessage("🧹 Chat history cleared.", nil)
 
 	case action == "/stop":
-		agent.ExitAgentMode(chatIDStr)
-		SendMessage("🛑 Agent mode stopped. Back to normal chat.", nil)
+		activeSess := GetActiveSessionID(chatIDStr)
+		if agent.IsLoopActive(chatIDStr) || agent.IsLoopActive(activeSess) {
+			agent.RequestStop(chatIDStr)
+			agent.RequestStop(activeSess)
+			SendMessage("⏹ <b>Stop requested</b> — the agent wraps up at the next step.", nil)
+		} else {
+			SendMessage("Nothing is running right now. Every message you send runs the agent automatically — there is no separate mode to switch.", nil)
+		}
 
 	case action == "/agent":
 		agent.EnterAgentMode(chatIDStr)
-		SendMessage("🛠 <b>Agent Mode Activated</b>\n\nI can execute shell commands, inspect files, and automate tasks.\nWhat should I do?", nil)
+		SendMessage("🛠 <b>Agent mode is always on</b> — every message already runs the full agent (shell, files, web, planning).\nJust tell me what you need. <code>/stop</code> interrupts a running task.", nil)
 
 	case action == "/confirm_yes" || action == "confirm_yes":
 		agent.HandleConfirmation(chatID, true, messageID)
@@ -679,11 +685,12 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 	case action == "help" || action == "/help":
 		helpText := "📖 <b>Scorp Agent Commands</b>\n\n" +
 			"💬 <b>Chat &amp; Agent</b>\n" +
-			"  /agent — Enter autonomous agent mode\n" +
-			"  /stop — Stop running task / agent mode\n" +
+			"  <i>The agent is always on — every message runs it.</i>\n" +
+			"  /stop — Interrupt the current task\n" +
 			"  /sessions — List, switch &amp; manage sessions\n" +
 			"  /compact — Compact session history\n" +
-			"  /clear — Clear conversation history\n\n" +
+			"  /clear — Clear conversation history\n" +
+			"  /agent — Agent info (kept for compatibility)\n\n" +
 			"🧠 <b>Models &amp; Tools</b>\n" +
 			"  /model — Manage AI models &amp; providers\n" +
 			"  /skills — Activate / list skills\n" +

@@ -125,6 +125,38 @@ func ExitAgentMode(chatID string) bool {
 	return false
 }
 
+// ── Cooperative stop requests (/stop), consumed by the agent loop ──
+
+var (
+	stopRequests   = make(map[string]bool)
+	stopRequestsMu sync.Mutex
+)
+
+// RequestStop flags the session's running agent loop to wrap up at its next
+// checkpoint. Safe to call when nothing is running: a new run clears stale
+// flags before its first iteration.
+func RequestStop(sessionID string) {
+	stopRequestsMu.Lock()
+	stopRequests[sessionID] = true
+	stopRequestsMu.Unlock()
+}
+
+// ConsumeStopRequest returns and clears the pending stop flag for a session.
+func ConsumeStopRequest(sessionID string) bool {
+	stopRequestsMu.Lock()
+	defer stopRequestsMu.Unlock()
+	pending := stopRequests[sessionID]
+	delete(stopRequests, sessionID)
+	return pending
+}
+
+// ClearStopRequest drops any pending stop flag so a fresh run starts clean.
+func ClearStopRequest(sessionID string) {
+	stopRequestsMu.Lock()
+	delete(stopRequests, sessionID)
+	stopRequestsMu.Unlock()
+}
+
 // ── Pending Message Queue (suppressed during agent mode) ──
 
 var (

@@ -113,6 +113,12 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 		defer setLoopActive(rawChatIDStr, false)
 	}
 
+	// A fresh run ignores stale stop requests from before it started
+	ClearStopRequest(chatIDStr)
+	if rawChatIDStr != chatIDStr && chatID != 0 {
+		ClearStopRequest(rawChatIDStr)
+	}
+
 	// Auto-title session in background if unnamed and on turn 1
 	if ShouldAutoTitleSession(sessionID) && len(history) <= 3 {
 		go func(oldID string, prompt string, targetChatID int64) {
@@ -206,6 +212,23 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 	isPureInfo := IsPureInformationalQuery(userMessage)
 
 	for iter := 0; iter < maxIterations(); iter++ {
+		// Cooperative stop: /stop wraps up at the next step boundary
+		stopHit := ConsumeStopRequest(chatIDStr)
+		if !stopHit && rawChatIDStr != chatIDStr && chatID != 0 {
+			stopHit = ConsumeStopRequest(rawChatIDStr)
+		}
+		if stopHit {
+			log.Printf("[agent] User stop — exiting at iteration %d", iter)
+			summary := fmt.Sprintf("⏹ <b>Stopped by user</b> (step %d/%d)", iter, maxIterations())
+			if plan := GetTaskPlan(chatIDStr); plan != nil {
+				done, total := plan.Progress()
+				summary += fmt.Sprintf("\n📋 Plan progress: %d/%d done — say \"continue\" to resume.", done, total)
+			}
+			tools.EditMessageByID(chatID, msgID, summary, nil)
+			appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: "[⏹ USER STOP] Task interrupted by the user at this point."})
+			return
+		}
+
 		// Real-time Steering Queue check at the start of each iteration
 		steerMsg, hasSteer := PopSteeringMessage(chatIDStr)
 		if !hasSteer && rawChatIDStr != chatIDStr && chatID != 0 {
@@ -598,6 +621,13 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 	defer setLoopActive(chatIDStr, false)
 
 	for iter := 0; iter < maxIterations(); iter++ {
+		// Cooperative stop: /stop wraps up at the next step boundary
+		if ConsumeStopRequest(chatIDStr) {
+			log.Printf("[agent] User stop — exiting resumed loop at iteration %d", iter)
+			tools.EditMessageByID(chatID, msgID, fmt.Sprintf("⏹ <b>Stopped by user</b> (step %d/%d)", iter, maxIterations()), nil)
+			return
+		}
+
 		chatMsgs := make([]models.ChatMessage, len(messages))
 		for i, m := range messages {
 			switch c := m.Content.(type) {

@@ -223,8 +223,9 @@ func startCLI(initialPrompts ...string) {
 				fmt.Println(formatTerminalText(agent.FormatCompactStats(currentSessionID, stats)))
 				continue
 			case "/stop":
-				agent.ExitAgentMode(chatIDStr)
-				fmt.Println("✓ Agent mode stopped.")
+				agent.RequestStop(chatIDStr)
+				agent.RequestStop(currentSessionID)
+				fmt.Println("⏹ Stop requested — the agent wraps up at the next step (or nothing was running).")
 				continue
 			case "/models":
 				printModelList()

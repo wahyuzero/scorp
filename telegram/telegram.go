@@ -79,7 +79,7 @@ func MainMenuKeyboard() map[string]interface{} {
 				map[string]string{"text": "📊 Status", "callback_data": "status"},
 			},
 			[]interface{}{
-				map[string]string{"text": "🛠 Agent Mode", "callback_data": "/agent"},
+				map[string]string{"text": "🖥 Monitor", "callback_data": "monitor"},
 				map[string]string{"text": "🧩 Skills", "callback_data": "/skills"},
 			},
 			[]interface{}{
@@ -109,7 +109,7 @@ func ReplyMenuKeyboard() map[string]interface{} {
 				map[string]string{"text": "⏰ Cron Tasks"},
 			},
 			[]interface{}{
-				map[string]string{"text": "🛠 Agent Mode"},
+				map[string]string{"text": "🖥 Monitor"},
 				map[string]string{"text": "🧩 Skills"},
 			},
 			[]interface{}{
@@ -134,7 +134,7 @@ var ReplyButtonActions = map[string]string{
 	"🤖 Models":      "/model",
 	"📊 Status":      "status",
 	"⏰ Cron Tasks":  "/cron",
-	"🛠 Agent Mode":  "/agent",
+	"🖥 Monitor":     "monitor",
 	"🧩 Skills":      "/skills",
 	"📂 Files":       "files",
 	"🛒 Marketplace": "mcpm:menu",
@@ -264,8 +264,8 @@ func SetupBotCommands() {
 	commands := []map[string]string{
 		{"command": "start", "description": "🏠 Main menu"},
 		{"command": "menu", "description": "☰ Show bottom menu keyboard"},
-		{"command": "agent", "description": "🛠 Autonomous agent mode"},
-		{"command": "stop", "description": "🛑 Stop agent mode"},
+		{"command": "agent", "description": "🛠 Agent info (always-on)"},
+		{"command": "stop", "description": "⏹ Interrupt current task"},
 		{"command": "sessions", "description": "📋 Conversation sessions"},
 		{"command": "model", "description": "🤖 AI models & providers"},
 		{"command": "cron", "description": "⏰ Scheduled cron tasks"},
