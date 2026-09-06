@@ -256,9 +256,9 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 	switch {
 	case action == "/start" || action == "mn:main":
 		text := "🤖 <b>Scorp Agent (v2.0)</b>\n\n" +
-			"💬 Type anything to chat with AI (agent-first)\n" +
-			"🛠 <code>/agent</code> for autonomous shell, file, and web access\n" +
-			"⏰ <code>/cron</code> to view and manage background tasks\n" +
+			"💬 Just type — I'll chat, plan, and execute autonomously.\n" +
+			"🛠 <code>/agent</code> forces agent mode, <code>/stop</code> halts it.\n" +
+			"☰ Tap the <b>≡ button</b> (right of the input field) for the command menu.\n" +
 			"━━━━━━━━━━━━━━━━━━━"
 		kb := MainMenuKeyboard()
 		if edit {
@@ -276,9 +276,29 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 			SendMessage(text, kb)
 		}
 
-	case action == "mn:set":
+	case action == "mn:set" || action == "/mode":
 		text := SettingsMenuText()
 		kb := SettingsMenuKeyboard()
+		if edit {
+			EditMessage(chatID, messageID, text, kb)
+		} else {
+			SendMessage(text, kb)
+		}
+
+	case strings.HasPrefix(action, "mode:"):
+		config.SetAutonomyLevel(strings.TrimPrefix(action, "mode:"))
+		AnswerCallback(callbackID, fmt.Sprintf("🛡 Autonomy mode: %s", config.GetAutonomyLevel()))
+		text := SettingsMenuText()
+		kb := SettingsMenuKeyboard()
+		if edit {
+			EditMessage(chatID, messageID, text, kb)
+		} else {
+			SendMessage(text, kb)
+		}
+
+	case action == "monitor" || action == "/monitor":
+		text := "🖥 <b>Monitor</b>\n\nSystem, containers, security, storage, and network:"
+		kb := MonitorMenuKeyboard()
 		if edit {
 			EditMessage(chatID, messageID, text, kb)
 		} else {
@@ -441,6 +461,17 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 		} else {
 			SendMessage(mcp.GetServerHealthStatus(), BackButtonKeyboard())
 		}
+
+	case action == "mcpm:menu":
+		// Marketplace browse view: full catalog + search hint.
+		AnswerCallback(callbackID, "🛒 Marketplace")
+		out, err := marketplace.CLISearch("")
+		if err != nil {
+			SendMessage(fmt.Sprintf("❌ Marketplace catalog failed to load: %v", err), BackButtonKeyboard())
+			break
+		}
+		SendMessage("🛒 <b>Scorp Marketplace</b>\n\n"+out+
+			"\n\n🔍 Search: <code>/mcp search &lt;term&gt;</code>", BackButtonKeyboard())
 
 	case strings.HasPrefix(action, "mcpm:"):
 		// Marketplace install callbacks: mcpm:<name>:<1|2|3>
@@ -637,15 +668,25 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 
 	case action == "help" || action == "/help":
 		helpText := "📖 <b>Scorp Agent Commands</b>\n\n" +
-			"/agent — Enter autonomous agent mode\n" +
-			"/model — Manage AI models & providers\n" +
-			"/cron — View & manage scheduled cron tasks\n" +
-			"/sops — View standard operating procedures\n" +
-			"/mcp — Model Context Protocol servers\n" +
-			"/status — System & container status\n" +
-			"/usage — Token usage & cost tracking\n" +
-			"/clear — Clear conversation history\n" +
-			"/stop — Stop running task"
+			"💬 <b>Chat &amp; Agent</b>\n" +
+			"  /agent — Enter autonomous agent mode\n" +
+			"  /stop — Stop running task / agent mode\n" +
+			"  /sessions — List, switch &amp; manage sessions\n" +
+			"  /compact — Compact session history\n" +
+			"  /clear — Clear conversation history\n\n" +
+			"🧠 <b>Models &amp; Tools</b>\n" +
+			"  /model — Manage AI models &amp; providers\n" +
+			"  /skills — Activate / list skills\n" +
+			"  /sops — Standard operating procedures\n" +
+			"  /mcp — MCP servers, search &amp; install\n" +
+			"  /files — File manager\n\n" +
+			"🖥 <b>System</b>\n" +
+			"  /status — System &amp; containers status\n" +
+			"  /usage — Token usage &amp; cost tracking\n" +
+			"  /cron — Scheduled cron tasks\n" +
+			"  /mode — Autonomy: readonly / supervised / yolo\n\n" +
+			"✅ Pending dangerous command? /confirm_yes or /confirm_no\n\n" +
+			"☰ Tip: the ≡ button next to the input field opens this command list anytime."
 		SendMessage(helpText, BackButtonKeyboard())
 
 	default:

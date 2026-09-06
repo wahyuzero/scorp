@@ -71,15 +71,22 @@ func MainMenuKeyboard() map[string]interface{} {
 	return map[string]interface{}{
 		"inline_keyboard": []interface{}{
 			[]interface{}{
+				map[string]string{"text": "💬 Sessions", "callback_data": "/sessions"},
 				map[string]string{"text": "🤖 Models", "callback_data": "/model"},
-				map[string]string{"text": "⏰ Cron Tasks", "callback_data": "/cron"},
 			},
 			[]interface{}{
-				map[string]string{"text": "📋 SOPs", "callback_data": "/sops"},
-				map[string]string{"text": "🔌 MCP", "callback_data": "/mcp"},
+				map[string]string{"text": "⏰ Cron Tasks", "callback_data": "/cron"},
+				map[string]string{"text": "📊 Status", "callback_data": "status"},
+			},
+			[]interface{}{
+				map[string]string{"text": "🛠 Agent Mode", "callback_data": "/agent"},
+				map[string]string{"text": "🧩 Skills", "callback_data": "/skills"},
 			},
 			[]interface{}{
 				map[string]string{"text": "🔧 System", "callback_data": "mn:sys"},
+				map[string]string{"text": "⚙️ Settings", "callback_data": "mn:set"},
+			},
+			[]interface{}{
 				map[string]string{"text": "❓ Help", "callback_data": "help"},
 			},
 		},
@@ -91,18 +98,18 @@ func MonitorMenuKeyboard() map[string]interface{} {
 		"inline_keyboard": []interface{}{
 			[]interface{}{
 				map[string]string{"text": "⚡ Status", "callback_data": "status"},
-				map[string]string{"text": "📊 Report", "callback_data": "report"},
-			},
-			[]interface{}{
 				map[string]string{"text": "🐳 Containers", "callback_data": "containers"},
+			},
+			[]interface{}{
 				map[string]string{"text": "☁️ Coolify", "callback_data": "coolify"},
-			},
-			[]interface{}{
 				map[string]string{"text": "🔐 Security", "callback_data": "security"},
-				map[string]string{"text": "📁 Storage", "callback_data": "storage"},
 			},
 			[]interface{}{
+				map[string]string{"text": "📁 Storage", "callback_data": "storage"},
 				map[string]string{"text": "🌐 Network", "callback_data": "network"},
+			},
+			[]interface{}{
+				map[string]string{"text": "📈 Usage", "callback_data": "/usage"},
 				map[string]string{"text": "◀️ Menu", "callback_data": "mn:main"},
 			},
 		},
@@ -113,15 +120,19 @@ func SystemMenuKeyboard() map[string]interface{} {
 	return map[string]interface{}{
 		"inline_keyboard": []interface{}{
 			[]interface{}{
-				map[string]string{"text": "📂 Files", "callback_data": "files"},
-				map[string]string{"text": "📊 Usage", "callback_data": "/usage"},
-			},
-			[]interface{}{
+				map[string]string{"text": "🖥 Monitor", "callback_data": "monitor"},
 				map[string]string{"text": "🔌 MCP", "callback_data": "/mcp"},
-				map[string]string{"text": "🛒 Marketplace", "callback_data": "mcpm:menu"},
 			},
 			[]interface{}{
-				map[string]string{"text": "📋 Sessions", "callback_data": "/sessions"},
+				map[string]string{"text": "🛒 Marketplace", "callback_data": "mcpm:menu"},
+				map[string]string{"text": "📂 Files", "callback_data": "files"},
+			},
+			[]interface{}{
+				map[string]string{"text": "📋 SOPs", "callback_data": "/sops"},
+				map[string]string{"text": "📈 Usage", "callback_data": "/usage"},
+			},
+			[]interface{}{
+				map[string]string{"text": "💬 Sessions", "callback_data": "/sessions"},
 				map[string]string{"text": "◀️ Menu", "callback_data": "mn:main"},
 			},
 		},
@@ -141,15 +152,38 @@ func BackButtonKeyboard() map[string]interface{} {
 // ─── Settings Menu ───
 
 func SettingsMenuText() string {
+	mode := string(config.GetAutonomyLevel())
+	var desc string
+	switch mode {
+	case "readonly":
+		desc = "Audit only — write tools are blocked."
+	case "yolo":
+		desc = "Full unattended autonomy — dangerous commands run without asking."
+	default:
+		desc = "Default — dangerous commands require your confirmation."
+	}
 	return fmt.Sprintf("⚙️ <b>Settings</b>\n\n"+
-		"🛡️ <b>Autonomy Mode</b>: %s\n"+
-		"⏰ <b>Cron Scheduler</b>: ACTIVE\n\n"+
-		"<i>VPS resource monitoring loops and alert spam have been removed.</i>", config.GetAutonomyLevel())
+		"🛡 <b>Autonomy Mode</b>: <code>%s</code> — %s\n\n"+
+		"⏰ <b>Cron Scheduler</b>: ACTIVE", mode, desc)
 }
 
 func SettingsMenuKeyboard() map[string]interface{} {
+	current := string(config.GetAutonomyLevel())
+	mark := func(level string) string {
+		if level == current {
+			return " ✓"
+		}
+		return ""
+	}
 	return map[string]interface{}{
 		"inline_keyboard": []interface{}{
+			[]interface{}{
+				map[string]string{"text": "🛡 Readonly" + mark("readonly"), "callback_data": "mode:readonly"},
+				map[string]string{"text": "🔒 Supervised" + mark("supervised"), "callback_data": "mode:supervised"},
+			},
+			[]interface{}{
+				map[string]string{"text": "⚡ YOLO — no confirmations" + mark("yolo"), "callback_data": "mode:yolo"},
+			},
 			[]interface{}{
 				map[string]string{"text": "◀️ Menu", "callback_data": "mn:main"},
 			},
@@ -172,21 +206,58 @@ func BackAndRefreshKeyboard(section string) map[string]interface{} {
 // Setup bot commands
 // ──────────────────────────────────────────────
 
+// SetupBotCommands registers the full command catalog with Telegram so the
+// right-side menu button (≡ next to the input field) opens the commands
+// panel — the same UX as mainstream AI bots — and explicitly pins the menu
+// button to that panel via setChatMenuButton. Also refreshes the bot's
+// public description shown in the chat header and profile.
 func SetupBotCommands() {
 	commands := []map[string]string{
 		{"command": "start", "description": "🏠 Main menu"},
-		{"command": "agent", "description": "🛠 Agent mode (tools)"},
-		{"command": "stop", "description": "🛑 Stop chat/agent"},
-		{"command": "clear", "description": "🧹 Clear history"},
-		{"command": "model", "description": "🤖 Model manager"},
+		{"command": "agent", "description": "🛠 Autonomous agent mode"},
+		{"command": "stop", "description": "🛑 Stop agent mode"},
+		{"command": "sessions", "description": "📋 Conversation sessions"},
+		{"command": "model", "description": "🤖 AI models & providers"},
+		{"command": "cron", "description": "⏰ Scheduled cron tasks"},
+		{"command": "status", "description": "📊 System & containers status"},
+		{"command": "files", "description": "📂 File manager"},
+		{"command": "skills", "description": "🧩 Skills"},
+		{"command": "sops", "description": "📕 SOPs"},
+		{"command": "mcp", "description": "🔌 MCP servers & marketplace"},
+		{"command": "usage", "description": "📈 Token usage & cost"},
+		{"command": "mode", "description": "🛡 Autonomy: readonly/supervised/yolo"},
+		{"command": "compact", "description": "🗜 Compact session history"},
+		{"command": "clear", "description": "🧹 Clear chat history"},
+		{"command": "confirm_yes", "description": "✅ Approve pending command"},
+		{"command": "confirm_no", "description": "❌ Deny pending command"},
 		{"command": "help", "description": "❓ Help"},
 	}
 	payload := map[string]interface{}{"commands": commands}
-	_, err := TgPost("/setMyCommands", payload)
-	if err != nil {
+	if _, err := TgPost("/setMyCommands", payload); err != nil {
 		log.Printf("[telegram] set commands error: %v", err)
 	} else {
-		log.Println("[telegram] Bot commands registered")
+		log.Printf("[telegram] Bot commands registered (%d)", len(commands))
+	}
+
+	// Pin the right-side menu button to the commands panel for every user.
+	if _, err := TgPost("/setChatMenuButton", map[string]interface{}{
+		"menu_button": map[string]string{"type": "commands"},
+	}); err != nil {
+		log.Printf("[telegram] set menu button error: %v", err)
+	} else {
+		log.Println("[telegram] Chat menu button set to commands panel")
+	}
+
+	// Public bot profile texts (header description + short "About" line).
+	if _, err := TgPost("/setMyDescription", map[string]interface{}{
+		"description": "Personal AI agent: chat, autonomous shell/file/web tasks, scheduled jobs, system monitoring, and MCP tools — all from your Telegram.",
+	}); err != nil {
+		log.Printf("[telegram] set description error: %v", err)
+	}
+	if _, err := TgPost("/setMyShortDescription", map[string]interface{}{
+		"short_description": "Autonomous AI agent on your VPS",
+	}); err != nil {
+		log.Printf("[telegram] set short description error: %v", err)
 	}
 }
 
