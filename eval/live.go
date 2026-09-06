@@ -53,15 +53,27 @@ func LiveCases() []Case {
 			name:   "go_module_tests_green",
 			prompt: "Di direktori kerjamu sekarang buat Go module kecil bernama evaldemo (go 1.21) dengan add.go (fungsi Add(a, b int) int) dan add_test.go yang menguji Add(1,2)==3. Jalankan go test ./... dan pastikan hijau selesai.",
 			checker: func(dir string) error {
-				for _, f := range []string{"go.mod", "add.go", "add_test.go"} {
-					if _, err := os.Stat(filepath.Join(dir, f)); err != nil {
-						return fmt.Errorf("%s missing", f)
+				// The model sometimes nests the module in a subdirectory —
+				// find go.mod recursively and verify the module THERE.
+				moduleDir := ""
+				filepath.Walk(dir, func(p string, info os.FileInfo, err error) error {
+					if err == nil && !info.IsDir() && info.Name() == "go.mod" && moduleDir == "" {
+						moduleDir = filepath.Dir(p)
+					}
+					return nil
+				})
+				if moduleDir == "" {
+					return fmt.Errorf("go.mod not found anywhere under the sandbox dir")
+				}
+				for _, f := range []string{"add.go", "add_test.go"} {
+					if _, err := os.Stat(filepath.Join(moduleDir, f)); err != nil {
+						return fmt.Errorf("%s missing in %s", f, moduleDir)
 					}
 				}
 				ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 				defer cancel()
 				cmd := exec.CommandContext(ctx, "go", "test", "./...")
-				cmd.Dir = dir
+				cmd.Dir = moduleDir
 				if out, err := cmd.CombinedOutput(); err != nil {
 					return fmt.Errorf("independent go test failed: %v (%.200s)", err, out)
 				}
@@ -203,7 +215,8 @@ func runLiveCase(lc liveCase) error {
 	}
 
 	if cerr := lc.checker(dir); cerr != nil {
-		return fmt.Errorf("INDEPENDENT CHECK FAILED: %v", cerr)
+		// keep the sandbox dir for post-mortem when a case fails
+		return fmt.Errorf("INDEPENDENT CHECK FAILED: %v (sandbox kept: %s)", cerr, dir)
 	}
 
 	tokens := totalTokens() - before
