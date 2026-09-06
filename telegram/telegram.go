@@ -93,6 +93,55 @@ func MainMenuKeyboard() map[string]interface{} {
 	}
 }
 
+// ReplyMenuKeyboard builds the persistent bottom keyboard (ReplyKeyboardMarkup):
+// the store-bot-style "Menu" button at the left of the input field that expands
+// into full-width option rows. Tapping a row sends its text as a normal message,
+// which HandleTelegramAction routes to the same handlers as slash commands.
+func ReplyMenuKeyboard() map[string]interface{} {
+	return map[string]interface{}{
+		"keyboard": []interface{}{
+			[]interface{}{
+				map[string]string{"text": "💬 Sessions"},
+				map[string]string{"text": "🤖 Models"},
+			},
+			[]interface{}{
+				map[string]string{"text": "📊 Status"},
+				map[string]string{"text": "⏰ Cron Tasks"},
+			},
+			[]interface{}{
+				map[string]string{"text": "🛠 Agent Mode"},
+				map[string]string{"text": "🧩 Skills"},
+			},
+			[]interface{}{
+				map[string]string{"text": "📂 Files"},
+				map[string]string{"text": "🛒 Marketplace"},
+			},
+			[]interface{}{
+				map[string]string{"text": "⚙️ Settings"},
+				map[string]string{"text": "❓ Help"},
+			},
+		},
+		"resize_keyboard":         true,
+		"is_persistent":           true,
+		"input_field_placeholder": "Ketik pesan, atau pakai menu di bawah…",
+	}
+}
+
+// ReplyButtonActions maps persistent reply-keyboard button labels to the
+// dispatcher actions they trigger. Labels must match ReplyMenuKeyboard exactly.
+var ReplyButtonActions = map[string]string{
+	"💬 Sessions":    "/sessions",
+	"🤖 Models":      "/model",
+	"📊 Status":      "status",
+	"⏰ Cron Tasks":  "/cron",
+	"🛠 Agent Mode":  "/agent",
+	"🧩 Skills":      "/skills",
+	"📂 Files":       "files",
+	"🛒 Marketplace": "mcpm:menu",
+	"⚙️ Settings":   "mn:set",
+	"❓ Help":        "help",
+}
+
 func MonitorMenuKeyboard() map[string]interface{} {
 	return map[string]interface{}{
 		"inline_keyboard": []interface{}{
@@ -214,6 +263,7 @@ func BackAndRefreshKeyboard(section string) map[string]interface{} {
 func SetupBotCommands() {
 	commands := []map[string]string{
 		{"command": "start", "description": "🏠 Main menu"},
+		{"command": "menu", "description": "☰ Show bottom menu keyboard"},
 		{"command": "agent", "description": "🛠 Autonomous agent mode"},
 		{"command": "stop", "description": "🛑 Stop agent mode"},
 		{"command": "sessions", "description": "📋 Conversation sessions"},

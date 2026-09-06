@@ -253,19 +253,29 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 	edit := isCallback && messageID != 0
 	chatIDStr := fmt.Sprintf("%d", chatID)
 
+	// Persistent reply-keyboard buttons arrive as their label text — normalize
+	// them to the equivalent slash action so one dispatcher serves both paths.
+	if mapped, ok := ReplyButtonActions[action]; ok {
+		action = mapped
+	}
+
 	switch {
 	case action == "/start" || action == "mn:main":
 		text := "🤖 <b>Scorp Agent (v2.0)</b>\n\n" +
 			"💬 Just type — I'll chat, plan, and execute autonomously.\n" +
 			"🛠 <code>/agent</code> forces agent mode, <code>/stop</code> halts it.\n" +
-			"☰ Tap the <b>≡ button</b> (right of the input field) for the command menu.\n" +
+			"☰ The bottom menu is active — tap <b>Menu</b> (left of the input field) anytime.\n" +
 			"━━━━━━━━━━━━━━━━━━━"
-		kb := MainMenuKeyboard()
 		if edit {
-			EditMessage(chatID, messageID, text, kb)
+			EditMessage(chatID, messageID, text, MainMenuKeyboard())
 		} else {
-			SendMessage(text, kb)
+			// Commands carry the persistent reply keyboard: this is what makes
+			// the "Menu" toggle appear next to the input field.
+			SendMessage(text, ReplyMenuKeyboard())
 		}
+
+	case action == "/menu":
+		SendMessage("☰ <b>Menu</b> — pick an option below, or just type your request.", ReplyMenuKeyboard())
 
 	case action == "mn:sys":
 		text := "🔧 <b>System &amp; Tools</b>"
@@ -686,7 +696,7 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 			"  /cron — Scheduled cron tasks\n" +
 			"  /mode — Autonomy: readonly / supervised / yolo\n\n" +
 			"✅ Pending dangerous command? /confirm_yes or /confirm_no\n\n" +
-			"☰ Tip: the ≡ button next to the input field opens this command list anytime."
+			"☰ Bottom menu: tap <b>Menu</b> at the left of the input · ≡ commands panel on the right"
 		SendMessage(helpText, BackButtonKeyboard())
 
 	default:
