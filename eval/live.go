@@ -111,6 +111,19 @@ func deploymentEnv() ([]string, error) {
 			existing[kv[:i]] = true
 		}
 	}
+	// The Go toolchain lives outside the default sudo PATH — live cases run
+	// `go test`, so make sure it is reachable.
+	pathIdx := -1
+	for i, kv := range env {
+		if strings.HasPrefix(kv, "PATH=") {
+			pathIdx = i
+		}
+	}
+	goBin := "/usr/local/go/bin"
+	if pathIdx >= 0 && !strings.Contains(env[pathIdx], goBin) {
+		env[pathIdx] = env[pathIdx] + ":" + goBin
+	}
+
 	if existing["TELEGRAM_BOT_TOKEN"] || existing["OPENCODE_API_KEY"] || existing["COMMAND_CODE_API_KEY"] {
 		return env, nil // keys already live in this process env
 	}
