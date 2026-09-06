@@ -247,6 +247,17 @@ func GetMCPTools() []MCPTool {
 // First-class MCP tool registration (Hermes-style)
 // ──────────────────────────────────────────────
 
+// MCPToolsDeferred reports whether MCP tool schemas should be withheld from
+// the native LLM schema (P2.9, default on). SCORP_MCP_DEFERRED=off restores
+// always-injected schemas for setups that prefer the old behavior.
+func MCPToolsDeferred() bool {
+	switch strings.ToLower(strings.TrimSpace(os.Getenv("SCORP_MCP_DEFERRED"))) {
+	case "off", "false", "0", "no":
+		return false
+	}
+	return true
+}
+
 // sanitizeMCPName replaces characters that are invalid in function names
 func sanitizeMCPName(s string) string {
 	s = strings.ReplaceAll(s, "-", "_")
@@ -286,6 +297,14 @@ func registerMCPToolsAsNative() {
 				Description:    fmt.Sprintf("[MCP:%s] %s", serverName, desc),
 				Category:       "mcp",
 				Native:         true,
+				// P2.9: MCP schemas are withheld from the native LLM schema by
+				// default — the 2026 evidence (Perplexity dropped MCP over its
+				// 15-20k token schema cost; best practice caps active tools at
+				// 10-15) says full injection doesn't pay. Tools stay fully
+				// executable via tool_call and surface in the native schema
+				// for their TTL window once tool_search discovers them.
+				// SCORP_MCP_DEFERRED=off restores always-injected schemas.
+				Deferred:       MCPToolsDeferred(),
 				Arguments:      argDefs,
 				RawInputSchema: tool.InputSchema,
 				Execute: func(args map[string]interface{}, chatID int64) (string, bool) {
@@ -309,7 +328,11 @@ func registerMCPToolsAsNative() {
 	}
 
 	if registered > 0 {
-		log.Printf("[mcp] Registered %d MCP tools as first-class native tools", registered)
+		if MCPToolsDeferred() {
+			log.Printf("[mcp] Registered %d MCP tools as DEFERRED (schemas withheld from context — discoverable via tool_search, SCORP_MCP_DEFERRED=off to inject)", registered)
+		} else {
+			log.Printf("[mcp] Registered %d MCP tools as first-class native tools", registered)
+		}
 		// Reset native tool cache so new tools are included
 		registry.ResetNativeToolCache()
 	}

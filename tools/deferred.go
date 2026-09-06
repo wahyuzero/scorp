@@ -122,13 +122,19 @@ func ExecuteToolSearch(args map[string]interface{}, chatID int64) (string, bool)
 		sb.WriteString("\n")
 	}
 
-	// Dynamically activate top discovered tools into native schema with TTL=3 (PicoClaw Parity)
-	if registry.IsDynamicModeEnabled() {
-		for i, m := range matches {
-			if i >= 5 {
-				break
-			}
+	// Dynamically activate the top discovered tools into the native schema
+	// with TTL=3 (PicoClaw Parity). Runs in ALL modes (P2.9): deferred MCP
+	// tools must surface after discovery even without SCORP_DYNAMIC_TOOLS.
+	// Only activate tools not already active — avoids needless schema-cache
+	// resets on every search.
+	activated := 0
+	for i, m := range matches {
+		if i >= 5 || activated >= 5 {
+			break
+		}
+		if !registry.IsToolActive(m.def) {
 			registry.ActivateToolWithTTL(m.def.Name, 3)
+			activated++
 		}
 	}
 
@@ -155,10 +161,10 @@ func ExecuteToolCall(args map[string]interface{}, chatID int64) (string, bool) {
 		argsObj = make(map[string]interface{})
 	}
 
-	// In dynamic mode, activate tool into native schema with TTL=3
-	if registry.IsDynamicModeEnabled() {
-		registry.ActivateToolWithTTL(toolName, 3)
-	}
+	// Activate the tool into the native schema with TTL=3 in ALL modes (P2.9):
+	// after an explicit tool_call the model can keep invoking it natively for
+	// the next few turns instead of routing every call through tool_call.
+	registry.ActivateToolWithTTL(toolName, 3)
 
 	// Execute the tool
 	if def.Execute == nil {

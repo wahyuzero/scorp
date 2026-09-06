@@ -82,9 +82,16 @@ func TickToolTTL() {
 
 // IsToolActive determines if a tool definition should be included in native LLM schema
 func IsToolActive(def ToolDef) bool {
-	// If dynamic mode is not explicitly enabled, keep all non-deferred native tools active
+	// Static mode (default): all non-deferred native tools are active, and
+	// deferred tools (e.g. MCP, P2.9) pop in for their TTL window once
+	// discovered via tool_search or invoked via tool_call.
 	if !IsDynamicModeEnabled() {
-		return def.Native && !def.Deferred
+		if def.Native && !def.Deferred {
+			return true
+		}
+		dynamicTTLMu.Lock()
+		defer dynamicTTLMu.Unlock()
+		return dynamicTTL[def.Name] > 0
 	}
 
 	// Dynamic mode: core tools are always active

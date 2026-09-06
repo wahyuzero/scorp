@@ -410,7 +410,7 @@ func init() {
 	// ── Tool Discovery (for deferred/on-demand tools) ──
 	registry.RegisterTool(registry.ToolDef{
 		Name:        "tool_search",
-		Description: "Search available tools by keyword. Returns tool name, description, and arguments. Use this to discover tools not shown in your initial tool list.",
+		Description: "Search available tools by keyword, including DEFERRED tools (all MCP server tools are deferred). Returns tool name, description, and arguments; discovered tools are activated into your tool list for the next few turns. Use this whenever you need an MCP/integration capability not shown in your initial tool list.",
 		Category:    "meta",
 		Native:      true,
 		Execute: func(args map[string]interface{}, chatID int64) (string, bool) {
