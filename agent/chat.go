@@ -380,6 +380,10 @@ func summarizeHistory(chatID string) {
 		return
 	}
 
+	// Preservation note comes from the FULL history — after summarization the
+	// previous final report would already be gone (P2.10).
+	preserve := preservationNote(chatID, sess.history)
+
 	// Split: old messages to summarize, recent to keep
 	cutPoint := len(sess.history) - keepHistoryMessages
 	oldMessages := make([]AgentMessage, cutPoint)
@@ -390,6 +394,10 @@ func summarizeHistory(chatID string) {
 	// Build summary request
 	var sb strings.Builder
 	sb.WriteString("Summarize this conversation concisely. Capture key facts, decisions, results, and context. ")
+	sb.WriteString("PRESERVE EXACTLY (verbatim where possible): (1) the user's original goal and current request, ")
+	sb.WriteString("(2) the active task plan / step list and each step's status, ")
+	sb.WriteString("(3) the final report or result of the previous task, ")
+	sb.WriteString("(4) key file paths, commands, and their outcomes. ")
 	sb.WriteString("Write in the same language as the conversation. Keep under 500 words.\n\n")
 	for _, msg := range oldMessages {
 		content := ""
@@ -414,7 +422,8 @@ func summarizeHistory(chatID string) {
 		// Fallback: simple trim
 		sess := getSession(chatID)
 		if sess != nil && len(sess.history) > maxHistoryMessages {
-			sess.history = sess.history[len(sess.history)-keepHistoryMessages:]
+			trimmed := sess.history[len(sess.history)-keepHistoryMessages:]
+			sess.history = injectPreservationNote(trimmed, preserve)
 			// Queue async save
 			select {
 			case historySaveChan <- chatID:
@@ -438,9 +447,10 @@ func summarizeHistory(chatID string) {
 		if recentStart < 0 {
 			recentStart = 0
 		}
-		newHistory := make([]AgentMessage, 0, keepHistoryMessages+1)
+		newHistory := make([]AgentMessage, 0, keepHistoryMessages+2)
 		newHistory = append(newHistory, summaryMsg)
 		newHistory = append(newHistory, sess.history[recentStart:]...)
+		newHistory = injectPreservationNote(newHistory, preserve)
 		sess.history = newHistory
 		// Queue async save
 		select {

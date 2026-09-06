@@ -436,3 +436,136 @@ func TestPrune_DockerScenario_41Messages(t *testing.T) {
 		beforeTokens, afterTokens, savings,
 		float64(savings)/float64(beforeTokens)*100, truncCount)
 }
+
+// ──────────────────────────────────────────────
+// P2.10 — Preservation & wiring tests
+// ──────────────────────────────────────────────
+
+func compactionTestSetup(t *testing.T) string {
+	t.Helper()
+	sess := "zz-compaction-test"
+	t.Cleanup(func() {
+		ClearTaskPlan(sess)
+		ClearChatSession(sess)
+		setLoopActive(sess, false)
+	})
+	ClearTaskPlan(sess)
+	ClearChatSession(sess)
+	return sess
+}
+
+func mkCompactionHistory(goal, oldReport string) []AgentMessage {
+	h := []AgentMessage{
+		{Role: "system", Content: "system prompt"},
+		{Role: "assistant", Content: oldReport},
+		{Role: "user", Content: goal},
+	}
+	// pad with heavy assistant analysis messages — they survive tool-result
+	// pruning, so the token threshold is actually reached
+	for i := 0; i < 20; i++ {
+		h = append(h,
+			AgentMessage{Role: "assistant", Content: "analysis step "+strings.Repeat("y", 2500)},
+			AgentMessage{Role: "user", Content: "[Tool Result: shell]\nstep output"},
+		)
+	}
+	h = append(h,
+		AgentMessage{Role: "assistant", Content: "recent thought"},
+		AgentMessage{Role: "user", Content: "[Tool Result: shell]\nlatest output"},
+	)
+	return h
+}
+
+func TestPreservationNoteContents(t *testing.T) {
+	sess := compactionTestSetup(t)
+	SetTaskPlan(sess, &TaskPlan{
+		Goal:  "demo goal",
+		Items: []PlanItem{{ID: "1", Desc: "step one", Status: "done"}, {ID: "2", Desc: "step two", Status: "pending"}},
+	})
+
+	history := []AgentMessage{
+		{Role: "system", Content: "sys"},
+		{Role: "assistant", Content: "previous final report text"},
+		{Role: "user", Content: "current user goal here"},
+		{Role: "assistant", Content: "ack"},
+		{Role: "user", Content: "[Tool Result: shell]\nsome output"},
+	}
+
+	note := preservationNote(sess, history)
+	for _, want := range []string{
+		preservationMarker,
+		"Active Task Ledger (1/2 done)",
+		"current user goal here",
+		"previous final report text",
+	} {
+		if !strings.Contains(note, want) {
+			t.Errorf("preservation note missing %q:\n%s", want, note)
+		}
+	}
+}
+
+func TestPreservationNoteSkipsMachinery(t *testing.T) {
+	history := []AgentMessage{
+		{Role: "user", Content: "[Tool Result: shell]\noutput"},
+		{Role: "user", Content: "⚠️ COMPLETE_TASK REJECTED — nudge"},
+	}
+	if note := preservationNote("no-session-here", history); strings.Contains(note, "REJECTED") {
+		t.Fatalf("runtime nudges must not be mistaken for the user goal:\n%s", note)
+	}
+}
+
+func TestActiveLoopCompactionPreservesContext(t *testing.T) {
+	sess := compactionTestSetup(t)
+	SetTaskPlan(sess, &TaskPlan{
+		Goal:  "demo goal",
+		Items: []PlanItem{{ID: "1", Desc: "build it", Status: "pending"}},
+	})
+
+	goal := "deploy scorp release v2.1 to production"
+	oldReport := "previous task shipped the P0 features"
+	history := mkCompactionHistory(goal, oldReport)
+	// stale preservation note from a previous compaction must be replaced
+	withStale := append([]AgentMessage{}, history[:4]...)
+	withStale = append(withStale, AgentMessage{Role: "user", Content: preservationMarker + "\nOLD stale note"})
+	withStale = append(withStale, history[4:]...)
+	history = withStale
+
+	setLoopActive(sess, true) // active-loop branch
+	newHistory, notice := maybeCompactHistory(sess, history)
+
+	if notice == "" || !strings.Contains(notice, "🗜") {
+		t.Fatalf("compaction must surface a notice, got %q", notice)
+	}
+
+	joined := ""
+	for _, m := range newHistory {
+		if s, ok := m.Content.(string); ok {
+			joined += s + "\n"
+		}
+	}
+	if strings.Count(joined, preservationMarker) != 1 {
+		t.Fatalf("exactly one preservation note expected, found %d", strings.Count(joined, preservationMarker))
+	}
+	for _, want := range []string{goal, oldReport, "Active Task Ledger"} {
+		if !strings.Contains(joined, want) {
+			t.Errorf("compacted history lost %q", want)
+		}
+	}
+	if got := estimateHistoryTokens(newHistory); got >= estimateHistoryTokens(history) {
+		t.Errorf("compaction must shrink the history: %d → %d tokens", estimateHistoryTokens(history), got)
+	}
+}
+
+func TestCompactionNoopUnderThreshold(t *testing.T) {
+	sess := compactionTestSetup(t)
+	history := []AgentMessage{
+		{Role: "system", Content: "sys"},
+		{Role: "user", Content: "small chat"},
+	}
+	newHistory, notice := maybeCompactHistory(sess, history)
+	if notice != "" {
+		t.Fatalf("under-threshold history must not compact, got %q", notice)
+	}
+	if len(newHistory) != len(history) {
+		t.Fatal("under-threshold history must be unchanged")
+	}
+}

@@ -251,6 +251,15 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 			noToolRetries = 0
 		}
 
+		// Token-aware compaction + preserved context (P2.10): cheap tool-result
+		// pruning always runs; structural truncation only past the token
+		// threshold. Ledger, latest goal, and previous final report survive.
+		var compactionNotice string
+		history, compactionNotice = maybeCompactHistory(chatIDStr, history)
+		if compactionNotice != "" {
+			thinkingLines = append(thinkingLines, compactionNotice)
+		}
+
 		// Convert history to ChatMessage format
 		chatMsgs := make([]models.ChatMessage, len(history))
 		for i, m := range history {
@@ -656,6 +665,14 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 			log.Printf("[agent] User stop — exiting resumed loop at iteration %d", iter)
 			tools.EditMessageByID(chatID, msgID, fmt.Sprintf("⏹ <b>Stopped by user</b> (step %d/%d)", iter, maxIterations()), nil)
 			return
+		}
+
+		// Token-aware compaction + preserved context (P2.10), same contract
+		// as the main loop.
+		var compactionNotice string
+		messages, compactionNotice = maybeCompactHistory(chatIDStr, messages)
+		if compactionNotice != "" {
+			thinkingLines = append(thinkingLines, compactionNotice)
 		}
 
 		chatMsgs := make([]models.ChatMessage, len(messages))

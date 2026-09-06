@@ -133,12 +133,121 @@ func truncateToolResultsInHistory(history []AgentMessage) ([]AgentMessage, int) 
 	return history, truncations
 }
 
-// maybeCompactHistory checks if the conversation needs compaction based on token count.
-// If so, it triggers truncation of tool results first, then summarization if still over budget.
-// Called from the agent loop before each model call.
-// During an active agent loop, we allow aggressive message truncation (keep recent N + system)
-// but defer LLM-based summarization to avoid race conditions and context loss mid-task.
-func maybeCompactHistory(chatID string, history []AgentMessage) []AgentMessage {
+// preservationMarker marks the always-survive context block injected after
+// every compaction; re-compactions replace the old block instead of stacking.
+const preservationMarker = "[🔒 PRESERVED CONTEXT]"
+
+// preservedUserPrefixes are message shapes that are runtime machinery, not
+// genuine user requests — skipped when hunting for the latest goal.
+var preservedUserPrefixes = []string{
+	"[Tool Result:", "⚠️", "🚨", "[⚡", "[📋", "[✅", "ℹ️ [Note:", preservationMarker,
+}
+
+// latestUserGoal returns the most recent genuine user request in history
+// (runtime nudges and tool results excluded), truncated for context safety.
+func latestUserGoal(history []AgentMessage) (string, int) {
+	for i := len(history) - 1; i >= 0; i-- {
+		if history[i].Role != "user" {
+			continue
+		}
+		content, ok := history[i].Content.(string)
+		if !ok {
+			continue
+		}
+		skip := false
+		for _, p := range preservedUserPrefixes {
+			if strings.HasPrefix(content, p) {
+				skip = true
+				break
+			}
+		}
+		if skip {
+			continue
+		}
+		if len(content) > 600 {
+			content = content[:600] + "..."
+		}
+		return content, i
+	}
+	return "", -1
+}
+
+// previousFinalReport returns the last assistant message that came before the
+// current goal — the final report of the previous task (verify26: losing it
+// made the model re-execute or contradict earlier results).
+func previousFinalReport(history []AgentMessage) string {
+	_, goalIdx := latestUserGoal(history)
+	for i := goalIdx - 1; i >= 0; i-- {
+		if history[i].Role != "assistant" {
+			continue
+		}
+		content, ok := history[i].Content.(string)
+		if !ok || strings.TrimSpace(content) == "" {
+			continue
+		}
+		if len(content) > 600 {
+			content = content[:600] + "..."
+		}
+		return content
+	}
+	return ""
+}
+
+// preservationNote assembles the block that MUST survive compaction: the
+// active task ledger, the user's latest goal, and the previous task's final
+// report. Returns "" when there is nothing worth preserving.
+func preservationNote(chatID string, history []AgentMessage) string {
+	var sb strings.Builder
+
+	if plan := GetTaskPlan(chatID); plan != nil && plan.Total() > 0 {
+		done, total := plan.Progress()
+		sb.WriteString(fmt.Sprintf("📋 Active Task Ledger (%d/%d done) — keep working against it:\n%s\n", done, total, plan.Render()))
+	}
+	if goal, _ := latestUserGoal(history); goal != "" {
+		sb.WriteString("🎯 Current user goal:\n" + goal + "\n")
+	}
+	if report := previousFinalReport(history); report != "" {
+		sb.WriteString("📝 Previous task final report:\n" + report + "\n")
+	}
+
+	if sb.Len() == 0 {
+		return ""
+	}
+	return preservationMarker + "\n" + sb.String()
+}
+
+// stripPreservationNotes drops old preserved blocks so a fresh one replaces
+// them instead of accumulating.
+func stripPreservationNotes(history []AgentMessage) []AgentMessage {
+	out := history[:0]
+	for _, msg := range history {
+		if content, ok := msg.Content.(string); ok && strings.HasPrefix(content, preservationMarker) {
+			continue
+		}
+		out = append(out, msg)
+	}
+	return out
+}
+
+// injectPreservationNote strips stale blocks and appends the given one (as a
+// user-role message — system-role messages mid-history break some adapters).
+// The note must be computed from the FULL pre-compaction history — after
+// truncation the previous report is already gone.
+func injectPreservationNote(history []AgentMessage, note string) []AgentMessage {
+	if note == "" {
+		return stripPreservationNotes(history)
+	}
+	history = stripPreservationNotes(history)
+	return append(history, AgentMessage{Role: "user", Content: note})
+}
+
+// maybeCompactHistory checks if the conversation needs compaction based on
+// token count. If so, it truncates tool results first, then applies
+// structural truncation during active loops (keeping system + latest goal +
+// recent window + the preservation block). Returns the (possibly new)
+// history and a one-line notice for the Telegram thinking footer.
+// LLM-based summarization only runs OUTSIDE active loops (race safety).
+func maybeCompactHistory(chatID string, history []AgentMessage) ([]AgentMessage, string) {
 	// Always apply age-aware tool result pruning (cheap, safe, prevents token bloat)
 	history, n := truncateToolResultsInHistory(history)
 	if n > 0 {
@@ -151,7 +260,7 @@ func maybeCompactHistory(chatID string, history []AgentMessage) []AgentMessage {
 	tokens := estimateHistoryTokens(history)
 
 	if tokens <= compactionThreshold {
-		return history
+		return history, ""
 	}
 
 	log.Printf("[compaction] History at ~%d tokens (threshold %d), compacting for %s",
@@ -161,14 +270,16 @@ func maybeCompactHistory(chatID string, history []AgentMessage) []AgentMessage {
 	tokens = estimateHistoryTokens(history)
 	if tokens <= compactionThreshold {
 		log.Printf("[compaction] After pruning: ~%d tokens (under threshold)", tokens)
-		return history
+		return history, ""
 	}
+	beforeTokens := tokens
 
 	// Step 2: Check if we're in an active agent loop
 	sess := getSession(chatID)
 	if sess != nil && sess.loopActive {
-		// During active loop: truncate to keep recent messages + system prompt + initial user request (anchor goal).
-		// This prevents context loss for original user instructions no matter how many iterations run.
+		// During active loop: truncate to keep recent messages + system prompt
+		// + preservation block (ledger, latest goal, previous final report).
+		// This prevents context loss no matter how many iterations run.
 		const keepDuringActiveLoop = 20 // keep last 20 messages
 		if len(history) > keepDuringActiveLoop+2 {
 			systemIdx := -1
@@ -185,6 +296,15 @@ func maybeCompactHistory(chatID string, history []AgentMessage) []AgentMessage {
 					}
 				}
 			}
+
+		// Compute the preservation note from the FULL history — after
+		// truncation the previous report would already be gone.
+		preserve := preservationNote(chatID, history)
+
+		history = stripPreservationNotes(history)
+		// indices shifted only if a note existed before userGoalIdx —
+		// recompute the goal index against the stripped slice
+		_, userGoalIdx = latestUserGoal(history)
 
 			var newHistory []AgentMessage
 			if systemIdx >= 0 {
@@ -205,30 +325,34 @@ func maybeCompactHistory(chatID string, history []AgentMessage) []AgentMessage {
 			if start < len(history) {
 				newHistory = append(newHistory, history[start:]...)
 			}
+			newHistory = injectPreservationNote(newHistory, preserve)
 
-			log.Printf("[compaction] Active loop: truncated from %d to %d messages (kept system + user goal + last %d)",
-				len(history), len(newHistory), len(history)-start)
+			after := estimateHistoryTokens(newHistory)
+			log.Printf("[compaction] Active loop: truncated from %d to %d messages (~%d → ~%d tokens; kept system + user goal + last %d + preserved context)",
+				len(history), len(newHistory), beforeTokens, after, len(history)-start)
 
 			// Update session
 			sess.history = newHistory
 			setSession(chatID, sess)
-			return newHistory
+			return newHistory, fmt.Sprintf("🗜 compacted: %d → %d msgs (~%dk → ~%dk tokens)", len(history), len(newHistory), beforeTokens/1000, after/1000)
 		}
 
 		log.Printf("[compaction] Still at ~%d tokens but agent loop active and history small — deferring LLM summarization", tokens)
-		return history
+		return history, ""
 	}
 
-	// Step 3: Full summarization (only when NOT in agent loop)
+	// Step 3: Full summarization (only when NOT in agent loop) —
+	// summarizeHistory computes the preservation note from the full history
+	// itself and injects it into the summarized result.
 	log.Printf("[compaction] Still at ~%d tokens after truncation, summarizing old messages", tokens)
 	summarizeHistory(chatID)
 
-	// Return updated history from session
 	sess = getSession(chatID)
 	if sess != nil {
-		return sess.history
+		after := estimateHistoryTokens(sess.history)
+		return sess.history, fmt.Sprintf("🗜 compacted: summarized (~%dk → ~%dk tokens)", beforeTokens/1000, after/1000)
 	}
-	return history
+	return history, "🗜 compacted: summarized old messages"
 }
 
 // formatTokenEstimate returns a human-readable token estimate for debugging
