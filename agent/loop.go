@@ -78,7 +78,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 	isContinuation := IsContinuationDirective(userMessage)
 	activeUserPrompt := userMessage
 	if isContinuation {
-		activeUserPrompt = fmt.Sprintf("%s\n\n[⚡ SYSTEM DIRECTIVE: The user instructed you to CONTINUE. You were in the middle of executing a task. DO NOT output conversational text or narrative promises. You MUST IMMEDIATELY invoke the required action tool(s). If all actions and verifications are 100%% complete, conclude by calling tool 'complete_task'.]", userMessage)
+		activeUserPrompt = fmt.Sprintf("%s\n\n[⚡ SYSTEM DIRECTIVE: CONTINUE] The user wants previous work continued. Scan the conversation history: identify the OUTERMOST original request and finish ALL of its remaining parts NOW by invoking real action tool(s). A completed sub-step is NOT completion — only call 'complete_task' when every part of the original request is done and verified. If the history shows no original task at all (or nothing remains), briefly state that there is nothing to continue and call 'complete_task' with that status. NEVER reference tools that do not exist in your tool list.]", userMessage)
 	}
 
 	// Add user message
@@ -302,7 +302,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 				// Otherwise, this is an action task where model emitted thought text without calling an action tool or complete_task!
 				shouldRetry = true
 				if isContinuation {
-					retryReason = "⚠️ ACTION-FIRST PROTOCOL: The user commanded you to CONTINUE. You emitted conversational thought without calling any tools. You MUST call the required action tool(s) now, or call 'complete_task' if the task is completely finished."
+					retryReason = "⚠️ CONTINUE PROTOCOL: Finish the remaining parts of the OUTERMOST original request found in the history — invoke a REAL tool from your tool list NOW, or call 'complete_task' only if truly nothing remains. Do NOT invent tools and do NOT emit plain text."
 				} else {
 					retryReason = "⚠️ TASK IN-PROGRESS: You outputted intermediate thought without calling any tools. In Agent Mode, you must either call an action tool to continue execution, or call 'complete_task' with your final report if all requested work is finished and verified."
 				}
