@@ -5,10 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"scorp-agent/agent"
 	"scorp-agent/models"
-	"scorp-agent/registry"
 	"time"
 )
+
+// subagentMaxWallClock caps a subagent's TOTAL lifetime regardless of the
+// per-model-call timeouts (plan P2.8: "Cap turn & wall-clock").
+const subagentMaxWallClock = 6 * time.Minute
 
 // ──────────────────────────────────────────────
 // Subagent Execution Engine
@@ -60,6 +64,22 @@ func runSubagent(params delegateTaskParams) delegateResult {
 	var toolNames []string
 
 	for iteration := 0; iteration < params.MaxIters; iteration++ {
+		// Total wall-clock guard: a subagent must never outlive its budget
+		if time.Since(start) > subagentMaxWallClock {
+			log.Printf("[delegate] Subagent %s hit wall-clock limit (%s)", subagentID, subagentMaxWallClock)
+			return delegateResult{
+				SubagentID: subagentID,
+				Task:       params.Task,
+				Role:       params.Role,
+				ModelUsed:  modelNameUsed,
+				Status:     "timeout",
+				Result:     "Wall-clock limit reached before completion.",
+				ToolsUsed:  toolNames,
+				Iterations: iteration,
+				Duration:   time.Since(start),
+			}
+		}
+
 		// Build message history
 		chatMsgs := make([]models.ChatMessage, len(history))
 		for i, m := range history {
@@ -74,11 +94,10 @@ func runSubagent(params delegateTaskParams) delegateResult {
 
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 
-		var text string
-		var _, _, _ = text, chatMsgs, ctx
 		var toolCalls []models.ToolCall
 		var modelLabel string
 		var err error
+		var text string
 
 		// If explicit model override, use it; otherwise route by role
 		if params.Model != "" {
@@ -156,7 +175,7 @@ func runSubagent(params delegateTaskParams) delegateResult {
 						toolsUsed[tc.Name] = true
 						toolNames = append(toolNames, tc.Name)
 					}
-					result, _ := registry.ExecuteToolByName(tc.Name, tc.Args, 0)
+					result, _ := agent.ExecuteTool(tc, 0)
 					if iso != nil {
 						result = iso.truncateOutput(result)
 					}
@@ -179,7 +198,11 @@ func runSubagent(params delegateTaskParams) delegateResult {
 				toolNames = append(toolNames, tc.Name)
 			}
 
-			result, _ := registry.ExecuteToolByName(tc.Name, tc.Args, 0) // chatID=0 for subagent (no Telegram)
+			// Execute through the agent gate stack (P0.2 deny rules, P1.4
+			// autonomy/plan-mode gating, P0.3 receipt recording) — previously
+			// this called registry.ExecuteToolByName directly and bypassed
+			// every safety layer.
+			result, _ := agent.ExecuteTool(tc, 0) // chatID=0 for subagent (no Telegram)
 
 			// Enforce output size limit
 			if iso != nil {

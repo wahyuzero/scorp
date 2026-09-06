@@ -61,3 +61,16 @@ func TestParseDelegateParams(t *testing.T) {
 		t.Errorf("Expected max_iters clamped to %d, got %d", MaxSubagentIters, params.MaxIters)
 	}
 }
+
+// TestParseDelegateParamsDefaults pins the caps (P2.8): max_iters clamps high,
+// floors at 1, and unknown roles fall back to auto.
+func TestParseDelegateParamsCapsAndDefaults(t *testing.T) {
+	p := ParseDelegateParams(map[string]interface{}{"task": "x", "max_iters": float64(0)})
+	if p.MaxIters != DefaultSubagentIters {
+		t.Fatalf("zero max_iters must default to %d, got %d", DefaultSubagentIters, p.MaxIters)
+	}
+	p = ParseDelegateParams(map[string]interface{}{"task": "x", "role": "nonexistent"})
+	if p.Role != string(RoleAuto) {
+		t.Fatalf("invalid role must fall back to auto, got %q", p.Role)
+	}
+}
