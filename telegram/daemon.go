@@ -624,6 +624,40 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 			SendMessage("Nothing is running right now. Every message you send runs the agent automatically — there is no separate mode to switch.", nil)
 		}
 
+	case strings.HasPrefix(action, "/undo"):
+		arg := strings.TrimSpace(strings.TrimPrefix(action, "/undo"))
+		activeSess := GetActiveSessionID(chatIDStr)
+		if agent.IsLoopActive(chatIDStr) || agent.IsLoopActive(activeSess) {
+			SendMessage("⏳ A task is running — <code>/stop</code> it before undoing.", nil)
+			return
+		}
+		cks, err := tools.ListCheckpoints(chatIDStr)
+		if err != nil || len(cks) == 0 {
+			cks, err = tools.ListCheckpoints(activeSess)
+		}
+		if err != nil || len(cks) == 0 {
+			SendMessage("↩️ No checkpoints available for this session (checkpoints are taken in git repositories).", nil)
+			return
+		}
+		latest := cks[0]
+		if arg != "confirm" {
+			diff := tools.CheckpointDiffStat(latest.Ref)
+			text := fmt.Sprintf("↩️ <b>Undo preview</b>\nLatest checkpoint: <code>%s</code>\nRepo: <code>%s</code>\n\nRestoring reverts the working tree to this pre-turn state (overlay: newer files stay).\n%s\n\nSend <code>/undo confirm</code> to restore.", latest.Time, latest.RepoRoot, diff)
+			SendMessage(text, nil)
+			return
+		}
+		n, rerr := tools.RestoreCheckpoint(chatIDStr, latest.Ref)
+		if rerr != nil {
+			n, rerr = tools.RestoreCheckpoint(activeSess, latest.Ref)
+		}
+		if rerr != nil {
+			SendMessage(fmt.Sprintf("❌ Undo failed: %v", rerr), nil)
+			return
+		}
+		_ = tools.DeleteCheckpoint(chatIDStr, latest.Ref)
+		_ = tools.DeleteCheckpoint(activeSess, latest.Ref)
+		SendMessage(fmt.Sprintf("↩️ <b>Restored %d file(s)</b> from checkpoint %s.\nRun <code>/undo</code> again to walk further back.", n, latest.Time), nil)
+
 	case strings.HasPrefix(action, "/plan"):
 		goal := strings.TrimSpace(strings.TrimPrefix(action, "/plan"))
 		if goal == "" {

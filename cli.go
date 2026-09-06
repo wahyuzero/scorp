@@ -227,6 +227,26 @@ func startCLI(initialPrompts ...string) {
 				agent.RequestStop(currentSessionID)
 				fmt.Println("⏹ Stop requested — the agent wraps up at the next step (or nothing was running).")
 				continue
+			case "/undo":
+				arg := strings.TrimSpace(strings.TrimPrefix(input, "/undo"))
+				cks, ckErr := tools.ListCheckpoints(currentSessionID)
+				if ckErr != nil || len(cks) == 0 {
+					fmt.Println("↩️ No checkpoints available (checkpoints are taken in git repositories).")
+					continue
+				}
+				latest := cks[0]
+				if arg != "confirm" {
+					fmt.Printf("↩️ Latest checkpoint: %s\nRepo: %s\n%s\nRun '/undo confirm' to restore.\n", latest.Time, latest.RepoRoot, tools.CheckpointDiffStat(latest.Ref))
+					continue
+				}
+				n, rerr := tools.RestoreCheckpoint(currentSessionID, latest.Ref)
+				if rerr != nil {
+					fmt.Printf("❌ Undo failed: %v\n", rerr)
+					continue
+				}
+				_ = tools.DeleteCheckpoint(currentSessionID, latest.Ref)
+				fmt.Printf("↩️ Restored %d file(s) from checkpoint %s. Run '/undo' again to walk further back.\n", n, latest.Time)
+				continue
 			case "/plan":
 				goal := strings.TrimSpace(strings.Join(parts[1:], " "))
 				if goal == "" {

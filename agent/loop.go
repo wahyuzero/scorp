@@ -519,6 +519,12 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 		history = append(history, AgentMessage{Role: "assistant", Content: reply})
 		appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: reply})
 
+		// Checkpoint (P1.6): pre-turn shadow commit of the working repo so
+		// /undo can walk back. Silent no-op outside git repositories.
+		if ckInfo, ckCreated, ckErr := tools.CreateCheckpoint(chatIDStr); ckCreated && ckErr == nil {
+			thinkingLines = append(thinkingLines, "💾 checkpoint @ "+ckInfo.Time)
+		}
+
 		// ── Execute Action Tools ──
 		for _, tc := range actionToolCalls {
 			// Real-time Steering Queue check (PicoClaw Parity)
@@ -776,6 +782,11 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 
 		messages = append(messages, AgentMessage{Role: "assistant", Content: reply})
 		appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: reply})
+
+		// Checkpoint (P1.6): pre-turn shadow commit, same as the main loop.
+		if _, ckCreated, ckErr := tools.CreateCheckpoint(chatIDStr); ckCreated && ckErr == nil {
+			thinkingLines = append(thinkingLines, "💾 checkpoint taken")
+		}
 
 		for _, tc := range actionToolCalls {
 			toolCount++

@@ -266,6 +266,7 @@ func SetupBotCommands() {
 		{"command": "menu", "description": "☰ Show bottom menu keyboard"},
 		{"command": "agent", "description": "🛠 Agent info (always-on)"},
 		{"command": "stop", "description": "⏹ Interrupt current task"},
+		{"command": "undo", "description": "↩️ Restore files to last checkpoint"},
 		{"command": "sessions", "description": "📋 Conversation sessions"},
 		{"command": "model", "description": "🤖 AI models & providers"},
 		{"command": "cron", "description": "⏰ Scheduled cron tasks"},
