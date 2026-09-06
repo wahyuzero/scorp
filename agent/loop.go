@@ -81,6 +81,17 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 		activeUserPrompt = fmt.Sprintf("%s\n\n[⚡ SYSTEM DIRECTIVE: CONTINUE] The user wants previous work continued. Scan the conversation history: identify the OUTERMOST original request and finish ALL of its remaining parts NOW by invoking real action tool(s). A completed sub-step is NOT completion — only call 'complete_task' when every part of the original request is done and verified. If the history shows no original task at all (or nothing remains), briefly state that there is nothing to continue and call 'complete_task' with that status. NEVER reference tools that do not exist in your tool list.]", userMessage)
 	}
 
+	// Cross-turn Task Ledger: a previous run that hit its budget hands back an
+	// unfinished plan — put the contract back in front of the model so ANY new
+	// message (not just "continue") resumes precisely where the work stopped.
+	if plan := GetTaskPlan(chatIDStr); plan != nil {
+		if len(plan.Unfinished()) == 0 {
+			ClearTaskPlan(chatIDStr)
+		} else {
+			activeUserPrompt = fmt.Sprintf("%s\n\n[📋 ACTIVE PLAN — %d item(s) unfinished. Finish ALL of them now via real tools, keep task_plan statuses updated, then complete_task.]\n%s", activeUserPrompt, len(plan.Unfinished()), plan.Render())
+		}
+	}
+
 	// Add user message
 	history = append(history, AgentMessage{
 		Role:    "user",
@@ -183,6 +194,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 	lastThinkingUpdate := time.Now()
 	noToolRetries := 0
 	completeTaskGateNudged := false
+	autoResumes := 0      // Task Ledger auto-resume budget (see maxAutoResumes)
 	lastFullThought := "" // full text of the last non-empty thought-only reply
 	recentToolSignatures := make(map[string]int)
 
@@ -264,6 +276,32 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 				continue
 			}
 
+			// Plan-completion gate (Task Ledger): an unfinished plan is
+			// deterministic proof the request is not fulfilled — reject the
+			// premature completion and keep executing, bounded by autoResumes.
+			if plan := GetTaskPlan(chatIDStr); plan != nil {
+				if un := plan.Unfinished(); len(un) > 0 {
+					if autoResumes >= maxAutoResumes {
+						planHandback := fmt.Sprintf("\n\n⏸ Auto-resume budget exhausted (%d attempts). Task is NOT fully finished — remaining items:\n%s\nSend \"continue\" to resume.", autoResumes, renderPlanItems(un))
+						finalOutput := explicitFinalResult + planHandback
+						history = append(history, AgentMessage{Role: "assistant", Content: reply})
+						appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: finalOutput})
+						sendScorpReply(chatID, msgID, finalOutput)
+						maybeRunSelfReview(chatID, chatIDStr)
+						return
+					}
+					autoResumes++
+					noToolRetries = 0
+					log.Printf("[agent] complete_task rejected — %d unfinished plan items (Task Ledger gate, resume %d/%d)", len(un), autoResumes, maxAutoResumes)
+					gateNudge := fmt.Sprintf("⚠️ COMPLETE_TASK REJECTED — the Task Ledger still has %d unfinished item(s):\n%s\nContinue executing them NOW with real tools (mark each 'in_progress' → 'done' via task_plan as you verify). complete_task is accepted ONLY when every item is done.", len(un), renderPlanItems(un))
+					history = append(history, AgentMessage{Role: "assistant", Content: reply})
+					history = append(history, AgentMessage{Role: "user", Content: gateNudge})
+					thinkingLines = append(thinkingLines, fmt.Sprintf("🛑 complete_task rejected: %d/%d plan items left", len(un), len(plan.Items)))
+					continue
+				}
+				ClearTaskPlan(chatIDStr) // every item verified — contract fulfilled
+			}
+
 			finalOutput := explicitFinalResult
 			if finalOutput == "" {
 				finalOutput = cleanToolCallTags(reply)
@@ -330,6 +368,25 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 				continue
 			}
 
+			// Autonomous persistence (Task Ledger): never end the turn while
+			// the ledger shows unfinished work — auto-resume execution instead
+			// so the user never has to type "continue".
+			planHandback := ""
+			if plan := GetTaskPlan(chatIDStr); plan != nil && len(plan.Unfinished()) > 0 {
+				if autoResumes < maxAutoResumes {
+					autoResumes++
+					noToolRetries = 0
+					log.Printf("[agent] auto-resume %d/%d — %d unfinished plan items", autoResumes, maxAutoResumes, len(plan.Unfinished()))
+					thinkingLines = append(thinkingLines, fmt.Sprintf("🔄 Auto-resume: %d/%d plan items left", len(plan.Unfinished()), len(plan.Items)))
+					resumeMsg := fmt.Sprintf("⚠️ AUTONOMOUS PERSISTENCE: The task is NOT finished — %d plan item(s) remain:\n%s\nDo NOT stop for conversation. Execute the next item now with real tools; keep task_plan statuses updated.", len(plan.Unfinished()), renderPlanItems(plan.Unfinished()))
+					history = append(history, AgentMessage{Role: "assistant", Content: reply})
+					history = append(history, AgentMessage{Role: "user", Content: resumeMsg})
+					continue
+				}
+				// Budget exhausted: transparent handback with exact remaining work.
+				planHandback = fmt.Sprintf("\n\n⏸ Auto-resume budget exhausted (%d attempts). Task is NOT fully finished — remaining items:\n%s\nSend \"continue\" to resume.", autoResumes, renderPlanItems(plan.Unfinished()))
+			}
+
 			// Max retries reached or pure informational query: output clean response as final
 			history = append(history, AgentMessage{Role: "assistant", Content: reply})
 			appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: cleanReply})
@@ -375,6 +432,10 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 					summary += "\n\n💡 Retry the command or continue with \"continue\"."
 					cleanReply = summary
 				}
+			}
+
+			if planHandback != "" {
+				cleanReply = strings.TrimSpace(cleanReply) + planHandback
 			}
 
 			sendScorpReply(chatID, msgID, cleanReply)
@@ -445,8 +506,19 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 				lastThinkingUpdate = time.Now()
 			}
 
-			// Execute tool via registry
-			result, ok := ExecuteTool(tc, chatID)
+			// Execute tool via registry; task_plan is intercepted so the
+			// ledger is scoped to the session name, not the numeric chatID.
+			var result string
+			var ok bool
+			if tc.Name == "task_plan" {
+				result, ok = execTaskPlanTool(chatIDStr, tc.Args)
+				if p := GetTaskPlan(chatIDStr); p != nil {
+					done, total := p.Progress()
+					thinkingLines = append(thinkingLines, fmt.Sprintf("📋 Plan: %d/%d done", done, total))
+				}
+			} else {
+				result, ok = ExecuteTool(tc, chatID)
+			}
 			if !ok {
 				log.Printf("[agent] Tool %s returned error: %s", tc.Name, helpers.TruncateStr(result, 200))
 			}
@@ -553,6 +625,19 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 		}
 
 		if isTaskCompleted {
+			// Task Ledger gate (resume path): same contract as the main loop —
+			// an unfinished plan means the request is not fulfilled.
+			if plan := GetTaskPlan(chatIDStr); plan != nil {
+				if un := plan.Unfinished(); len(un) > 0 {
+					log.Printf("[agent] resume complete_task rejected — %d unfinished plan items (Task Ledger gate)", len(un))
+					gateNudge := fmt.Sprintf("⚠️ COMPLETE_TASK REJECTED — the Task Ledger still has %d unfinished item(s):\n%s\nContinue executing them NOW with real tools; complete_task is accepted ONLY when every item is done.", len(un), renderPlanItems(un))
+					messages = append(messages, AgentMessage{Role: "assistant", Content: reply})
+					messages = append(messages, AgentMessage{Role: "user", Content: gateNudge})
+					continue
+				}
+				ClearTaskPlan(chatIDStr)
+			}
+
 			finalOutput := explicitFinalResult
 			if finalOutput == "" {
 				finalOutput = cleanToolCallTags(reply)
