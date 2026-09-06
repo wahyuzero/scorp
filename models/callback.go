@@ -4,6 +4,10 @@ package models
 type ToolCall struct {
 	Name string                 `json:"name"`
 	Args map[string]interface{} `json:"args"`
+	// AutoDecision (P3.13): preset by the agent loop's auto-mode gate so
+	// ExecuteTool trusts the classification instead of re-grading. Never
+	// marshaled into transcripts.
+	AutoDecision string `json:"-"`
 }
 
 var UpdateEnvFile func(key, value string)

@@ -162,6 +162,10 @@ func StartMCPServers() {
 	// Register all discovered MCP tools as first-class native tools
 	// (like Hermes Agent: mcp_{server}_{tool})
 	registerMCPToolsAsNative()
+
+	// Contract watch (P3.14): compare live toolset fingerprints against the
+	// persisted contract — silent toolset changes surface as warnings.
+	CheckServerContracts()
 }
 
 // StopMCPServers shuts down all running MCP servers gracefully

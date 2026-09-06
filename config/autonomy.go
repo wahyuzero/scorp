@@ -6,9 +6,13 @@ import (
 )
 
 // ──────────────────────────────────────────────
-// 3-Tier Autonomy System (ZeroClaw Parity)
+// 4-Tier Autonomy System
 // - readonly   : Strict read-only audit & inspection mode
 // - supervised : Default mode. Safe tools run auto, dangerous require confirm
+// - auto       : (P3.13) classifier-gated autonomy — cheap model + deterministic
+//                heuristics grade every tool call: safe → run, risky → confirm
+//                gate, destructive → hard-deny unless allowlisted. Falls back
+//                to supervised-style behavior after repeated uncertain calls.
 // - yolo       : Full unattended autonomy (bypasses confirmations)
 // ──────────────────────────────────────────────
 
@@ -17,6 +21,7 @@ type AutonomyLevel string
 const (
 	AutonomyReadOnly   AutonomyLevel = "readonly"
 	AutonomySupervised AutonomyLevel = "supervised"
+	AutonomyAuto       AutonomyLevel = "auto"
 	AutonomyYOLO       AutonomyLevel = "yolo"
 )
 
@@ -62,7 +67,7 @@ var (
 	}
 )
 
-// SetAutonomyLevel sets the global autonomy level (readonly, supervised, yolo)
+// SetAutonomyLevel sets the global autonomy level (readonly, supervised, auto, yolo)
 func SetAutonomyLevel(level string) {
 	currentAutonomyMu.Lock()
 	defer currentAutonomyMu.Unlock()
@@ -71,7 +76,9 @@ func SetAutonomyLevel(level string) {
 	switch normalized {
 	case "readonly", "ro", "audit":
 		currentAutonomy = AutonomyReadOnly
-	case "yolo", "full", "auto":
+	case "auto", "autonomous":
+		currentAutonomy = AutonomyAuto
+	case "yolo", "full":
 		currentAutonomy = AutonomyYOLO
 	default:
 		currentAutonomy = AutonomySupervised
@@ -88,10 +95,16 @@ func GetAutonomyLevel() AutonomyLevel {
 // ConfirmationRequired reports whether the active autonomy mode still routes
 // risky actions through human confirmation. Every confirmation gate (agent
 // loop, shell, sql, process, git) must consult this single predicate so the
-// autonomy contract stays uniform: only YOLO runs unattended; readonly and
-// supervised always require confirmation.
+// autonomy contract stays uniform: only YOLO runs unattended; readonly,
+// supervised and auto always keep the human-confirmation backstop.
 func ConfirmationRequired() bool {
 	return GetAutonomyLevel() != AutonomyYOLO
+}
+
+// IsReadOnlyTool reports whether a tool belongs to the read-only set (used by
+// the readonly audit mode, Plan Mode and the auto-mode classifier fast path).
+func IsReadOnlyTool(toolName string) bool {
+	return readOnlyTools[toolName]
 }
 
 // SetPlanningMode toggles Plan Mode (P1.4): while a /plan draft is running,

@@ -2,6 +2,7 @@ package tools
 
 import (
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -176,4 +177,50 @@ func TestIntegrityStatus() (touched, green bool) {
 		}
 	}
 	return !lastTouch.IsZero(), lastGreen.After(lastTouch)
+}
+
+// ──────────────────────────────────────────────
+// Claim Gate (P4.16) — proof-of-test for pass claims
+//
+// Extension of the anti-fabrication contract: a final report that CLAIMS
+// tests/checks pass must be backed by a successful test-suite execution
+// receipt inside the current task window — independent of whether test files
+// were touched. No receipt → complete_task is nudged once, then proceeds
+// with an advisory note. Receipts.json stays the single evidence source.
+// ──────────────────────────────────────────────
+
+var testPassClaimPatterns = []*regexp.Regexp{
+	regexp.MustCompile(`(?i)\ball (tests|checks|unit tests|suites?) (are |is |were )?(pass(ing|ed)?|green)\b`),
+	regexp.MustCompile(`(?i)\b(tests|test suite|checks?) (are |is |were )?(all )?(pass(ing|ed)?|green)\b`),
+	regexp.MustCompile(`(?i)\b(100%|semua) (tests?|tes|pengujian) (lulus|pass(ed|ing)?|berhasil|green)\b`),
+	regexp.MustCompile(`(?i)\b(tes|tests?|pengujian) lulus (semua|all)\b`),
+	regexp.MustCompile(`(?i)\bsemua (tes|test|pengujian) lulus\b`),
+	regexp.MustCompile(`(?i)\b(build|suite) is green\b`),
+	regexp.MustCompile(`(?i)\beverything (is )?(passing|green)\b`),
+}
+
+// LooksLikeTestPassClaim reports whether the text asserts that a test suite
+// (or checks) passed. Deliberately conservative — it matches confident
+// success claims, not mentions of test names.
+func LooksLikeTestPassClaim(text string) bool {
+	for _, re := range testPassClaimPatterns {
+		if re.MatchString(text) {
+			return true
+		}
+	}
+	return false
+}
+
+// HasGreenTestRun reports whether a SUCCESSFUL test-suite execution receipt
+// exists within the current task window.
+func HasGreenTestRun() bool {
+	for _, r := range GetRecentReceipts() {
+		if !testGateBoundary.IsZero() && r.Timestamp.Before(testGateBoundary) {
+			continue
+		}
+		if r.Tool == "shell" && r.Success && IsTestRunCommand(r.Meta["cmd"]) {
+			return true
+		}
+	}
+	return false
 }

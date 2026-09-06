@@ -325,6 +325,7 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 		stor := collectors.CollectStorage()
 		text := scheduler.FormatStatusResponse(sys, docker, stor)
 		text += tools.SandboxStatusNotice()
+		text += mcp.ContractStatusNotice()
 		kb := BackAndRefreshKeyboard("status")
 		if edit {
 			EditMessage(chatID, messageID, text, kb)
@@ -776,7 +777,7 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 			"  /status — System &amp; containers status\n" +
 			"  /usage — Token usage &amp; cost tracking\n" +
 			"  /cron — Scheduled cron tasks\n" +
-			"  /mode — Autonomy: readonly / supervised / yolo\n\n" +
+			"  /mode — Autonomy: readonly / supervised / auto / yolo\n\n" +
 			"✅ Pending dangerous command? /confirm_yes or /confirm_no\n\n" +
 			"☰ Bottom menu: tap <b>Menu</b> at the left of the input · ≡ commands panel on the right"
 		SendMessage(helpText, BackButtonKeyboard())

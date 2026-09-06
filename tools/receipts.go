@@ -52,8 +52,10 @@ func saveReceiptsLocked() {
 	}
 }
 
-// RecordToolReceipt logs a cryptographic receipt of tool execution
-func RecordToolReceipt(toolName string, args map[string]interface{}, output string, ok bool) ToolReceipt {
+// RecordToolReceipt logs a cryptographic receipt of tool execution. Optional
+// extraMeta entries (e.g. auto_decision from the P3.13 classifier) are merged
+// into the receipt meta.
+func RecordToolReceipt(toolName string, args map[string]interface{}, output string, ok bool, extraMeta ...map[string]string) ToolReceipt {
 	argsJSON, _ := json.Marshal(args)
 	argsH := sha256.Sum256(argsJSON)
 	argsHash := hex.EncodeToString(argsH[:])
@@ -80,6 +82,13 @@ func RecordToolReceipt(toolName string, args map[string]interface{}, output stri
 		if v, ok := args[k].(string); ok && v != "" {
 			meta["path"] = v
 			break
+		}
+	}
+	for _, extra := range extraMeta {
+		for k, v := range extra {
+			if v != "" {
+				meta[k] = v
+			}
 		}
 	}
 

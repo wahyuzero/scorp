@@ -63,6 +63,10 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 	// tasks no longer gate this task's completion.
 	tools.MarkTaskBoundary()
 
+	// Fresh task → fresh auto-mode classifier stats (P3.13): fallback state
+	// from a previous task does not carry over.
+	ResetAutoStats()
+
 	// Wrap execution with safety wall-clock timeout to prevent runaway deadloops (Incident 2026-09-05)
 	ctx, cancel := context.WithTimeout(context.Background(), maxTurnTimeout())
 	defer cancel()
@@ -210,6 +214,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 	noToolRetries := 0
 	completeTaskGateNudged := false
 	testGateNudged := false
+	claimGateNudged := false
 	autoResumes := 0      // Task Ledger auto-resume budget (see maxAutoResumes)
 	lastFullThought := "" // full text of the last non-empty thought-only reply
 	recentToolSignatures := make(map[string]int)
@@ -368,6 +373,24 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 				testGateAdvisory = "\n\n⚠️ <i>Advisory: test file(s) were modified during this task, but no green test-suite run was recorded after the last edit. This completion is NOT test-verified.</i>"
 			}
 
+			// Claim gate (P4.16): a PASS claim without a green test-run receipt
+			// in this task window gets the same one-shot nudge treatment —
+			// claims must be backed by receipts, not confidence.
+			claimGateAdvisory := ""
+			if tools.LooksLikeTestPassClaim(reply) && !tools.HasGreenTestRun() {
+				if !claimGateNudged {
+					claimGateNudged = true
+					noToolRetries = 0
+					log.Printf("[agent] complete_task rejected — pass claim without any green test-run receipt (claim gate)")
+					claimNudge := "⚠️ COMPLETE_TASK REJECTED — your report claims tests/checks pass, but NO successful test-suite execution is recorded in this task's receipts. Run the test suite now (shell: `go test ./...` / `npm test` / `pytest`, as appropriate) and then call complete_task again — or restate your result without the pass claim. Claims must be backed by receipts."
+					history = append(history, AgentMessage{Role: "assistant", Content: reply})
+					history = append(history, AgentMessage{Role: "user", Content: claimNudge})
+					thinkingLines = append(thinkingLines, "🛑 complete_task rejected: pass claim without test-run receipt")
+					continue
+				}
+				claimGateAdvisory = "\n\n⚠️ <i>Advisory: this report claims tests pass, but no test-suite run was recorded this task. The claim is NOT receipt-backed.</i>"
+			}
+
 			finalOutput := explicitFinalResult
 			if finalOutput == "" {
 				finalOutput = cleanToolCallTags(reply)
@@ -375,7 +398,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 			if finalOutput == "" {
 				finalOutput = "Task completed successfully."
 			}
-			finalOutput += testGateAdvisory
+			finalOutput += testGateAdvisory + claimGateAdvisory
 
 			history = append(history, AgentMessage{Role: "assistant", Content: reply})
 			appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: finalOutput})
@@ -566,6 +589,38 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 				return
 			}
 
+			// Auto-mode classifier gate (P3.13): grade every call when
+			// SCORP_AUTONOMY=auto. deny → synthetic tool result; ask → inline
+			// confirmation + pause; allow → proceed with the decision preset
+			// so the receipt records it.
+			if config.GetAutonomyLevel() == config.AutonomyAuto {
+				decision, reason, source := PermissionDecision(tc.Name, tc.Args)
+				switch decision {
+				case AutoDeny:
+					toolResult := fmt.Sprintf("[Tool Result: %s]\n⛔ Denied by auto-mode classifier (%s): %s", tc.Name, source, reason)
+					history = append(history, AgentMessage{Role: "user", Content: toolResult})
+					appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: toolResult})
+					thinkingLines = append(thinkingLines, "  ⛔ auto-deny")
+					log.Printf("[auto] DENY %s: %s", tc.Name, reason)
+					continue
+				case AutoAsk:
+					thinkingLines = append(thinkingLines, "⚠️ Awaiting confirmation (auto)...")
+					tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
+					lastThinkingUpdate = time.Now()
+
+					display := confirmationDisplay(tc)
+					promptMsgID := tools.SendMessageGetIDWithKeyboard(
+						fmt.Sprintf("⚠️ <b>Auto-mode Confirmation</b>\n\n<pre>%s</pre>\n\nAllow execution?", helpers.EscapeHTML(display)),
+						chatID, confirmKeyboard())
+
+					StorePendingConfirmationArgs(fmt.Sprintf("%d", chatID), tc.Name, display, tc.Args, history, promptMsgID)
+					log.Printf("[auto] ASK %s: %s", tc.Name, reason)
+					return
+				}
+				tc.AutoDecision = "auto:" + source
+				log.Printf("[auto] ALLOW %s (%s): %s", tc.Name, source, reason)
+			}
+
 			// Check for repeated identical actions (loop prevention)
 			tcSig := toolCallSignature(tc)
 			if tcSig != "" && recentToolSignatures[tcSig] >= 2 {
@@ -663,6 +718,7 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 	lastThinkingUpdate := time.Now()
 	noToolRetries := 0
 	testGateNudged := false
+	claimGateNudged := false
 	recentToolSignatures := make(map[string]int)
 
 	setLoopActive(chatIDStr, true)
@@ -746,11 +802,27 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 				testGateAdvisory = "\n\n⚠️ <i>Advisory: test file(s) were modified during this task, but no green test-suite run was recorded after the last edit. This completion is NOT test-verified.</i>"
 			}
 
+			// Claim gate (P4.16), resume path — same contract as the main loop.
+			claimGateAdvisory := ""
+			if tools.LooksLikeTestPassClaim(reply) && !tools.HasGreenTestRun() {
+				if !claimGateNudged {
+					claimGateNudged = true
+					noToolRetries = 0
+					log.Printf("[agent] resume complete_task rejected — pass claim without any green test-run receipt (claim gate)")
+					claimNudge := "⚠️ COMPLETE_TASK REJECTED — your report claims tests/checks pass, but NO successful test-suite execution is recorded in this task's receipts. Run the test suite now (shell: `go test ./...` / `npm test` / `pytest`, as appropriate) and then call complete_task again — or restate your result without the pass claim. Claims must be backed by receipts."
+					messages = append(messages, AgentMessage{Role: "assistant", Content: reply})
+					messages = append(messages, AgentMessage{Role: "user", Content: claimNudge})
+					thinkingLines = append(thinkingLines, "🛑 complete_task rejected: pass claim without test-run receipt")
+					continue
+				}
+				claimGateAdvisory = "\n\n⚠️ <i>Advisory: this report claims tests pass, but no test-suite run was recorded this task. The claim is NOT receipt-backed.</i>"
+			}
+
 			finalOutput := explicitFinalResult
 			if finalOutput == "" {
 				finalOutput = cleanToolCallTags(reply)
 			}
-			finalOutput += testGateAdvisory
+			finalOutput += testGateAdvisory + claimGateAdvisory
 			messages = append(messages, AgentMessage{Role: "assistant", Content: reply})
 			appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: finalOutput})
 			sendScorpReply(chatID, msgID, finalOutput)
@@ -805,6 +877,36 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 
 				StorePendingConfirmation(chatIDStr, "shell", cmd, messages, promptMsgID)
 				return
+			}
+
+			// Auto-mode classifier gate (P3.13), resume-loop site — same
+			// contract as the main loop.
+			if config.GetAutonomyLevel() == config.AutonomyAuto {
+				decision, reason, source := PermissionDecision(tc.Name, tc.Args)
+				switch decision {
+				case AutoDeny:
+					toolResult := fmt.Sprintf("[Tool Result: %s]\n⛔ Denied by auto-mode classifier (%s): %s", tc.Name, source, reason)
+					messages = append(messages, AgentMessage{Role: "user", Content: toolResult})
+					appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: toolResult})
+					thinkingLines = append(thinkingLines, "  ⛔ auto-deny")
+					log.Printf("[auto] DENY %s: %s", tc.Name, reason)
+					continue
+				case AutoAsk:
+					thinkingLines = append(thinkingLines, "⚠️ Awaiting confirmation (auto)...")
+					tools.EditMessageByID(chatID, msgID, buildThinkingMessage(thinkingLines, time.Since(start), false), nil)
+					lastThinkingUpdate = time.Now()
+
+					display := confirmationDisplay(tc)
+					promptMsgID := tools.SendMessageGetIDWithKeyboard(
+						fmt.Sprintf("⚠️ <b>Auto-mode Confirmation</b>\n\n<pre>%s</pre>\n\nAllow execution?", helpers.EscapeHTML(display)),
+						chatID, confirmKeyboard())
+
+					StorePendingConfirmationArgs(chatIDStr, tc.Name, display, tc.Args, messages, promptMsgID)
+					log.Printf("[auto] ASK %s: %s", tc.Name, reason)
+					return
+				}
+				tc.AutoDecision = "auto:" + source
+				log.Printf("[auto] ALLOW %s (%s): %s", tc.Name, source, reason)
 			}
 
 			tcSig := toolCallSignature(tc)

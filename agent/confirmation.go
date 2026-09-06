@@ -17,6 +17,7 @@ import (
 type pendingConfirmation struct {
 	toolName    string
 	command     string
+	args        map[string]interface{} // full tool args (P3.13 auto-mode confirmations); nil = legacy shell path
 	messages    []AgentMessage
 	created     time.Time
 	promptMsgID int64
@@ -29,6 +30,12 @@ var (
 
 // StorePendingConfirmation records a pending command confirmation
 func StorePendingConfirmation(chatID, toolName, command string, messages []AgentMessage, promptMsgID ...int64) {
+	StorePendingConfirmationArgs(chatID, toolName, command, nil, messages, promptMsgID...)
+}
+
+// StorePendingConfirmationArgs records a pending confirmation carrying full
+// tool args (P3.13): on approval, any tool can be executed — not just shell.
+func StorePendingConfirmationArgs(chatID, toolName, command string, args map[string]interface{}, messages []AgentMessage, promptMsgID ...int64) {
 	pendingConfirmsMu.Lock()
 	defer pendingConfirmsMu.Unlock()
 	var pMsgID int64
@@ -38,6 +45,7 @@ func StorePendingConfirmation(chatID, toolName, command string, messages []Agent
 	pendingConfirms[chatID] = &pendingConfirmation{
 		toolName:    toolName,
 		command:     command,
+		args:        args,
 		messages:    messages,
 		created:     time.Now(),
 		promptMsgID: pMsgID,
@@ -116,6 +124,24 @@ func HandleConfirmation(chatID int64, confirmed bool, callbackMsgID ...int64) {
 		toolResult := fmt.Sprintf("[Tool Result: %s]\nUser REJECTED the command: %s\nPlease suggest an alternative approach.", pc.toolName, pc.command)
 		pc.messages = append(pc.messages, AgentMessage{Role: "user", Content: toolResult})
 		appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: toolResult})
+		go resumeAgentLoop(chatID, pc.messages, 0)
+		return
+	}
+
+	// P3.13: auto-mode confirmations carry full args and may target any tool.
+	// Execute via ExecuteTool so deny rules, hooks, receipts and the auto
+	// decision pipeline all apply on the confirmed path too.
+	if pc.args != nil {
+		tc := ToolCall{Name: pc.toolName, Args: pc.args}
+		result, ok := ExecuteTool(tc, chatID)
+		status := "✅"
+		if !ok {
+			status = "❌"
+		}
+		toolResult := fmt.Sprintf("[Tool Result: %s]\n%s%s", pc.toolName, status, result)
+		pc.messages = append(pc.messages, AgentMessage{Role: "user", Content: toolResult})
+		appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: toolResult})
+		tools.SendMessage(fmt.Sprintf("%s Executed after approval. Continuing...", status), nil)
 		go resumeAgentLoop(chatID, pc.messages, 0)
 		return
 	}

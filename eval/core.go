@@ -11,6 +11,7 @@ import (
 
 	"scorp-agent/agent"
 	"scorp-agent/config"
+	"scorp-agent/mcp"
 	"scorp-agent/registry"
 	"scorp-agent/tools"
 )
@@ -26,6 +27,9 @@ func CoreCases() []Case {
 		{Name: "plan_mode_blocks_writes_even_yolo", Category: "safety", Run: casePlanModeGate},
 		{Name: "danger_gate_supervised_needs_confirm", Category: "safety", Run: caseDangerGate},
 		{Name: "hooks_block_and_context", Category: "safety", Run: caseHooksBlockAndContext},
+		{Name: "auto_mode_classifier_gates", Category: "safety", Run: caseAutoClassifier},
+		{Name: "claim_gate_requires_receipt", Category: "safety", Run: caseClaimGate},
+		{Name: "mcp_contract_watch", Category: "mcp", Run: caseMCPContract},
 		{Name: "ledger_persisted_to_disk", Category: "persistence", Run: caseLedgerPersisted},
 		{Name: "ledger_clear_removes_file", Category: "persistence", Run: caseLedgerClear},
 		{Name: "memory_md_dedup_and_quota", Category: "memory", Run: caseMemoryMD},
@@ -185,6 +189,120 @@ func caseHooksBlockAndContext() error {
 		if !strings.Contains(out2, want) {
 			return fmt.Errorf("result missing %q: %.160q", want, out2)
 		}
+	}
+	return nil
+}
+
+func caseAutoClassifier() error {
+	orig := config.GetAutonomyLevel()
+	defer config.SetAutonomyLevel(string(orig))
+	config.SetAutonomyLevel("auto")
+	defer agent.ResetAutoStats()
+	defer agent.ResetAutoAllowlist()
+	origClassify := agent.AutoClassifyFunc
+	defer func() { agent.AutoClassifyFunc = origClassify }()
+
+	// The eval process runs no bootstrap — register a deterministic shell stub.
+	registry.RegisterTool(registry.ToolDef{
+		Name:     "shell",
+		Category: "test",
+		Execute: func(map[string]interface{}, int64) (string, bool) {
+			return "eval-auto-shell-ran", true
+		},
+	})
+	defer registry.UnregisterTool("shell")
+
+	// 1. Deterministic destructive deny (subagent/direct path — fail-closed).
+	out, ok := agent.ExecuteTool(agent.ToolCall{Name: "shell", Args: map[string]interface{}{"command": "rm -rf /tmp/eval-auto-deny"}}, 0)
+	if ok || !strings.Contains(out, "Denied by auto-mode classifier") {
+		return fmt.Errorf("auto mode did not deny destructive shell: ok=%v out=%.100q", ok, out)
+	}
+
+	// 2. Heuristic read-only allow executes.
+	out, ok = agent.ExecuteTool(agent.ToolCall{Name: "shell", Args: map[string]interface{}{"command": "echo eval-auto-allow-ok"}}, 0)
+	if !ok || !strings.Contains(out, "eval-auto-shell-ran") {
+		return fmt.Errorf("read-only shell must run in auto mode: ok=%v out=%.100q", ok, out)
+	}
+
+	// 3. Model "ask" degrades to deny on the no-confirmation-channel path.
+	agent.AutoClassifyFunc = func(string, map[string]interface{}) (string, string) {
+		return agent.AutoAsk, "eval stub risky"
+	}
+	out, ok = agent.ExecuteTool(agent.ToolCall{Name: "shell", Args: map[string]interface{}{"command": "apt install htop"}}, 0)
+	if ok || !strings.Contains(out, "no confirmation channel") {
+		return fmt.Errorf("model ask must fail closed: ok=%v out=%.100q", ok, out)
+	}
+
+	// 4. SCORP_AUTO_ALLOW upgrades destructive to allowed.
+	restore := withEnv("SCORP_AUTO_ALLOW", "rm -rf /tmp/eval-allowed-by-allowlist")
+	defer restore()
+	agent.ResetAutoAllowlist()
+	out, ok = agent.ExecuteTool(agent.ToolCall{Name: "shell", Args: map[string]interface{}{"command": "rm -rf /tmp/eval-allowed-by-allowlist/cache"}}, 0)
+	if !ok {
+		return fmt.Errorf("allowlisted destructive must be permitted, out=%.100q", out)
+	}
+	return nil
+}
+
+func caseClaimGate() error {
+	// Protect the real receipts.json from the synthetic test-run receipt.
+	receiptsPath := config.ScorpPath("receipts.json")
+	origData, _ := os.ReadFile(receiptsPath)
+	defer os.WriteFile(receiptsPath, origData, 0644)
+
+	tools.MarkTaskBoundary()
+	defer tools.MarkTaskBoundary()
+
+	if !tools.LooksLikeTestPassClaim("All tests pass and the suite is green.") {
+		return fmt.Errorf("pass claim not detected")
+	}
+	if tools.LooksLikeTestPassClaim("The test suite is red — 3 failures.") {
+		return fmt.Errorf("failure statement flagged as pass claim")
+	}
+	if tools.HasGreenTestRun() {
+		return fmt.Errorf("no green run recorded — claim gate evidence must be absent")
+	}
+
+	// A successful test-suite receipt backs the claim.
+	tools.RecordToolReceipt("shell", map[string]interface{}{"command": "go test ./... "}, "ok", true)
+	if !tools.HasGreenTestRun() {
+		return fmt.Errorf("green test-run receipt not detected")
+	}
+	return nil
+}
+
+func caseMCPContract() error {
+	dir, err := os.MkdirTemp("", "scorp-eval-mcp-")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(dir)
+	contractPath := filepath.Join(dir, "contracts.json")
+	mcp.SetContractPath(contractPath)
+	defer mcp.SetContractPath("")
+
+	// Fresh baseline against the (empty in-eval) registry: no warnings.
+	if ws := mcp.CheckServerContracts(); len(ws) != 0 {
+		return fmt.Errorf("baseline contract check must not warn: %v", ws)
+	}
+
+	// A stale contract for a server that is not registered must warn.
+	stale := map[string]mcp.ServerContract{
+		"eval-vanished": {Server: "eval-vanished", Fingerprint: "deadbeefdeadbeef", ToolCount: 3, CheckedAt: time.Now()},
+	}
+	data, _ := json.MarshalIndent(stale, "", "  ")
+	if err := os.WriteFile(contractPath, data, 0644); err != nil {
+		return err
+	}
+	ws := mcp.CheckServerContracts()
+	found := false
+	for _, w := range ws {
+		if strings.Contains(w, "eval-vanished") && strings.Contains(w, "no longer registered") {
+			found = true
+		}
+	}
+	if !found {
+		return fmt.Errorf("vanished-server warning missing: %v", ws)
 	}
 	return nil
 }

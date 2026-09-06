@@ -208,6 +208,8 @@ func SettingsMenuText() string {
 		desc = "Audit only — write tools are blocked."
 	case "yolo":
 		desc = "Full unattended autonomy — dangerous commands run without asking."
+	case "auto":
+		desc = "Classifier-gated autonomy — safe runs, risky asks, destructive denied."
 	default:
 		desc = "Default — dangerous commands require your confirmation."
 	}
@@ -229,6 +231,9 @@ func SettingsMenuKeyboard() map[string]interface{} {
 			[]interface{}{
 				map[string]string{"text": "🛡 Readonly" + mark("readonly"), "callback_data": "mode:readonly"},
 				map[string]string{"text": "🔒 Supervised" + mark("supervised"), "callback_data": "mode:supervised"},
+			},
+			[]interface{}{
+				map[string]string{"text": "🤖 Auto — classifier" + mark("auto"), "callback_data": "mode:auto"},
 			},
 			[]interface{}{
 				map[string]string{"text": "⚡ YOLO — no confirmations" + mark("yolo"), "callback_data": "mode:yolo"},
@@ -276,7 +281,7 @@ func SetupBotCommands() {
 		{"command": "sops", "description": "📕 SOPs"},
 		{"command": "mcp", "description": "🔌 MCP servers & marketplace"},
 		{"command": "usage", "description": "📈 Token usage & cost"},
-		{"command": "mode", "description": "🛡 Autonomy: readonly/supervised/yolo"},
+		{"command": "mode", "description": "🛡 Autonomy: readonly/supervised/auto/yolo"},
 		{"command": "compact", "description": "🗜 Compact session history"},
 		{"command": "clear", "description": "🧹 Clear chat history"},
 		{"command": "confirm_yes", "description": "✅ Approve pending command"},

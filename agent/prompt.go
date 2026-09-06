@@ -3,6 +3,7 @@ package agent
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"scorp-agent/config"
 	"scorp-agent/mcp"
 	"scorp-agent/models"
@@ -176,6 +177,28 @@ func ExecuteTool(tc ToolCall, chatID int64) (string, bool) {
 	// 3. PreToolUse hooks (P3.12): user-configured enforcement at the single
 	// choke point. Fires only when the call is actually about to execute —
 	// deny rules, autonomy and path checks remain the outer layers.
+
+	// 2.5 Auto-mode enforcement (P3.13) for paths that bypass the agent loops
+	// (subagents). The loops classify before calling ExecuteTool and preset
+	// tc.AutoDecision; a preset decision is trusted. Un-preset calls are
+	// graded here with fail-closed semantics — this path has no confirmation
+	// channel, so an "ask" degrades to a denial.
+	if config.GetAutonomyLevel() == config.AutonomyAuto {
+		if tc.AutoDecision == "" {
+			decision, reason, source := PermissionDecision(tc.Name, tc.Args)
+			switch decision {
+			case AutoAllow:
+				tc.AutoDecision = "auto:" + source
+			case AutoDeny:
+				log.Printf("[auto] DENY %s (subagent/direct path): %s", tc.Name, reason)
+				return "⛔ Denied by auto-mode classifier: " + reason, false
+			default:
+				log.Printf("[auto] ASK→DENY %s (no confirmation channel on this path): %s", tc.Name, reason)
+				return "⛔ Auto-mode requires human confirmation for this action, and this execution path has no confirmation channel. Escalate to the parent agent/user instead.", false
+			}
+		}
+	}
+
 	hookCtx, hookBlocked, hookReason := tools.RunPreToolUseHooks(tc.Name, tc.Args, chatID)
 	if hookBlocked {
 		return "🪝 " + hookReason, false
@@ -188,8 +211,13 @@ func ExecuteTool(tc ToolCall, chatID int64) (string, bool) {
 	out = tools.RedactSecrets(out)
 
 	// 6. Record Cryptographic Receipt (ZeroClaw Parity) — before hook context
-	// is appended, so receipts capture the tool's own output.
-	tools.RecordToolReceipt(tc.Name, tc.Args, out, ok)
+	// is appended, so receipts capture the tool's own output. The auto-mode
+	// decision (P3.13) travels with the receipt when present.
+	var extraMeta []map[string]string
+	if tc.AutoDecision != "" {
+		extraMeta = append(extraMeta, map[string]string{"auto_decision": tc.AutoDecision})
+	}
+	tools.RecordToolReceipt(tc.Name, tc.Args, out, ok, extraMeta...)
 
 	// 7. PostToolUse hooks + pre-hook additional context (P3.12): never block,
 	// stdout is surfaced to the model.
