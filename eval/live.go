@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"scorp-agent/config"
+
+	"github.com/joho/godotenv"
 )
 
 // ──────────────────────────────────────────────
@@ -96,6 +98,37 @@ func LiveCases() []Case {
 	return cases
 }
 
+// deploymentEnv builds the subprocess environment: the parent env plus the
+// deployment .env candidates (same order as config.LoadConfig). Without this,
+// a one-shot spawned outside systemd lacks the API keys systemd injects for
+// the daemon.
+func deploymentEnv() ([]string, error) {
+	candidates := []string{config.ScorpPath(".env"), filepath.Join(config.HomeDir(), "scorp", ".env")}
+	existing := map[string]bool{}
+	for _, kv := range os.Environ() {
+		if i := strings.Index(kv, "="); i > 0 {
+			existing[kv[:i]] = true
+		}
+	}
+	var extra []string
+	for _, path := range candidates {
+		kv, err := godotenv.Read(path)
+		if err != nil {
+			continue
+		}
+		for k, v := range kv {
+			if !existing[k] {
+				existing[k] = true
+				extra = append(extra, k+"="+v)
+			}
+		}
+	}
+	if extra == nil {
+		return nil, fmt.Errorf("no deployment .env found (tried %v)", candidates)
+	}
+	return append(os.Environ(), extra...), nil
+}
+
 // runLiveCase spawns `scorp -p <task> -s scorp-eval-<name>` in a fresh sandbox
 // dir, then runs the independent checker. Token usage is captured from the
 // model_usage.json delta for the tokens/task metric.
@@ -111,12 +144,18 @@ func runLiveCase(lc liveCase) error {
 		return err
 	}
 
+	env, err := deploymentEnv()
+	if err != nil {
+		return fmt.Errorf("live case needs deployment env: %v", err)
+	}
+
 	before := totalTokens()
 
 	ctx, cancel := context.WithTimeout(context.Background(), liveTaskTimeout)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, exe, "-p", lc.prompt, "-s", fmt.Sprintf("%s-%s-%d", liveSessionPrefix, lc.name, time.Now().Unix()))
 	cmd.Dir = dir
+	cmd.Env = env
 	out, err := cmd.CombinedOutput()
 
 	if ctx.Err() == context.DeadlineExceeded {
