@@ -259,3 +259,15 @@ Task conversation tail:
 		log.Printf("[memory-md] Task %s: added %d durable entr(ies) to MEMORY.md", helpers.TruncateStr(chatIDStr, 40), added)
 	}
 }
+
+// SetMemoryMDFile overrides the durable-memory file location (eval/embedding
+// use); empty string restores the default ~/.scorp/MEMORY.md.
+func SetMemoryMDFile(path string) {
+	memoryMDMu.Lock()
+	defer memoryMDMu.Unlock()
+	if path == "" {
+		memoryMDFile = config.ScorpPath("MEMORY.md")
+		return
+	}
+	memoryMDFile = path
+}

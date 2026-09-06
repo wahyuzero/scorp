@@ -11,6 +11,7 @@ import (
 
 	"scorp-agent/bootstrap"
 	"scorp-agent/config"
+	"scorp-agent/eval"
 	"scorp-agent/gateway"
 	"scorp-agent/mcp"
 	"scorp-agent/mcp/marketplace"
@@ -119,6 +120,11 @@ func main() {
 		}
 		fmt.Println("To run an SOP: ./scorp sop run <name>")
 		return
+	}
+
+	// 6. Private evaluation arena (P4.15) — pre-deploy quality gate
+	if len(os.Args) > 1 && os.Args[1] == "eval" {
+		os.Exit(eval.Run(os.Args[2:]))
 	}
 
 	// Global Autonomy Mode flag parsing
