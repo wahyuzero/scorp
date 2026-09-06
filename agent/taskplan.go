@@ -1,12 +1,16 @@
 package agent
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"scorp-agent/config"
 	"scorp-agent/internal/helpers"
 )
 
@@ -45,28 +49,93 @@ var (
 	taskPlansMu sync.Mutex
 )
 
-// SetTaskPlan stores (or replaces) the ledger for a session.
+// ── Ledger persistence (P1.5) ──
+// The ledger is the completion CONTRACT — losing it on daemon restart broke
+// auto-resume (plan doc: "zero kehilangan plan saat restart"). Every mutation
+// is flushed to ~/.scorp/plans/<session>.plan.json and reloaded lazily when a
+// session is first touched after a restart. Completed/cleared plans are
+// removed from disk; stale plans older than planFileExpiry are discarded on
+// load so abandoned tasks don't haunt sessions forever.
+
+const planFileExpiry = 7 * 24 * time.Hour
+
+// planFilePath is the on-disk location of a session's ledger.
+func planFilePath(sessionID string) string {
+	return filepath.Join(config.ScorpPath("plans"), sanitizeSessionID(sessionID)+".plan.json")
+}
+
+// savePlanToDisk atomically persists the ledger (tmp write + rename).
+func savePlanToDisk(sessionID string, p *TaskPlan) {
+	p.mu.RLock()
+	data, err := json.Marshal(p)
+	p.mu.RUnlock()
+	if err != nil {
+		return
+	}
+	path := planFilePath(sessionID)
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return
+	}
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, data, 0644); err != nil {
+		return
+	}
+	_ = os.Rename(tmp, path)
+}
+
+// loadPlanFromDisk reads a persisted ledger; expired or corrupt files are
+// removed so they can't wedge a session.
+func loadPlanFromDisk(sessionID string) *TaskPlan {
+	path := planFilePath(sessionID)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+	var p TaskPlan
+	if err := json.Unmarshal(data, &p); err != nil {
+		_ = os.Remove(path)
+		return nil
+	}
+	if time.Since(p.UpdatedAt) > planFileExpiry {
+		_ = os.Remove(path)
+		return nil
+	}
+	return &p
+}
+
+// SetTaskPlan stores (or replaces) the ledger for a session and persists it.
 func SetTaskPlan(sessionID string, p *TaskPlan) {
 	p.mu.Lock()
 	p.UpdatedAt = time.Now()
 	p.mu.Unlock()
 	taskPlansMu.Lock()
-	defer taskPlansMu.Unlock()
 	taskPlans[sessionID] = p
+	taskPlansMu.Unlock()
+	savePlanToDisk(sessionID, p)
 }
 
-// GetTaskPlan returns the session ledger or nil.
+// GetTaskPlan returns the session ledger or nil, lazy-loading from disk on
+// the first access after a daemon restart.
 func GetTaskPlan(sessionID string) *TaskPlan {
 	taskPlansMu.Lock()
 	defer taskPlansMu.Unlock()
-	return taskPlans[sessionID]
+	if p, ok := taskPlans[sessionID]; ok {
+		return p
+	}
+	p := loadPlanFromDisk(sessionID)
+	if p != nil {
+		taskPlans[sessionID] = p
+	}
+	return p
 }
 
-// ClearTaskPlan drops the ledger (contract fulfilled or invalidated).
+// ClearTaskPlan drops the ledger (contract fulfilled or invalidated) and
+// removes its persisted file.
 func ClearTaskPlan(sessionID string) {
 	taskPlansMu.Lock()
-	defer taskPlansMu.Unlock()
 	delete(taskPlans, sessionID)
+	taskPlansMu.Unlock()
+	_ = os.Remove(planFilePath(sessionID))
 }
 
 // snapshot returns a copy of the items under the read lock — callers may keep

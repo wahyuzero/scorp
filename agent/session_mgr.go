@@ -119,6 +119,18 @@ func RenameSession(oldID, newID string) error {
 		mu.Unlock()
 	}
 
+	// Move the persisted task ledger (P1.5) and its in-memory entry — the
+	// completion contract must follow the session it belongs to.
+	taskPlansMu.Lock()
+	if p, ok := taskPlans[oldID]; ok {
+		taskPlans[newID] = p
+		delete(taskPlans, oldID)
+	}
+	taskPlansMu.Unlock()
+	if _, err := os.Stat(planFilePath(oldID)); err == nil {
+		_ = os.Rename(planFilePath(oldID), planFilePath(newID))
+	}
+
 	return nil
 }
 
@@ -135,6 +147,10 @@ func DeleteSession(sessionID string) error {
 	if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("failed to delete session file: %w", err)
 	}
+
+	// Drop the persisted task ledger too (P1.5) — a deleted session must not
+	// resurrect its completion contract.
+	ClearTaskPlan(sessionID)
 
 	return nil
 }
