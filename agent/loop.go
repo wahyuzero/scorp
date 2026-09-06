@@ -330,6 +330,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 						appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: finalOutput})
 						sendScorpReply(chatID, msgID, finalOutput)
 						maybeRunSelfReview(chatID, chatIDStr)
+						go extractTaskMemory(chatIDStr, history)
 						return
 					}
 					autoResumes++
@@ -381,6 +382,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 
 			sendScorpReply(chatID, msgID, finalOutput)
 			maybeRunSelfReview(chatID, chatIDStr)
+			go extractTaskMemory(chatIDStr, history)
 			return
 		}
 
@@ -506,6 +508,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 
 			sendScorpReply(chatID, msgID, cleanReply)
 			maybeRunSelfReview(chatID, chatIDStr)
+			go extractTaskMemory(chatIDStr, history)
 			return
 		}
 
@@ -746,6 +749,7 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 			appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: finalOutput})
 			sendScorpReply(chatID, msgID, finalOutput)
 			maybeRunSelfReview(chatID, chatIDStr)
+			go extractTaskMemory(chatIDStr, messages)
 			return
 		}
 
@@ -766,6 +770,7 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 			appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: cleanReply})
 			sendScorpReply(chatID, msgID, cleanReply)
 			maybeRunSelfReview(chatID, chatIDStr)
+			go extractTaskMemory(chatIDStr, messages)
 			return
 		}
 

@@ -86,6 +86,7 @@ func StartDaemon() {
 	tools.IsDangerousCommand = func(cmd string) bool {
 		return agent.IsDangerousCommand(cmd)
 	}
+	tools.AppendDurableMemory = agent.AppendMemoryMD
 
 	// Autonomous callbacks
 	tools.AutoConfig = &agent.AutoConfig

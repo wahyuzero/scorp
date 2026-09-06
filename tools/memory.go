@@ -158,7 +158,20 @@ func ExecuteMemory(args map[string]interface{}) (string, bool) {
 		}
 		deleteMemory(key)
 		return fmt.Sprintf("Memory[%s] deleted", key), true
+	case "remember":
+		// P1.7 durable-memory protocol: one bullet into MEMORY.md that
+		// survives across sessions (injected at session start).
+		if value == "" {
+			return "Error: 'value' is required for remember — a self-contained one-line fact", false
+		}
+		if AppendDurableMemory == nil {
+			return "Error: durable memory not wired in this runtime", false
+		}
+		if n := AppendDurableMemory([]string{value}); n > 0 {
+			return "🧠 Remembered (MEMORY.md): " + value, true
+		}
+		return "Already remembered (no change)", true
 	default:
-		return "Error: action must be get, set, list, or delete", false
+		return "Error: action must be get, set, list, delete, or remember", false
 	}
 }

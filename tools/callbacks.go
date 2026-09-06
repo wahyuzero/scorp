@@ -32,6 +32,9 @@ var (
 var (
 	StorePendingConfirmation func(chatID, toolName, command string, messages []AgentMessage, promptMsgID ...int64)
 	IsDangerousCommand       func(cmd string) bool
+	// AppendDurableMemory appends entries to MEMORY.md (P1.7) — wired to
+	// agent.AppendMemoryMD by daemon/CLI to avoid an import cycle.
+	AppendDurableMemory func(entries []string) int
 )
 
 // Agent session/history callbacks

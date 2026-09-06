@@ -160,16 +160,16 @@ func init() {
 	// ── Memory ──
 	registry.RegisterTool(registry.ToolDef{
 		Name:        "memory",
-		Description: "Store/retrieve persistent key-value memory",
+		Description: "Store/retrieve persistent key-value memory; action=remember appends a durable one-line fact to MEMORY.md (survives across sessions, injected at session start). Use remember for decisions, system state changes, and environment facts worth keeping next week.",
 		Category:    "other",
 		Native:      true,
 		Execute: func(args map[string]interface{}, chatID int64) (string, bool) {
 			return tools.ExecuteMemory(args)
 		},
 		Arguments: map[string]registry.ArgDef{
-			"action": {Type: "string", Description: "set, get, delete, list", Required: true, Enum: []string{"set", "get", "delete", "list"}},
-			"key":    {Type: "string", Description: "Memory key"},
-			"value":  {Type: "string", Description: "Value (for set)"},
+			"action": {Type: "string", Description: "set, get, delete, list, remember", Required: true, Enum: []string{"set", "get", "delete", "list", "remember"}},
+			"key":    {Type: "string", Description: "Memory key (get/set/delete)"},
+			"value":  {Type: "string", Description: "Value (set) or one-line durable fact (remember)"},
 		},
 	})
 

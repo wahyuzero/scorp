@@ -123,6 +123,12 @@ func getAgentSystemPrompt(chatID ...int64) string {
 		sb.WriteString("\n## PERSISTENT MEMORY\n" + memSummary + "\n")
 	}
 
+	// Durable memory file (P1.7): decisions & state extracted at task
+	// completions — the agent's long-term notes across sessions.
+	if durable := ReadMemoryMD(); durable != "" {
+		sb.WriteString("\n## DURABLE MEMORY (MEMORY.md)\n" + durable + "\n")
+	}
+
 	// 5. Interface Environment Context (Tail only)
 	if len(chatID) > 0 && chatID[0] != 0 {
 		sb.WriteString("\n## SESSION CONTEXT\n- Active interface: Telegram Messenger\n")
