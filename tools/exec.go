@@ -132,6 +132,18 @@ func ExecuteShell(args map[string]interface{}, chatID int64) (string, bool) {
 	// forever even after the direct child exits.
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
+	// Sanitize LD_PRELOAD for PRoot Linux environments inside Termux:
+	// Android Bionic libtermux-exec-ld-preload.so crashes glibc child processes with static TLS errors.
+	if lp := os.Getenv("LD_PRELOAD"); strings.Contains(lp, "libtermux-exec") {
+		var cleanEnv []string
+		for _, e := range os.Environ() {
+			if !strings.HasPrefix(e, "LD_PRELOAD=") {
+				cleanEnv = append(cleanEnv, e)
+			}
+		}
+		cmd.Env = cleanEnv
+	}
+
 	var buf bytes.Buffer
 	cmd.Stdout = &buf
 	cmd.Stderr = &buf
