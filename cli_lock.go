@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"syscall"
 )
 
 // sessionLockFile holds the file descriptor for an acquired session lock
@@ -35,7 +34,7 @@ func acquireSessionLock(sessionID string) (*sessionLockFile, error) {
 		return nil, fmt.Errorf("failed to open session lockfile: %w", err)
 	}
 
-	err = syscall.Flock(int(f.Fd()), syscall.LOCK_EX|syscall.LOCK_NB)
+	err = lockFileExclusive(f)
 	if err != nil {
 		// Locked by another active process. Read existing PID
 		buf := make([]byte, 32)
@@ -57,7 +56,7 @@ func acquireSessionLock(sessionID string) (*sessionLockFile, error) {
 // Release releases the lock and cleans up the file
 func (l *sessionLockFile) Release() {
 	if l != nil && l.file != nil {
-		_ = syscall.Flock(int(l.file.Fd()), syscall.LOCK_UN)
+		_ = unlockFile(l.file)
 		_ = l.file.Close()
 		_ = os.Remove(l.path)
 		l.file = nil

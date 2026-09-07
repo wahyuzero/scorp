@@ -13,12 +13,65 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
-          - goos: linux
-            goarch: arm64
+          # 1. Linux x86_64 (CGO + FTS5)
           - goos: linux
             goarch: amd64
+            cgo: 1
+            tags: "fts5"
+            ext: ""
+            name: "scorp_linux_amd64"
+
+          # 2. Linux ARM64 (CGO + FTS5)
+          - goos: linux
+            goarch: arm64
+            cgo: 1
+            tags: "fts5"
+            ext: ""
+            name: "scorp_linux_arm64"
+
+          # 3. Android Termux ARM64 (Standalone static)
+          - goos: android
+            goarch: arm64
+            cgo: 0
+            tags: "nobrowser"
+            ext: ""
+            name: "scorp_android_arm64"
+
+          # 4. macOS Apple Silicon
+          - goos: darwin
+            goarch: arm64
+            cgo: 0
+            tags: "nobrowser"
+            ext: ""
+            name: "scorp_darwin_arm64"
+
+          # 5. macOS Intel
+          - goos: darwin
+            goarch: amd64
+            cgo: 0
+            tags: "nobrowser"
+            ext: ""
+            name: "scorp_darwin_amd64"
+
+          # 6. Windows x64
+          - goos: windows
+            goarch: amd64
+            cgo: 0
+            tags: "nobrowser"
+            ext: ".exe"
+            name: "scorp_windows_amd64.exe"
+
+          # 7. Linux ARMv7 (32-bit SBC / Raspberry Pi)
+          - goos: linux
+            goarch: arm
+            goarm: "7"
+            cgo: 0
+            tags: "nobrowser"
+            ext: ""
+            name: "scorp_linux_armv7"
 
     steps:
       - uses: actions/checkout@v4
@@ -28,37 +81,41 @@ jobs:
         with:
           go-version: '1.25'
 
-      - name: Install CGO dependencies (Linux)
+      - name: Install CGO cross-compiler (Linux ARM64 only)
+        if: matrix.cgo == 1 && matrix.goarch == 'arm64'
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc
-          if [ "${{ matrix.goarch }}" = "arm64" ]; then
-            sudo apt-get install -y gcc-aarch64-linux-gnu
-          fi
+          sudo apt-get install -y gcc-aarch64-linux-gnu
 
       - name: Build binary
         env:
-          CGO_ENABLED: 1
+          CGO_ENABLED: ${{ matrix.cgo }}
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
-          CC: ${{ matrix.goarch == 'arm64' && 'aarch64-linux-gnu-gcc' || 'gcc' }}
+          GOARM: ${{ matrix.goarm || '' }}
+          CC: ${{ matrix.cgo == 1 && matrix.goarch == 'arm64' && 'aarch64-linux-gnu-gcc' || 'gcc' }}
         run: |
           VERSION=${GITHUB_REF_NAME:-$(echo $GITHUB_SHA | cut -c1-7)}
-          go build -tags fts5 \
+          TAGS_FLAG=""
+          if [ -n "${{ matrix.tags }}" ]; then
+            TAGS_FLAG="-tags ${{ matrix.tags }}"
+          fi
+
+          go build $TAGS_FLAG \
             -ldflags="-s -w -buildid= -X scorp-agent/updater.Version=${VERSION}" \
             -trimpath \
-            -o scorp_${{ matrix.goos }}_${{ matrix.goarch }} .
+            -o "${{ matrix.name }}" .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: scorp_${{ matrix.goos }}_${{ matrix.goarch }}
-          path: scorp_${{ matrix.goos }}_${{ matrix.goarch }}
+          name: ${{ matrix.name }}
+          path: ${{ matrix.name }}
 
   release:
     needs: build
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
 
     steps:
       - uses: actions/checkout@v4
@@ -69,10 +126,15 @@ jobs:
           path: artifacts
           merge-multiple: true
 
+      - name: Generate Checksums
+        run: |
+          cd artifacts
+          sha256sum scorp_* > checksums.txt
+          cat checksums.txt
+
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
           files: |
-            artifacts/scorp_linux_arm64
-            artifacts/scorp_linux_amd64
+            artifacts/*

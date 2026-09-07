@@ -10,7 +10,6 @@ import (
 	"scorp-agent/config"
 	"scorp-agent/internal/helpers"
 	"strings"
-	"syscall"
 	"time"
 )
 
@@ -130,7 +129,7 @@ func ExecuteShell(args map[string]interface{}, chatID int64) (string, bool) {
 	// Own process group so the timeout can kill backgrounded grandchildren —
 	// otherwise `server &` inherits the stdout pipe and CombinedOutput blocks
 	// forever even after the direct child exits.
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	SetProcessGroup(cmd)
 
 	// Sanitize LD_PRELOAD for PRoot Linux environments inside Termux:
 	// When running inside a PRoot Linux distro (Debian, Ubuntu, Arch, etc.) on Android,
@@ -166,7 +165,7 @@ func ExecuteShell(args map[string]interface{}, chatID int64) (string, bool) {
 		timedOut = true
 		if cmd.Process != nil {
 			// Negative PID kills the whole group (bash + backgrounded children).
-			syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+			KillProcessGroup(cmd)
 		}
 		<-done // copiers finish once every group member released the pipe
 		err = fmt.Errorf("timeout")

@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"syscall"
 	"time"
 
 	"scorp-agent/config"
@@ -84,7 +83,7 @@ func runHookCommand(hook config.HookEntry, event, toolName string, args map[stri
 		"SCORP_HOOK_SESSION="+payload.SessionID,
 	)
 	// Own process group so a hanging hook's children die with it.
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	SetProcessGroup(cmd)
 
 	if err := cmd.Start(); err != nil {
 		return "", err.Error(), -1
@@ -94,7 +93,7 @@ func runHookCommand(hook config.HookEntry, event, toolName string, args map[stri
 
 	select {
 	case <-ctx.Done():
-		syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		KillProcessGroup(cmd)
 		<-done
 		return strings.TrimSpace(outBuf.String()), strings.TrimSpace(errBuf.String()), hookExitTimeout
 	case err := <-done:
