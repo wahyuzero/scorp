@@ -43,7 +43,13 @@ func main() {
 	// Load environment configuration
 	_ = config.LoadConfig()
 
-	// 1. Subcommand: update
+	// 1. Subcommand: help
+	if len(os.Args) > 1 && (os.Args[1] == "help" || os.Args[1] == "--help" || os.Args[1] == "-h") {
+		printCLIHelp()
+		return
+	}
+
+	// 2. Subcommand: update
 	if len(os.Args) > 1 && os.Args[1] == "update" {
 		msg, err := updater.SelfUpdate()
 		if err != nil {
@@ -170,16 +176,23 @@ func main() {
 	telegram.StartDaemon()
 }
 
-// isCLIMode returns true if running in CLI mode (--cli flag, commands, or no Telegram token)
+// isCLIMode returns true if running in CLI mode (--cli flag, flags, commands, or no Telegram token)
 func isCLIMode() bool {
 	if len(os.Args) > 1 {
 		arg := os.Args[1]
-		if arg == "--cli" || arg == "-c" || arg == "-p" {
-			return true
+		if arg == "daemon" || arg == "--daemon" {
+			return false
 		}
-		if arg != "update" && arg != "version" && arg != "--version" && arg != "-v" && arg != "--mcp-server" && !strings.HasPrefix(arg, "-") {
-			return true
+		subcommands := map[string]bool{
+			"update": true, "version": true, "--version": true, "-v": true,
+			"--mcp-server": true, "quickstart": true, "setup": true,
+			"gateway": true, "sop": true, "eval": true,
+			"help": true, "--help": true, "-h": true,
 		}
+		if subcommands[arg] {
+			return false
+		}
+		return true
 	}
 	// If no token configured, default to CLI mode
 	if config.Cfg.TelegramBotToken == "" && os.Getenv("TELEGRAM_BOT_TOKEN") == "" {
