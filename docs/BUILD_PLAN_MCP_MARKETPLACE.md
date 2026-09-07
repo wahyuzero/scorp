@@ -1,176 +1,176 @@
 # 🦂 Scorp MCP Marketplace — Build Plan & Execution Roadmap
 
-> **Status:** Executed — M0/M1/M2 selesai & tervalidasi; M3 sebagian (container hardening ditunda)
-> **Blueprint Reference:** [`docs/MCP_MARKETPLACE_BLUEPRINT.md`](MCP_MARKETPLACE_BLUEPRINT.md)
-> **Target Version:** Scorp Agent v2.5 / v3.0
-> **Owner:** Wahyu
-> **Created:** September 2026
+> **Status:** Executed — M0/M1/M2 completed and validated; M3 partial (container hardening deferred)  
+> **Blueprint Reference:** [`docs/MCP_MARKETPLACE_BLUEPRINT.md`](MCP_MARKETPLACE_BLUEPRINT.md)  
+> **Target Version:** Scorp Agent v2.5 / v3.0  
+> **Owner:** Wahyu  
+> **Created:** September 2026  
 
 ---
 
-## 🎯 1. Ringkasan Eksekutif
+## 🎯 1. Executive Summary
 
-Dokumen ini menerjemahkan blueprint MCP Marketplace menjadi rencana build yang dapat dieksekusi, berdasarkan audit aktual codebase scorp-agent.
+This document translates the MCP Marketplace blueprint into an executable build plan, grounded in an actual audit of the scorp-agent codebase.
 
-Temuan sentral dari audit: **blueprint ini menumpang pada infrastruktur yang sudah ada, bukan membangun dari nol.** Ketiga opsi instalasi (prebuilt / rebuild / upstream) berakhir di titik yang sama — sebuah entry di `~/.scorp/mcp.json`. Setelah entry itu ada, seluruh infrastruktur existing otomatis bekerja: watchdog, hot-reload, health status, dan registrasi tool sebagai native function di `registry/`. Dengan demikian, Tri-Option adalah **lapisan sourcing baru di depan `mcp_manage` yang sudah ada**, bukan sistem baru.
+The central finding of the audit: **this blueprint leverages existing infrastructure rather than building from scratch.** All three installation options (prebuilt / rebuild / upstream) converge at the exact same point — an entry in `~/.scorp/mcp.json`. Once that entry exists, the entire existing infrastructure activates automatically: watchdog, hot-reload, health monitoring, and native tool registration in `registry/`. Therefore, Tri-Option is a **new sourcing layer in front of the existing `mcp_manage`**, not an entirely new subsystem.
 
-**Strategi eksekusi yang disepakati:**
+**Agreed Execution Strategy:**
 
-1. **Vertical slice dulu** — `/mcp search` + `/mcp install` dengan Tri-Option untuk port seed (prebuilt + upstream) sebelum transpiler. Marketplace terasa hidup sejak M1 dengan risiko rendah.
-2. **Port referensi ditulis manual** — `mcp-fetch`, `mcp-sqlite`, `mcp-filesystem` dibuat idiomatic sebagai golden standard, sekaligus isi marketplace pertama dan test case validasi transpiler.
-3. **Sandbox build ringan** — `go build` di temp directory terisolasi dengan verifikasi checksum; hardening container menyusul.
-4. **Codegen self-hosted** — transpiler memakai LLM gateway internal scorp (routing model *complex/premium* dari `models.json`), tanpa dependency CLI eksternal.
+1. **Vertical Slice First** — Implement `/mcp search` + `/mcp install` with Tri-Option for seed ports (prebuilt + upstream) prior to the transpiler. The marketplace feels functional from M1 with minimal operational risk.
+2. **Handwritten Reference Ports** — `mcp-fetch`, `mcp-sqlite`, and `mcp-filesystem` written idiomatically as the golden standard, serving as the first marketplace catalog entries and transpiler validation test cases.
+3. **Lightweight Sandbox Build** — `go build` in an isolated temp directory with checksum verification; container hardening follows later.
+4. **Self-Hosted Codegen** — The transpiler utilizes Scorp's internal LLM gateway (routing through *complex/premium* models in `models.json`) without external CLI dependencies.
 
 ---
 
-## 🔍 2. Audit Codebase: Existing vs Gap
+## 🔍 2. Codebase Audit: Existing vs. Gaps
 
-### 2.1 Yang Sudah Ada (Tidak Perlu Dibangun)
+### 2.1 Existing Components (No Need to Rebuild)
 
-| Komponen Blueprint | Implementasi Existing | Lokasi |
+| Blueprint Component | Existing Implementation | Location |
 | :--- | :--- | :--- |
-| MCP client (JSON-RPC 2.0, stdio + SSE) | Hand-rolled client, spawn server, hot-reload | `mcp/client.go`, `mcp/sse.go` |
+| MCP client (JSON-RPC 2.0, stdio + SSE) | Custom client, server spawning, hot-reload | `mcp/client.go`, `mcp/sse.go` |
 | Server lifecycle & crash recovery | Watchdog + health status | `mcp/watchdog.go`, `mcp/RestartServer` |
-| Tool registration ke LLM | Native function calling + deferred tools + raw JSON Schema | `registry/registry.go` |
-| Manajemen server (add/remove/list/reload) | Agent tool `mcp_manage` dengan hot-reload | `mcp/manage.go` |
-| **Layer 5: Secret Redactor** ✅ | Regex sanitizer output tool | `tools/redact.go` (+ `redact_test.go`) |
-| Engine codegen transpiler | Multi-provider gateway, routing rules, fallback on error | `gateway/gateway.go`, `models.json` |
-| Interface UX | `/mcp` command CLI + tombol MCP Telegram (`callback_data`) | `cli.go:278`, `telegram/telegram.go` |
-| Path konfigurasi terpusat | `mcpConfigFilePath()` → `~/.scorp/mcp.json` | `config/config_paths.go:93` |
+| Tool registration to LLM | Native function calling + deferred tools + raw JSON Schema | `registry/registry.go` |
+| Server management (add/remove/list/reload) | Agent tool `mcp_manage` with hot-reload | `mcp/manage.go` |
+| **Layer 5: Secret Redactor** ✅ | Regex tool output sanitizer | `tools/redact.go` (+ `redact_test.go`) |
+| Transpiler codegen engine | Multi-provider gateway, routing rules, fallback on error | `gateway/gateway.go`, `models.json` |
+| UX Interfaces | `/mcp` CLI command + Telegram MCP inline buttons | `cli.go`, `telegram/telegram.go` |
+| Centralized config paths | `mcpConfigFilePath()` → `~/.scorp/mcp.json` | `config/config_paths.go` |
 
-### 2.2 Gap yang Harus Dibangun
+### 2.2 Gaps to Build
 
-- ❌ Registry client: fetch + cache `registry.json`, search lokal, parser manifest
-- ❌ JSON Schema `scorp-mcp.json` v1 (health matrix, flavor, contributors, origin)
-- ❌ Tri-Option install flow (CLI interaktif + Telegram inline keyboard)
-- ❌ SHA-256 pinning & verifikasi artifact (Cosign menyusul)
-- ❌ Pipeline transpiler: probe → codegen → sandbox build → contract verify
-- ❌ Drift livecheck & indikator sinkronisasi upstream
-- ❌ PR generator (kontribusi port / maintenance update)
-- ❌ Repo publik `scorp-mcp-registry` + 3 workflow CI
-- ❌ 3 port referensi Go (fetch, sqlite, filesystem)
+- ❌ Registry client: fetch + cache `registry.json`, local search, manifest parser
+- ❌ JSON Schema `scorp-mcp.json` v1 (health matrix, flavors, contributors, origin)
+- ❌ Tri-Option install flow (interactive CLI + Telegram inline keyboard)
+- ❌ SHA-256 pinning & artifact verification (Cosign deferred)
+- ❌ Transpiler pipeline: probe → codegen → sandbox build → contract verify
+- ❌ Drift livecheck & upstream sync indicator
+- ❌ PR generator (port contributions / maintenance updates)
+- ❌ Public repo `scorp-mcp-registry` + 3 CI workflows
+- ❌ 3 Go reference ports (fetch, sqlite, filesystem)
 
 ---
 
-## 🏛️ 3. Insight Arsitektur Kunci
+## 🏛️ 3. Key Architectural Insights
 
-### 3.1 Titik Konvergensi Tri-Option
+### 3.1 Tri-Option Convergence Point
 
 ```
-Opsi 1 Prebuilt  ──┐  download binary → SHA-256 verify → ~/.scorp/mcp-binaries/
-                   ├──>  Entry di ~/.scorp/mcp.json  ──>  infra existing jalan sendiri
-Opsi 2 Rebuild   ──┤  (transpile → go build → binary lokal)     (watchdog, hot-reload,
-                   │                                             native tool registry)
-Opsi 3 Upstream  ──┘  register npx/uvx langsung (sudah didukung client)
+Option 1 Prebuilt  ──┐  download binary → SHA-256 verify → ~/.scorp/mcp-binaries/
+                     ├──>  Entry in ~/.scorp/mcp.json  ──>  Existing infra takes over
+Option 2 Rebuild   ──┤  (transpile → go build → local bin)       (watchdog, hot-reload,
+                     │                                            native tool registry)
+Option 3 Upstream  ──┘  register direct npx/uvx (already supported)
 ```
 
-Implikasi: `mcp_manage(action="add")` yang sudah ada adalah mekanisme akhir dari SEMUA jalur instalasi. Komponen baru hanya memutuskan *cara menghasilkan* entry tersebut.
+Implication: Existing `mcp_manage(action="add")` is the ultimate endpoint for ALL install paths. New components merely decide *how to generate* that configuration entry.
 
 ### 3.2 Transpiler = Self-Hosted Codegen
 
-- **Phase 1 (Probe):** reuse JSON-RPC client `mcp/client.go` untuk spawn server ephemeral (deteksi runtime `npx`/`uvx`/`python3`) dan capture `initialize` + `tools/list` sebagai benchmark kontrak.
-- **Phase 2 (Generate):** prompt codegen khusus `mark3labs/mcp-go`, dieksekusi via `gateway/` dengan routing model *complex* (premium).
-- **Phase 3 (Verify):** `go build` di temp dir, boot binary hasil build, diff skema tool terhadap benchmark Phase 1. Gagal → graceful degradation ke upstream runtime.
+- **Phase 1 (Probe):** Reuse JSON-RPC client `mcp/client.go` to spawn an ephemeral server (detecting `npx`/`uvx`/`python3` runtime) and capture `initialize` + `tools/list` as benchmark contracts.
+- **Phase 2 (Generate):** Structured codegen prompt for `mark3labs/mcp-go`, executed via `gateway/` with *complex* (premium) model routing.
+- **Phase 3 (Verify):** `go build` in a temp directory, boot the compiled binary, diff tool schema against Phase 1 benchmark. On failure → graceful degradation to upstream runtime.
 
-### 3.3 Security Layers: Status Awal
+### 3.3 Security Layers: Initial Status
 
-| Layer | Status | Catatan |
+| Layer | Status | Notes |
 | :--- | :--- | :--- |
-| 1. Source-Only Registry | ⬜ Baru (M0) | Kebijakan repo registry + CI |
-| 2. AST & Prompt Scan | ⬜ Baru (M0) | `gosec` + `govulncheck` + prompt linter di CI |
-| 3. Hermetic CI/CD | ⬜ Baru (M0) | GitHub Actions, multi-arch |
-| 4. SHA-256 Pinning | ⬜ Baru (M1) | Verifikasi di sisi client sebelum eksekusi |
-| 5. Secret Redactor | ✅ **Sudah Ada** | Tinggal audit coverage path output MCP client |
+| 1. Source-Only Registry | ⬜ New (M0) | Registry repo policy + CI |
+| 2. AST & Prompt Scan | ⬜ New (M0) | `gosec` + `govulncheck` + prompt linter in CI |
+| 3. Hermetic CI/CD | ⬜ New (M0) | GitHub Actions, multi-arch |
+| 4. SHA-256 Pinning | ⬜ New (M1) | Client-side pre-execution verification |
+| 5. Secret Redactor | ✅ **Existing** | Audit coverage on MCP client output paths |
 
 ---
 
-## ⚠️ 4. Keputusan Terbuka & Inkonsistensi Blueprint
+## ⚠️ 4. Decisions & Blueprint Alignment
 
-1. **Lokasi source port (inkonsistensi blueprint):** Bagian 5C blueprint menaruh `main.go` langsung di repo registry, tetapi bagian 5B manifest menunjuk `port_repository` ke repo terpisah `scorp-mcp-ports`.
-   **Keputusan:** Source port hidup langsung di `scorp-mcp-registry/servers/<nama>/main.go` untuk MVP (satu sumber kebenaran, satu tempat CI audit). Field `port_repository` menjadi opsional.
-2. **Cosign:** ditunda ke M3. MVP mengandalkan SHA-256 murni; key management Cosign adalah proyek kecil tersendiri.
-3. **Cleanup kecil:** `mcp/manage.go` masih hardcode `$HOME/.scorp/mcp.json` — migrasikan ke `config.ConfigFilePathMCP()` saat menyentuh file tersebut.
+1. **Port Source Location:** Section 5C placed `main.go` directly in the registry repo, whereas section 5B pointed `port_repository` to a separate `scorp-mcp-ports` repo.
+   **Decision:** Port sources live directly in `scorp-mcp-registry/servers/<name>/main.go` for the MVP (single source of truth, single CI audit point). The `port_repository` field remains optional.
+2. **Cosign:** Deferred to M3. MVP relies on pure SHA-256; Cosign key management is a dedicated sub-project.
+3. **Configuration Cleanup:** Migrate hardcoded `$HOME/.scorp/mcp.json` references to `config.ConfigFilePathMCP()`.
 
 ---
 
-## 🚀 5. Milestone & Deliverables
+## 🚀 5. Milestones & Deliverables
 
-### M0 — Foundation: Schema, Registry Repo & Port Referensi
+### M0 — Foundation: Schema, Registry Repo & Reference Ports
 
-*Scope: tanpa menyentuh codebase scorp-agent.*
+*Scope: Outside the scorp-agent core repository.*
 
-- [x] Finalisasi JSON Schema `scorp-mcp.json` v1: field `origin` (port/native), `upstream.pinned_commit`, `health` (status, coverage_score, active/unsupported tools), `variant` (flavor), `contributors`, `artifacts` (multi-arch + sha256), `build` (go_version, sdk)
-- [x] Publish schema ke `scorp-mcp-registry/schema/v1.json`
-- [x] Scaffold repo publik `wahyuzero/scorp-mcp-registry` dengan layout blueprint 5C (`registry.json`, `servers/`, `.github/workflows/`)
-- [x] Workflow CI: `security-audit.yml` (gosec, govulncheck, prompt-injection linter, JSON-RPC contract validation), `release-binaries.yml` (cross-compile linux amd64/arm64 + checksum), `drift-livecheck.yml` (stub, diaktifkan penuh di M3)
-- [x] Tulis 3 port referensi manual (idiomatic, `mark3labs/mcp-go`, Go 1.24+):
+- [x] Finalize JSON Schema `scorp-mcp.json` v1: fields `origin` (port/native), `upstream.pinned_commit`, `health` (status, coverage_score, active/unsupported tools), `variant` (flavor), `contributors`, `artifacts` (multi-arch + sha256), `build` (go_version, sdk).
+- [x] Publish schema to `scorp-mcp-registry/schema/v1.json`.
+- [x] Scaffold public repo `wahyuzero/scorp-mcp-registry` following layout 5C (`registry.json`, `servers/`, `.github/workflows/`).
+- [x] CI Workflows: `security-audit.yml` (gosec, govulncheck, prompt-injection linter, JSON-RPC contract validation), `release-binaries.yml` (cross-compile linux amd64/arm64 + checksums), `drift-livecheck.yml` (stub, enabled in M3).
+- [x] Implement 3 idiomatic Go reference ports (`mark3labs/mcp-go`, Go 1.25+):
   - [x] `mcp-fetch` — web scraping & markdown extraction
-  - [x] `mcp-sqlite` — inspeksi & query database lokal
-  - [x] `mcp-filesystem` — akses file lokal ter-scope
-- [x] Manifest `scorp-mcp.json` untuk ketiganya (artifacts diisi oleh release CI saat pertama tag)
+  - [x] `mcp-sqlite` — local database inspection & querying
+  - [x] `mcp-filesystem` — scoped local filesystem access
+- [x] `scorp-mcp.json` manifests for all three ports (artifacts populated by release CI on first tag).
 
-**Acceptance:** `registry.json` ter-index; ketiga binary lolos security-audit CI dan bisa dijalankan manual via JSON-RPC handshake.
+**Acceptance:** `registry.json` indexed; all three binaries pass security-audit CI and run manual JSON-RPC handshakes successfully.
 
 ### M1 — Vertical Slice: Marketplace Client & Tri-Option Install (MVP)
 
-*Scope: package baru `mcp/marketplace/` + integrasi CLI & Telegram.*
+*Scope: New package `mcp/marketplace/` + CLI & Telegram integration.*
 
-- [x] `mcp/marketplace/registry.go` — fetch `registry.json` dari GitHub raw, cache lokal dengan ETag/TTL, fallback ke cache stale saat offline
-- [x] `mcp/marketplace/manifest.go` — parser + validasi manifest terhadap schema v1
-- [x] `mcp/marketplace/search.go` — pencarian lokal (nama, deskripsi, tool, flavor)
-- [x] `mcp/marketplace/install.go` — orkestrasi Tri-Option:
-  - [x] Opsi 1 (Prebuilt): unduh artifact per-arsitektur, **verifikasi SHA-256 sebelum eksekusi**, simpan ke `~/.scorp/mcp-binaries/`, register via `mcp_manage add`
-  - [x] Opsi 2 (Rebuild): tampil dengan status "coming in v2.5 — jalankan transpiler manual" (diaktifkan penuh di M2)
-  - [x] Opsi 3 (Upstream): register `npx`/`uvx` langsung — reuse jalur existing
-- [x] Pre-install disclosure: health badge (🟢 full / 🟡 partial), daftar tool nonaktif + alasan, delta resource vs upstream
-- [x] CLI: subcommand `/mcp search <term>` dan `/mcp install <target>` di `cli_mcp.go` (prompt interaktif `[1/2/3]`)
-- [x] Telegram: inline keyboard Tri-Option (pola `callback_data` existing), dialog naratif sesuai blueprint bagian 2
-- [x] Audit coverage Layer 5: output tool MCP kini melewati `tools/redact.go` di `registerMCPToolsAsNative`
+- [x] `mcp/marketplace/registry.go` — fetch `registry.json` from GitHub raw, local cache with ETag/TTL, fallback to stale cache when offline.
+- [x] `mcp/marketplace/manifest.go` — parser + manifest validation against schema v1.
+- [x] `mcp/marketplace/search.go` — local search (name, description, tool, flavor).
+- [x] `mcp/marketplace/install.go` — Tri-Option orchestration:
+  - [x] Option 1 (Prebuilt): download per-architecture artifact, **verify SHA-256 before execution**, store in `~/.scorp/mcp-binaries/`, register via `mcp_manage add`.
+  - [x] Option 2 (Rebuild): displayed with status "coming in v2.5 — run transpiler manually" (fully enabled in M2).
+  - [x] Option 3 (Upstream): register `npx`/`uvx` directly — reuse existing pathway.
+- [x] Pre-install disclosure: health badge (🟢 full / 🟡 partial), disabled tools list + rationale, resource delta vs upstream.
+- [x] CLI: subcommands `/mcp search <term>` and `/mcp install <target>` in `cli_mcp.go` (interactive `[1/2/3]` prompts).
+- [x] Telegram: inline Tri-Option keyboard (using existing `callback_data` pattern) and narrative dialogs.
+- [x] Layer 5 coverage audit: MCP tool outputs route through `tools/redact.go` in `registerMCPToolsAsNative`.
 
-**Acceptance:** End-to-end `/mcp install fetch` → pilih opsi 1 → binary terverifikasi terdaftar dan tool-nya muncul di agent; opsi 3 berfungsi untuk server Node/Python apa pun; dialog Telegram setara CLI.
+**Acceptance:** End-to-end `/mcp install fetch` → select option 1 → verified binary registered and tools exposed to the agent; option 3 works for arbitrary Node/Python servers; Telegram dialog matches CLI.
 
 ### M2 — AI Transpiler
 
-- [x] `mcp/transpiler/probe.go` — spawn ephemeral upstream server di sandbox dir, deteksi runtime (`npx`/`uvx`/`python3` dengan graceful fail + pesan jelas bila tidak ada), capture benchmark: skema tool, parameter, required fields
-- [x] `mcp/transpiler/generate.go` — prompt codegen terstruktur untuk `mark3labs/mcp-go`, dieksekusi via `gateway/` (routing *complex*), output `main.go` tunggal yang decoupled
-- [x] `mcp/transpiler/build.go` — `go build` di temp dir terisolasi; pinning `go.sum`; module cache terkontrol
-- [x] `mcp/transpiler/verify.go` — boot binary hasil build, kirim mock JSON-RPC, diff skema output vs benchmark Phase 1 (target: 100% match)
-- [x] Graceful degradation: kegagalan compile/verify → laporan blocker transparan → tawaran fallback ke upstream runtime
-- [x] Aktifkan Opsi 2 di Tri-Option (CLI + Telegram) via `marketplace.RebuildHook`
-- [x] Flow "Share to Marketplace": generator manifest + draft PR (dengan atribusi penulis asli) via `gh` (`/mcp share <name>`)
-- [x] **Validasi golden standard:** jalankan transpiler terhadap upstream fetch/sqlite/filesystem, bandingkan hasil dengan port manual M0
+- [x] `mcp/transpiler/probe.go` — spawn ephemeral upstream server in sandbox dir, detect runtime (`npx`/`uvx`/`python3` with actionable failure messages), capture benchmark: tool schemas, parameters, required fields.
+- [x] `mcp/transpiler/generate.go` — structured codegen prompt for `mark3labs/mcp-go`, executed via `gateway/` (*complex* routing), outputting a decoupled standalone `main.go`.
+- [x] `mcp/transpiler/build.go` — `go build` in an isolated temp directory; pinning `go.sum`; controlled module cache.
+- [x] `mcp/transpiler/verify.go` — boot compiled binary, send mock JSON-RPC requests, diff output schema against Phase 1 benchmark (target: 100% match).
+- [x] Graceful degradation: compile/verify failures → transparent blocker report → prompt fallback to upstream runtime.
+- [x] Enable Option 2 in Tri-Option flow (CLI + Telegram) via `marketplace.RebuildHook`.
+- [x] "Share to Marketplace" workflow: manifest generator + draft PR (with original author attribution) via `gh` (`/mcp share <name>`).
+- [x] **Golden standard validation:** transpile upstream fetch/sqlite/filesystem, comparing output against M0 handwritten ports.
 
-**Acceptance:** Minimal 1 dari 3 port upstream berhasil ditranspilasi end-to-end dengan contract match 100%; kegagalan selalu menghasilkan jalur fallback yang jelas.
+**Acceptance:** At least 1 of 3 upstream ports successfully transpiled end-to-end with 100% contract match; failures always provide clear fallback options.
 
 ### M3 — Governance & Hardening
 
-- [x] `drift-livecheck.yml` penuh: cek harian upstream tags/commits, update field drift di `registry.json`, indikator 🟢/🟡 di hasil search/install + dialog notifikasi resync
-- [x] Cosign step disiapkan (disabled, butuh key management) — SHA-256 tetap Layer 4 utama untuk sekarang
-- [ ] Hardening sandbox build: evaluasi container opsional (Docker bila tersedia) untuk isolasi network/FS
-- [x] Workflow kolaborasi multi-maintainer: setiap PR update melewati Layer 2 penuh (`security-audit.yml` on pull_request); attribution changelog di manifest
-- [x] Dukungan flavor/variant di search (namespace `@author/nama-flavor`) — `variant` ikut terindeks di registry.json
-- [x] Klasifikasi `origin: native` untuk submission Go orisinal (tanpa drift check)
+- [x] Full `drift-livecheck.yml`: daily checks against upstream tags/commits, update drift fields in `registry.json`, display 🟢/🟡 indicators in search/install + resync notifications.
+- [x] Cosign verification step prepared (disabled pending key management) — SHA-256 remains primary Layer 4 defense.
+- [ ] Build sandbox hardening: evaluate optional container isolation (Docker if available) for network/filesystem isolation.
+- [x] Multi-maintainer collaboration workflow: every update PR undergoes full Layer 2 checks (`security-audit.yml` on pull_request); attribution changelog in manifest.
+- [x] Flavor/variant support in search (namespace `@author/name-flavor`) — `variant` indexed in `registry.json`.
+- [x] Classification `origin: native` for original Go submissions (bypassing drift check).
 
 ---
 
-## 📊 6. Risiko & Mitigasi
+## 📊 6. Risks & Mitigations
 
-| Risiko | Dampak | Mitigasi |
+| Risk | Impact | Mitigation |
 | :--- | :--- | :--- |
-| Kualitas codegen LLM variatif | Transpiler menghasilkan kode yang gagal compile / kontrak meleset | Port manual M0 sebagai golden test case; verify.go mewajibkan contract diff 100%; graceful degradation ke upstream |
-| Runtime upstream tidak terpasang di mesin user (`npx`/`uvx`) | Opsi transpile & upstream gagal | Deteksi runtime + pesan error actionable sebelum pipeline berjalan |
-| Sandbox tanpa container bisa akses network saat `go build` | Permukaan supply-chain lebih lebar | Pinning `go.sum` + module cache terkontrol di M2; container opsional di M3 |
-| Key management Cosign | Menunda release bertanda tangan | SHA-256 murni cukup untuk M1/M2; Cosign terisolasi di M3 |
-| Registry repo belum ada saat M1 selesai | Client tidak punya sumber data | M0 mendahului M1; `registry.json` seed dengan 3 port sebelum client di-merge |
+| Variable LLM codegen quality | Transpiler outputs code failing compilation or contract diff | M0 manual ports serve as golden test cases; `verify.go` requires 100% schema match; graceful degradation to upstream |
+| Upstream runtime missing on host (`npx`/`uvx`) | Transpile & upstream options fail | Runtime detection + actionable error messages before pipeline execution |
+| Uncontained sandbox accessing network during `go build` | Broader supply-chain exposure | Pinned `go.sum` + controlled module cache in M2; optional container isolation in M3 |
+| Cosign key management overhead | Delays signed releases | Pure SHA-256 sufficient for M1/M2; Cosign isolated to M3 |
+| Registry repo unpopulated at M1 completion | Client lacks data source | M0 precedes M1; seed `registry.json` with 3 ports before client merge |
 
 ---
 
-## 🗺️ 7. Urutan Eksekusi
+## 🗺️ 7. Execution Order
 
 ```
 M0 (Foundation)  ──>  M1 (MVP Install)  ──>  M2 (Transpiler)  ──>  M3 (Governance)
    schema, repo,        search + install,      probe, generate,        livecheck, cosign,
-   3 port manual        SHA-256, UX            verify, share-PR        flavors, hardening
+   3 manual ports       SHA-256, UX            verify, share-PR        flavors, hardening
 ```
 
-Prasyarat lintas milestone: repo `scorp-mcp-registry` publik sebelum M1 merge; `mark3labs/mcp-go` ditambahkan sebagai dependency **hanya untuk port referensi & hasil transpiler** (client scorp tetap hand-rolled).
+Cross-milestone prerequisite: public `scorp-mcp-registry` repo before M1 merge; `mark3labs/mcp-go` added as a dependency **only for reference ports & transpiled outputs** (Scorp core client remains custom hand-rolled).

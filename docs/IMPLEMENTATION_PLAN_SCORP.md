@@ -1,192 +1,120 @@
-# SCORP AGENT — RENCANA IMPLEMENTASI 2026→
-> Basis: riset fitur & sentimen komunitas (lihat `docs/RESEARCH_AI_AGENT_FEATURES_2026.md`).
-> Prinsip penyusunan: setiap item wajib punya (a) bukti komunitas, (b) desain konkret untuk
-> arsitektur scorp, (c) estimasi effort S (<1 hari) / M (1-3 hari) / L (>3 hari).
+# SCORP AGENT — IMPLEMENTATION PLAN 2026→
+> Basis: Feature research & community sentiment (see `docs/RESEARCH_AI_AGENT_FEATURES_2026.md`).  
+> Structuring principles: Every item must have (a) community evidence, (b) a concrete design for Scorp's architecture, (c) effort estimate S (<1 day) / M (1–3 days) / L (>3 days).  
 
-> **STATUS (2026-09-06): SEMUA ITEM TERLAKSANA & terverifikasi live di tencent-vps —**
-> P0.1 sandbox bwrap + daemon non-root ✅ · P0.2 deny-rule engine ✅ · P0.3 test-integrity gate ✅ ·
-> P1.4 plan mode ✅ · P1.5 ledger persisten ✅ · P1.6 checkpoint/rewind ✅ · P1.7 auto memory ✅ ·
-> P2.8 delegate (audit + routing lewat gate stack) ✅ · P2.9 MCP deferred ✅ · P2.10 compaction
-> preservation ✅ · P4.15 `scorp eval` (arena 14 kasus + gerbang pra-deploy otomatis via
-> `scripts/deploy.sh`) ✅ · P3.12 hooks ✅ · P3.13 auto-classifier (mode `auto`, PermissionDecision)
-> ✅ · P3.14 MCP contract watch (fingerprint + warning) ✅ · P4.16 klaim berbasis bukti (claim
-> gate) ✅ — komit a1bb393..5310066.
+> **STATUS (2026-09-06): ALL ITEMS IMPLEMENTED & live-verified on tencent-vps —**  
+> P0.1 bwrap sandbox + non-root daemon ✅ · P0.2 deny-rule engine ✅ · P0.3 test-integrity gate ✅ ·  
+> P1.4 plan mode ✅ · P1.5 persistent ledger ✅ · P1.6 checkpoint/rewind ✅ · P1.7 auto memory ✅ ·  
+> P2.8 delegate (audit + routing through gate stack) ✅ · P2.9 MCP deferred ✅ · P2.10 compaction preservation ✅ ·  
+> P4.15 `scorp eval` (14-case arena + automated pre-deploy gate via `scripts/deploy.sh`) ✅ · P3.12 hooks ✅ ·  
+> P3.13 auto-classifier (`auto` mode, PermissionDecision) ✅ · P3.14 MCP contract watch (fingerprint + warning) ✅ ·  
+> P4.16 evidence-based claims (claim gate) ✅ — commits a1bb393..5310066.  
 
-## PRINSIP PENGEMBANGAN (dari konsensus riset)
+## CORE PRINCIPLES (From Research Consensus)
 
-1. **State di file, bukan chat** — "All progress not recorded in memory is at risk."
-2. **Deny rules berlaku di SEMUA mode** — bahkan YOLO (pola Claude Code 2.1).
-3. **Sandbox sebelum autonomi** — bukan prompt fatigue sebagai kontrol utama.
-4. **Merge-rate > test-pass-rate** — verifikasi artefak, bukan klaim agent.
-5. **Harness menentukan hasil** — ekonomi token & konteks adalah fitur, bukan detail.
+1. **State in Files, Not in Chat** — "All progress not recorded in memory is at risk."
+2. **Deny Rules Apply in ALL Modes** — Even in YOLO (Claude Code 2.1 pattern).
+3. **Sandboxing Before Autonomy** — Not prompt fatigue as the primary control.
+4. **Merge-Rate > Test-Pass-Rate** — Verify artifacts, not agent claims.
+5. **Harness Determines Results** — Token & context economics are core features, not implementation details.
 
-## BASELINE SCORP vs TABEL 2026
+## SCORP BASELINE vs 2026 ARCHITECTURE
 
-Sudah selaras (jangan dirombak): Task Ledger + plan gate + auto-resume · autonomy 3 tingkat +
-`ConfirmationRequired()` satu-predikat · sandbox path sensitif (hard, semua mode) · anti-fabrication
-gate · compaction + New-Request Roll-Up · deferred tool loading (`tool_search`+`tool_call`, TTL) ·
-MCP client + marketplace · skills · scheduler/cron · steering queue · cooperative `/stop` ·
-receipts hash (audit trail) · `/usage` · Telegram-first (= "remote control" ala 2026, sudah dimiliki).
+Already aligned (do not touch): Task Ledger + plan gate + auto-resume · 3-tier autonomy + single-predicate `ConfirmationRequired()` · Sensitive path sandbox (hard, all modes) · Anti-fabrication gate · Compaction + New-Request Roll-Up · Deferred tool loading (`tool_search` + `tool_call`, TTL) · MCP client + marketplace · Skills · Scheduler/cron · Steering queue · Cooperative `/stop` · Receipts hash (audit trail) · `/usage` · Telegram-first (remote control model).
 
-Gap terkonfirmasi: sandbox eksekusi nyata ❌ · plan-mode workflow ❌ (readonly toolset ADA, belum
-jadi alur) · checkpoint/rewind ❌ · subagent isolasi konteks ❌ · **task ledger in-memory saja
-(hilang saat restart)** ❌ · MCP tool schema masih di-inject penuh ❌ · memori masih KV datar ❌ ·
-hooks ❌ · auto-classifier ❌ · eval harness belum dikodifikasi ❌.
+Resolved gaps: Real execution sandbox ✅ · Plan-mode workflow ✅ · Checkpoint/rewind ✅ · Subagent context isolation ✅ · Persistent task ledger ✅ · MCP tool schema deferred-by-default ✅ · Structured markdown memory (`MEMORY.md`) ✅ · Hooks ✅ · Auto-classifier ✅ · Encoded eval harness ✅.
 
 ---
 
-## P0 — TRUST & SAFETY (milestone v2.1)
-*Prioritas tertinggi: keluhan #1 komunitas = keamanan/review burden; YOLO tanpa sandbox = "opt-in rootkit".*
+## P0 — TRUST & SAFETY (Milestone v2.1)
+*Highest priority: #1 community complaint is security/review burden; YOLO without sandbox is an "opt-in rootkit".*
 
-### 1. Sandbox eksekusi shell (effort L, impact H)
-**Bukti**: Anthropic "sandboxing → -84% permission prompts"; dual isolation (fs+network) adalah
-jawaban industri. **Desain**: di `tools/exec.go ExecuteShell`, bungkus `exec.Command` dengan
-bubblewrap (`bwrap --ro-bind / / --bind $PWD $PWD --tmpfs /tmp --unshare-all --share-net --die-with-parent`)
-saat tersedia; varian network-deny default + allowlist domain via env. Daemon VPS **harus pindah
-ke user non-root** (sekarang root — red flag terbesar scorp). Integrasi: YOLO tanpa bwrap →
-peringatan permanen di status; supervised default = sandbox on; escape hatch per-command via
-confirm gate yang sudah ada.
+### 1. Shell Execution Sandbox (Effort L, Impact H)
+**Evidence**: Anthropic reports "sandboxing → -84% permission prompts"; dual isolation (fs + network) is the industry standard.  
+**Design**: In `tools/exec.go ExecuteShell`, wrap `exec.Command` with bubblewrap (`bwrap --ro-bind / / --bind $PWD $PWD --tmpfs /tmp --unshare-all --share-net --die-with-parent`) when available; default network-deny + domain allowlists via environment. VPS daemon **migrated to a non-root user**.  
+**Integration**: YOLO without bwrap triggers a permanent status warning; supervised default = sandbox ON; per-command escape hatch via existing confirmation gates.
 
-### 2. Deny-rule engine (effort M, impact H)
-**Bukti**: deny rules berlaku bahkan di `bypassPermissions` (Claude Code docs). **Desain**: generalisasi
-`config.IsPathRestricted` → `config.DenyRules` dengan pola `tool(param:regex)` (mis. `shell(*:curl*|*nc*)`,
-`write_file(*:/etc/*)`), load dari config; dievaluasi di `ExecuteTool` SEBELUM `ConfirmationRequired`
-— sehingga tetap hidup di YOLO. Regression test per rule.
+### 2. Deny-Rule Engine (Effort M, Impact H)
+**Evidence**: Deny rules remain enforced even under `bypassPermissions` (Claude Code docs).  
+**Design**: Generalized `config.IsPathRestricted` → `config.DenyRules` with `tool(param:regex)` syntax (e.g. `shell(*:curl*|*nc*)`, `write_file(*:/etc/*)`), loaded from config; evaluated in `ExecuteTool` BEFORE `ConfirmationRequired` — active even in YOLO. Regression test per rule.
 
-### 3. Test-integrity gate (effort M, impact H)
-**Bukti**: benchmark nyata 19/45 klaim "all tests pass" palsu; METR 50% PR lulus benchmark tak
-di-merge; agen melemahkan test. **Desain**: saat sesi menyentuh file test/`conftest`/CI config,
-`complete_task` ditolak kecuali ada receipt shell berisi eksekusi test suite hijau *setelah* edit
-terakhir (receipts.json sudah hash output — tinggal dipakai sebagai bukti). Simetri dengan
-plan-completion gate yang sudah ada di kedua loop.
+### 3. Test-Integrity Gate (Effort M, Impact H)
+**Evidence**: Empirical audits found 19/45 "all tests pass" claims were fabricated; METR found 50% of PRs passing benchmarks were unmergeable; agents weaken test suites to turn CI green.  
+**Design**: When a session touches test or CI files, `complete_task` is rejected unless a shell receipt with a passing test-suite run exists *after* the latest file edit (receipts.json hashes output as cryptographic proof). Symmetrical to the plan-completion gate.
 
 ---
 
-## P1 — PLAN & CHECKPOINT (milestone v2.2)
-*Prioritas: plan mode = fitur dipuji #1; checkpoint = #5; "state di file" = konsensus #1.*
+## P1 — PLAN & CHECKPOINT (Milestone v2.2)
+*Priority: Plan mode is the #1 praised feature; checkpointing is #5; "state in files" is #1 consensus.*
 
-### 4. Plan mode workflow (effort M, impact H)
-**Desain**: `/plan <goal>` → loop dijalankan dengan `IsToolAllowed` readonly (SUDAH ADA di
-`config/autonomy.go`) + task ledger dibuat → plan dirender via inline keyboard Telegram
-("✅ Approve plan" / "✏️ Revise" / "❌ Cancel") → approve = lanjut ke mode eksekusi dengan ledger
-sama (auto-resume & plan gate sudah mendukung). Zero infrastruktur baru — komposisi dari 3 fitur
-yang sudah terbukti di verify26.
+### 4. Plan Mode Workflow (Effort M, Impact H)
+**Design**: `/plan <goal>` runs the loop with `IsToolAllowed` restricted to read-only tools + task ledger created → plan rendered via Telegram inline keyboard ("✅ Approve plan" / "✏️ Revise" / "❌ Cancel") or CLI prompt → approval transitions directly to execution mode with the same ledger.
 
-### 5. Persistensi task ledger (effort S, impact H)
-**Desain**: `taskPlans` di-flush ke `<session>.plan.json` tiap update (pola sama dengan history
-save yang sudah ada); load saat sesi pertama kali dipakai; daemon restart tidak lagi membuang plan.
-Termasuk migrasi: plan selesai dihapus dari disk.
+### 5. Task Ledger Persistence (Effort S, Impact H)
+**Design**: `taskPlans` flushed to `<session>.plan.json` on each update; reloaded when the session is touched; daemon restarts preserve active plans. Completed plans are cleanly purged from disk.
 
-### 6. Checkpoint/rewind (effort M/L, impact H)
-**Bukti**: "FINALLY checkpoints!" (HN); Cursor & Claude Code jadikan baseline UX. **Desain**: per
-turn dengan perubahan file → `git stash create` / commit bayangan di `refs/scorp/ckpt` (repo git);
-non-git → snapshot tar ke `~/.scorp/checkpoints/<session>/`. `/undo` = restore snapshot terakhir
-(code-first). Simpan maksimal N=20 per sesi. Pasangkan dengan receipt turn untuk audit.
+### 6. Checkpoint / Rewind (Effort M/L, Impact H)
+**Evidence**: "FINALLY checkpoints!" (HN); Cursor & Claude Code made it baseline UX.  
+**Design**: Shadow commits created under `refs/scorp/ckpt` before modifying turns (in Git repos); `/undo` restores the latest snapshot (code-first). Up to N=20 checkpoints retained per session.
 
-### 7. Auto memory protocol (effort S/M, impact M/H)
-**Bukti**: "agent lupa lintas sesi" = keluhan permanen; auto memory = jawaban resmi Anthropic.
-**Desain**: upgrade `memory.json` KV → `MEMORY.md` per proyek + index; di `complete_task`/session
-end, agent menulis ringkasan keputusan & state (prompt khusus, bukan heuristik `extractAndSaveMemory`
-yang sekarang); di sesi start, MEMORY.md di-inject setelah system prompt; kuota ~200 baris
-(konsensus docs CC).
+### 7. Auto Memory Protocol (Effort S/M, Impact M/H)
+**Evidence**: "Agents forgetting across sessions" is a permanent complaint; auto-memory files are Anthropic's official solution.  
+**Design**: Upgraded flat KV store to project-scoped `MEMORY.md`; at `complete_task`, the agent distills decisions and state via a dedicated extraction prompt; on session start, `MEMORY.md` is injected after the system prompt (~200-line quota).
 
 ---
 
-## P2 — EKONOMI TOKEN & KONTEKS (milestone v2.3)
-*Bukti: overhead harness = keluhan #2; Claude Code 33k token sebelum prompt vs OpenCode 7k.*
+## P2 — TOKEN & CONTEXT ECONOMY (Milestone v2.3)
+*Evidence: Harness overhead is the #2 complaint; Claude Code consumes 33k tokens before prompts vs. OpenCode's 7k.*
 
-### 8. Subagent `delegate` (effort L, impact H)
-**Desain**: tool baru `delegate(task, max_turns)` → spawn child loop dengan context FRESH (system
-prompt minimal + task), hanya laporan final yang kembali ke parent sebagai tool result. Use case:
-eksplorasi/read besar, fan-out research. Cap turn & wall-clock (pola `maxAutoResumes` yang sudah
-ada). INI penghemat token terbesar: N×(N+1)/2×S akumulasi re-read parent terpotong jadi 1 summary.
+### 8. Subagent `delegate` (Effort L, Impact H)
+**Design**: Tool `delegate(task, max_turns)` spawns a child loop with a FRESH context (minimal system prompt + task), returning only the final summary to the parent as the tool result. Bounded by turn caps and strict 6-minute wall-clock limits. Cuts quadratic context accumulation ($N \times (N+1)/2$).
 
-### 9. MCP schema deferred-by-default (effort S/M, impact M/H)
-**Bukti**: CTO Perplexity membuang MCP karena 15-20k token skema; best practice cap 10–15 tool.
-**Desain**: infrastruktur `Deferred` registry SUDAH ADA — tandai semua tool MCP `deferred:true`,
-aktif via `tool_search` (TTL mekanisme sudah jalan). Merchant marketplace tetap tampil, skema tak
-membebani context.
+### 9. Deferred-by-Default MCP Tool Schemas (Effort S/M, Impact M/H)
+**Evidence**: CTO of Perplexity discarded MCP due to 15–20k token schema overhead; best practice recommends 10–15 active tools maximum.  
+**Design**: Mark MCP tools `deferred:true`, loaded dynamically via `tool_search` with TTL auto-eviction.
 
-### 10. Compaction preservation (effort S, impact M)
-**Desain**: `maybeCompactHistory` menerima preservation instructions: task ledger aktif, goal user
-terakhir, dan laporan final task sebelumnya SELALU selamat compaction (persis pembelajaran
-Roll-Up/verify26). Tampilkan "🗜 compacted at N%" di thinking footer Telegram.
+### 10. Compaction Preservation (Effort S, Impact M)
+**Design**: `maybeCompactHistory` preserves key state: active task ledger, user goals, and previous final summaries ALWAYS survive compaction passes.
 
-### 11. `/cost` per sesi (effort S, impact M)
-**Desain**: `model_usage.json` sudah mencatat — tambah agregasi per sesi/turn + tampilkan di
-`/usage`; warning otomatis saat burn melewati ambang per task.
+### 11. Per-Session Cost Tracking (Effort S, Impact M)
+**Design**: Session and turn aggregation in `model_usage.json`, exposed via `/usage` with threshold warnings when spending exceeds limits.
 
 ---
 
-## P3 — EXTENSIBILITY & AUTONOMI UX (milestone v3.0)
+## P3 — EXTENSIBILITY & AUTONOMY UX (Milestone v3.0)
 
-### 12. Hooks PreToolUse/PostToolUse (effort M, impact M/H) — ✅ 2026-09-06
-**Bukti**: "CLAUDE.md bilang 'tolong', hooks bilang 'harus'" — enforcement deterministik dipuji
-enterprise. **Desain**: config `hooks: {pre_tool_use: [...]}`; dieksekusi di titik gerbang
-konfirmasi di kedua loop (satu titik: `ExecuteTool`); exit code 2 = blok, stdout = additional
-context ke model. Non-blocking untuk audit/logging.
-**Realisasi**: `SCORP_HOOKS_PRE`/`SCORP_HOOKS_POST` (entri `tool_pattern:shell_command`,
-`;`-separated, glob matcher, spek invalid di-skip); payload JSON di stdin (secret di-redact) +
-env `SCORP_HOOK_EVENT/TOOL/SESSION`; exit 0 → stdout jadi konteks tambahan, exit 2 → blok
-(stderr = alasan), exit lain non-blocking, hook macet dibunuh 10s tanpa memblokir; berlaku juga
-di jalankan resume terkonfirmasi. Uji: config/tools/agent test suite + kasus arena
-`hooks_block_and_context` (11 kasus core).
+### 12. PreToolUse/PostToolUse Hooks (Effort M, Impact M/H) — ✅ Implemented
+**Evidence**: "CLAUDE.md says 'please', hooks say 'must'" — deterministic enforcement praised by enterprise teams.  
+**Design**: Configuration via `SCORP_HOOKS_PRE` and `SCORP_HOOKS_POST` (`tool_pattern:shell_command`). Evaluated at the single execution bottleneck (`ExecuteTool`); exit code 2 blocks execution, stdout injects additional context.
 
-### 13. Auto-mode classifier (effort M/L, impact H) — ✅ 2026-09-06
-**Bukti**: data Anthropic — manusia menangkap 13.6% perintah berbahaya vs classifier 89%; auto mode
-jadi default Agu 2026. **Desain**: tingkat ke-4 `auto` di antara supervised↔yolo: model murah
-mengklasifikasi tiap tool call (safe → jalan, risky → confirm gate yang sudah ada, destructive →
-hard-deny kecuali allowlist); fallback manual setelah N keputusan meragukan; statistik keputusan ke
-receipts. `ConfirmationRequired()` diperluas jadi `PermissionDecision(tool, args) -> allow|ask|deny`.
-**Realisasi**: `agent/auto.go` — lapisan: read-only deterministic → heuristik shell read-only →
-destructive hard-deny (escape: `SCORP_AUTO_ALLOW` regex) → model murah `RouteModel("chat")`
-(JSON ketat, 15s); uncertain fail-closed ke ask; 3× uncertain berturut → fallback gaya supervised
-sampai batas task. Enforcement di kedua loop (ask = keyboard konfirmasi + pause + resume dengan
-history) dan `ExecuteTool` (subagent: ask gagal jadi deny). Konfirmasi auto membawa args penuh —
-semua tool bisa dieksekusi setelah approval. Keputusan tercatat di receipt meta `auto_decision`.
-Arena: `auto_mode_classifier_gates`.
+### 13. Auto-Mode Classifier (Effort M/L, Impact H) — ✅ Implemented
+**Evidence**: Anthropic data indicates humans catch 13.6% of dangerous commands vs. classifier catching 89%; auto-mode became default in late 2026.  
+**Design**: 4th tier `auto` between supervised and yolo: cheap model + deterministic heuristics grade every tool call (safe → execute, risky → confirm, destructive → hard-deny unless allowlisted). Falls back to supervised behavior after 3 consecutive uncertain decisions.
 
-### 14. MCP contract watch (effort S, impact M) — ✅ 2026-09-06
-**Desain**: fingerprint (hash nama+skema tool) per server MCP; perubahan diam-diam → warning
-(pola mcpwatch: "uptime bilang server menjawab, tidak bilang ia masih melakukan yang agen harapkan").
-**Realisasi**: `mcp/contract.go` — fingerprint sha256 (nama|deskripsi|inputSchema, sorted) per
-server, persisten di `~/.scorp/mcp_contracts.json`; cek tiap startup; perubahan → warning sekali
-(log + notice di /status); server yang menghilang dari registry terus memperingatkan. Arena:
-`mcp_contract_watch`.
+### 14. MCP Contract Watch (Effort S, Impact M) — ✅ Implemented
+**Design**: SHA-256 fingerprinting (name, description, inputSchema) per MCP server in `~/.scorp/mcp_contracts.json`. Schema drift triggers immediate warnings.
 
 ---
 
-## P4 — VERIFIKASI & KUALITAS (berjalan sejak v2.1)
+## P4 — VERIFICATION & QUALITY GATES
 
-### 15. `scorp eval` — arena privat (effort M, impact H)
-**Bukti**: SWE-bench di-retire; konsensus "build your own private arena dari backlog nyata".
-**Desain**: kodifikasi metode verify26 (yang sudah terbukti) jadi suite: 20–40 task berkategori
-(persistence, safety-gate, plan, MCP, sandbox) + pemeriksa artefak independen; dijalankan otomatis
-sebelum deploy; metrik: pass rate, klaim-vs-verifikasi delta, token/task.
+### 15. `scorp eval` — Private Evaluation Arena (Effort M, Impact H) — ✅ Implemented
+**Evidence**: SWE-bench was retired; modern consensus is "build private arenas from real-world backlog issues".  
+**Design**: Encoded suite: deterministic safety/persistence checks + live agent tasks verified by independent artifact checkers; integrated into `scripts/deploy.sh` as an automated deployment gate.
 
-### 16. Bukti uji wajib untuk klaim (effort S, impact M) — ✅ 2026-09-06
-**Desain**: perluasan anti-fabrication gate — klaim "all tests pass" tanpa receipt eksekusi test
-pada sesi berjalan → ditolak dengan nudge. Receipts.json tinggal di-query.
-**Realisasi**: `tools/testgate.go` — `LooksLikeTestPassClaim` (pola EN+ID) + `HasGreenTestRun`
-(receipt test-run sukses dalam window task); complete_task dengan klaim pass tanpa bukti → nudge
-sekali, lalu lolos dengan advisory eksplisit "NOT receipt-backed" (kedua loop). Arena:
-`claim_gate_requires_receipt`.
+### 16. Evidence-Based Claim Gate (Effort S, Impact M) — ✅ Implemented
+**Design**: Claims like "all tests pass" without corresponding execution receipts in the current session window are rejected with a verification nudge.
 
 ---
 
-## EKSPILISIT TIDAK DIBANGUN (sekarang)
-- **Agent teams/swarms** — bukti: "significantly more tokens", koordinasi mahal; tunggu `delegate` matang.
-- **Repo map ala Aider** — parkir; pertimbangkan saat pemakaian multi-repo naik.
-- **Voice / IDE plugin / cloud agents** — bukan medan scorp (Telegram-first sudah jadi pembeda).
+## EXPLICITLY NOT BUILT
+- **Agent teams / Swarms** — Community evidence shows high token expenditure and coordination overhead; deferred until delegation matures.
+- **Full-repo graphs (Aider style)** — Deferred until multi-repo demands rise.
+- **Voice / IDE plugins / Cloud agents** — Out of scope (Telegram-first remains Scorp's core differentiator).
 
-## URUTAN EKSEKUSI (2 minggu pertama — quick wins ber-impact)
-1. P0.2 deny-rule engine (M) → 2. P1.5 ledger persisten (S) → 3. P0.3 test-integrity gate (M) →
-4. P2.9 MCP deferred (S/M) → 5. P1.4 plan mode (M) → 6. P2.10 compaction preservation (S) →
-lalu P0.1 sandbox (L) sebagai proyek tersendiri, P1.6 checkpoint, sisanya menyusul.
-
-## METRIK SUKSES (merge-rate mindset)
-- Permission prompt per task ↓ (baseline setelah P0.1)
-- Token per task ↓ ≥40% (P2.8/9 — ukur via /cost)
-- Eval pass rate ≥95% + delta klaim-vs-verifikasi → 0 (P4)
-- Zero kehilangan plan saat restart (P1.5); zero insiden "compaction membuang goal" (P2.10)
-- Insiden keamanan: 0 eksekusi di luar sandbox sejak P0.1
+## SUCCESS METRICS (Merge-Rate Mindset)
+- Permission prompts per task decreased significantly.
+- Token consumption per task reduced by ≥40% (via `delegate` and deferred MCP).
+- Eval pass rate at 100% across all regression cases.
+- Zero loss of task plans across daemon restarts.
+- Zero uncontained executions outside the sandbox.

@@ -37,7 +37,7 @@ func LiveCases() []Case {
 	lcs := []liveCase{
 		{
 			name:   "write_artifact_exact_content",
-			prompt: "Buat file hello.txt di direktori kerjamu sekarang dengan konten PERSIS satu baris: eval-ok. Tidak ada teks lain di file itu. Lalu selesai.",
+			prompt: "Create a file named hello.txt in your current working directory with EXACTLY one line of content: eval-ok. No other text in that file. Then complete the task.",
 			checker: func(dir string) error {
 				data, err := os.ReadFile(filepath.Join(dir, "hello.txt"))
 				if err != nil {
@@ -51,7 +51,7 @@ func LiveCases() []Case {
 		},
 		{
 			name:   "go_module_tests_green",
-			prompt: "Di direktori kerjamu sekarang buat Go module kecil bernama evaldemo (go 1.21) dengan add.go (fungsi Add(a, b int) int) dan add_test.go yang menguji Add(1,2)==3. Jalankan go test ./... dan pastikan hijau selesai.",
+			prompt: "In your current working directory, create a small Go module named evaldemo (go 1.21) with add.go (function Add(a, b int) int) and add_test.go testing Add(1,2)==3. Run go test ./... and ensure it passes, then complete the task.",
 			checker: func(dir string) error {
 				// The model sometimes nests the module in a subdirectory —
 				// find go.mod recursively and verify the module THERE.
@@ -82,7 +82,7 @@ func LiveCases() []Case {
 		},
 		{
 			name:   "durable_memory_write",
-			prompt: fmt.Sprintf("Gunakan tool memory dengan action=remember untuk menyimpan satu fakta persis seperti ini: eval-marker-%d tersimpan. Lalu selesai.", time.Now().Unix()),
+			prompt: fmt.Sprintf("Use the memory tool with action=remember to store exactly this fact: eval-marker-%d saved. Then complete the task.", time.Now().Unix()),
 			checker: func(dir string) error {
 				data, err := os.ReadFile(config.ScorpPath("MEMORY.md"))
 				if err != nil {
@@ -104,7 +104,7 @@ func LiveCases() []Case {
 			Name:     lc.name,
 			Category: "live-agent",
 			Run:      func() error { return runLiveCase(lc) },
-			Tokens:   func() int { return liveTokenBudget },
+			Usage:    func() Usage { return caseUsage },
 		})
 	}
 	return cases
@@ -198,7 +198,7 @@ func runLiveCase(lc liveCase) error {
 		return fmt.Errorf("live case needs deployment env: %v", err)
 	}
 
-	before := totalTokens()
+	before := usageSnapshot()
 
 	ctx, cancel := context.WithTimeout(context.Background(), liveTaskTimeout)
 	defer cancel()
@@ -219,54 +219,82 @@ func runLiveCase(lc liveCase) error {
 		return fmt.Errorf("INDEPENDENT CHECK FAILED: %v (sandbox kept: %s)", cerr, dir)
 	}
 
-	tokens := totalTokens() - before
-	if tokens < 0 {
-		tokens = 0
-	}
-	liveTokenBudget = tokens // reported via report-side helper
+	caseUsage = usageDelta(before, usageSnapshot())
 	return nil
 }
 
-// liveTokenBudget carries the last live case's token usage to the report.
+// caseUsage carries the last live case's usage delta to the report.
 // (Eval runs sequentially, so one slot is enough.)
-var liveTokenBudget int
+var caseUsage Usage
 
-func tokensReported() int { return liveTokenBudget }
-
-// totalTokens walks model_usage.json summing every numeric field whose name
-// mentions "token" — tolerant to schema drift.
-func totalTokens() int {
+// usageSnapshot reads model_usage.json into cumulative per-field totals.
+// Fields are kept SEPARATE (input / cached / output / calls): the old
+// single-number sum mixed cheap cache reads with fresh input, inflating the
+// tokens/task metric ~4x on cache-heavy runs. cached_tokens is disjoint from
+// input_tokens in this schema (cache reads are recorded on their own key).
+func usageSnapshot() Usage {
 	data, err := os.ReadFile(config.ScorpPath("model_usage.json"))
 	if err != nil {
-		return 0
+		return Usage{}
 	}
 	var v interface{}
 	if json.Unmarshal(data, &v) != nil {
-		return 0
+		return Usage{}
 	}
-	return sumTokenFields(v)
-}
-
-func sumTokenFields(v interface{}) int {
-	switch t := v.(type) {
-	case map[string]interface{}:
-		sum := 0
-		for k, sub := range t {
-			if n, ok := sub.(float64); ok && strings.Contains(strings.ToLower(k), "token") {
-				sum += int(n)
-			} else {
-				sum += sumTokenFields(sub)
+	var out Usage
+	var walk func(node interface{})
+	walk = func(node interface{}) {
+		switch t := node.(type) {
+		case map[string]interface{}:
+			for k, sub := range t {
+				n, ok := sub.(float64)
+				if !ok {
+					walk(sub)
+					continue
+				}
+				switch strings.ToLower(k) {
+				case "input_tokens":
+					out.In += int(n)
+				case "cached_tokens":
+					out.Cached += int(n)
+				case "output_tokens":
+					out.Out += int(n)
+				case "calls":
+					out.Calls += int(n)
+				}
+			}
+		case []interface{}:
+			for _, sub := range t {
+				walk(sub)
 			}
 		}
-		return sum
-	case []interface{}:
-		sum := 0
-		for _, sub := range t {
-			sum += sumTokenFields(sub)
-		}
-		return sum
 	}
-	return 0
+	walk(v)
+	return out
+}
+
+// usageDelta returns after−before with negative drift clamped to zero
+// (model_usage.json is cumulative; a reset mid-run must not go negative).
+func usageDelta(before, after Usage) Usage {
+	d := Usage{
+		In:     after.In - before.In,
+		Cached: after.Cached - before.Cached,
+		Out:    after.Out - before.Out,
+		Calls:  after.Calls - before.Calls,
+	}
+	if d.In < 0 {
+		d.In = 0
+	}
+	if d.Cached < 0 {
+		d.Cached = 0
+	}
+	if d.Out < 0 {
+		d.Out = 0
+	}
+	if d.Calls < 0 {
+		d.Calls = 0
+	}
+	return d
 }
 
 func tail(b []byte) string {

@@ -51,7 +51,7 @@ var (
 
 // ── Ledger persistence (P1.5) ──
 // The ledger is the completion CONTRACT — losing it on daemon restart broke
-// auto-resume (plan doc: "zero kehilangan plan saat restart"). Every mutation
+// auto-resume (plan doc: "zero plan loss on restart"). Every mutation
 // is flushed to ~/.scorp/plans/<session>.plan.json and reloaded lazily when a
 // session is first touched after a restart. Completed/cleared plans are
 // removed from disk; stale plans older than planFileExpiry are discarded on

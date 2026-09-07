@@ -155,7 +155,7 @@ func SandboxVersion() string {
 
 // SandboxStatusNotice renders the sandbox line for /status and /agent info,
 // including the permanent warning when YOLO runs without a sandbox (plan P0.1:
-// "YOLO tanpa bwrap → peringatan permanen di status").
+// "YOLO without bwrap → permanent warning in status").
 func SandboxStatusNotice() string {
 	var sb strings.Builder
 	switch {

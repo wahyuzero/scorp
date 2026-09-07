@@ -78,8 +78,8 @@ func List() string {
 		}
 		sb.WriteString("\n")
 	}
-	sb.WriteString("📝 <b>Usage:</b> <code>/skill docker cek status container</code>\n")
-	sb.WriteString("Atau di agent mode: <code>pakai skill docker</code>")
+	sb.WriteString("📝 <b>Usage:</b> <code>/skill docker check container status</code>\n")
+	sb.WriteString("Or in agent mode: <code>use skill docker</code>")
 	return sb.String()
 }
 

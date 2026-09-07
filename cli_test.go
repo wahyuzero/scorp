@@ -24,13 +24,13 @@ func TestStripHTML(t *testing.T) {
 }
 
 func TestFormatFinalResponse(t *testing.T) {
-	input := "🤖 <b>Scorp:</b>\n\nIni adalah jawaban final."
+	input := "🤖 <b>Scorp:</b>\n\nThis is the final response."
 	output := formatFinalResponse(input)
 
 	if strings.HasPrefix(output, "🤖") || strings.HasPrefix(output, "Scorp:") {
 		t.Errorf("expected Scorp header prefix to be stripped, got: %s", output)
 	}
-	if !strings.Contains(output, "Ini adalah jawaban final.") {
+	if !strings.Contains(output, "This is the final response.") {
 		t.Errorf("expected main text preserved, got: %s", output)
 	}
 }

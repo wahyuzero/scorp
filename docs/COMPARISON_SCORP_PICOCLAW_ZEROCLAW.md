@@ -1,84 +1,84 @@
-# 🥊 Komparasi Arsitektur: Scorp vs PicoClaw vs ZeroClaw
+# 🥊 Architecture Comparison: Scorp vs PicoClaw vs ZeroClaw
 
-Dokumen ini memuat analisis perbandingan mendalam (*head-to-head*) antara tiga agen AI otonom ultra-ringan berbasis native compiled binary: **Scorp** (Go), **PicoClaw** (Sipeed / Go), dan **ZeroClaw** (ZeroClaw Labs / Rust).
+This document provides an in-depth head-to-head architectural analysis between three ultra-lightweight autonomous AI agents based on native compiled binaries: **Scorp** (Go), **PicoClaw** (Sipeed / Go), and **ZeroClaw** (ZeroClaw Labs / Rust).
 
 ---
 
-## 📊 1. Ringkasan Matriks Perbandingan
+## 📊 1. Comparison Matrix Summary
 
-| Dimensi / Fitur | 🦂 **Scorp** | 🦞 **PicoClaw** (Sipeed) | 🦀 **ZeroClaw** (ZeroClaw Labs) |
+| Dimension / Feature | 🦂 **Scorp** | 🦞 **PicoClaw** (Sipeed) | 🦀 **ZeroClaw** (ZeroClaw Labs) |
 | :--- | :--- | :--- | :--- |
-| **Bahasa Pemrograman** | **Go 1.26+** (Static binary) | **Go** (Static binary, ~95% AI-bootstrap) | **Rust** (Memory safety, no GC) |
-| **Alokasi RAM Rata-rata** | **~10 – 15 MB** | **< 10 MB** (Dioptimalkan untuk SBC $10) | **< 5 MB** (Terendah berkat Rust native) |
-| **Fokus & DNA Utama** | **DevOps, Sysadmin, Linux Server Ops & AI Coding** | **Embedded Linux, IoT, SBC & Home Assistant** | **Local-First Agent, Sandboxed Runtime & Security** |
-| **Target Hardware** | VPS (x86/ARM64), Cloud VM, Linux PC, Termux Android | SBC $10 (LicheeRV Nano, NanoKVM, RPi Zero, RISC-V) | Linux Server, Desktop, Hardened Containers |
-| **Arsitektur CPU** | x86_64, ARM64 | **x86_64, ARM64, ARMv6 (32-bit), RISC-V, LoongArch** | x86_64, ARM64 |
-| **Antarmuka Utama** | **Telegram Daemon Interaktif** (Inline Role Picker, Health Check, Session UI) + Interactive CLI | **Multi-Channel Gateway** (Telegram, Discord, DingTalk, Feishu, WeCom, QQ) + Flutter FUI | **TUI (`zerocode`)**, CLI + **HTTP Gateway Daemon** (`port 42617`) |
-| **Provider LLM** | **Dual Hybrid:** Command Code (Vercel AI Gateway) + OpenCode Zen (Free) + Direct OpenAI/Anthropic/Gemini | OpenAI, Anthropic, DeepSeek, OpenRouter, Groq, Zhipu | 20+ Provider (OpenAI, Anthropic, Ollama, Groq, DeepSeek, dll.) |
-| **Prompt Caching** | ✅ **Native Telemetry & 90% Discount Tracking** (Cloudflare / DeepSeek / Vercel AI SDK) | ⚠️ Tergantung upstream API standard | ⚠️ Tergantung crate provider |
+| **Language** | **Go 1.25+** (Static binary) | **Go** (Static binary, ~95% AI-bootstrap) | **Rust** (Memory safety, no GC) |
+| **Average RAM Footprint** | **~10 – 25 MB** | **< 10 MB** (Optimized for $10 SBCs) | **< 5 MB** (Lowest thanks to native Rust) |
+| **Primary Focus & DNA** | **DevOps, Sysadmin, Linux Server Ops & AI Coding** | **Embedded Linux, IoT, SBC & Home Assistant** | **Local-First Agent, Sandboxed Runtime & Security** |
+| **Target Hardware** | VPS (x86/ARM64), Cloud VMs, Linux PCs, Android Termux | $10 SBCs (LicheeRV Nano, NanoKVM, RPi Zero, RISC-V) | Linux Servers, Desktops, Hardened Containers |
+| **CPU Architectures** | x86_64, ARM64 | **x86_64, ARM64, ARMv6 (32-bit), RISC-V, LoongArch** | x86_64, ARM64 |
+| **Primary Interfaces** | **Interactive Telegram Daemon** (Inline Keyboards, Health Checks, Session UI) + Interactive CLI + Web Gateway | **Multi-Channel Gateway** (Telegram, Discord, DingTalk, Feishu, WeCom, QQ) + Flutter FUI | **TUI (`zerocode`)**, CLI + **HTTP Gateway Daemon** (`port 42617`) |
+| **LLM Providers** | **Hybrid:** Command Code, DeepSeek, Gemini, OpenAI, Claude, Ollama, OpenRouter, Groq, custom OpenAI APIs | OpenAI, Anthropic, DeepSeek, OpenRouter, Groq, Zhipu | 20+ Providers (OpenAI, Anthropic, Ollama, Groq, DeepSeek, etc.) |
+| **Prompt Caching** | ✅ **Native Telemetry & 90% Discount Tracking** (Cloudflare / DeepSeek / Vercel AI SDK) | ⚠️ Dependent on upstream API standard | ⚠️ Dependent on crate provider |
 | **System Collectors** | **Native Go Collectors** (CPU, RAM, Disk, Systemd, Process, Thermal, Network) | Standard Linux CLI execution | Standard Linux CLI execution |
-| **Hardware Tools** | Remote VPS & CLI | **Sensor Fisik (I2C/SPI) & Pin GPIO** | Standard local tools |
-| **Keamanan & Guardrails** | Autonomy Modes (`readonly`, `supervised`, `yolo`), Cryptographic Receipts, Command Blacklist | Standard permissions, embedded sandbox | **Defense-in-depth**, Workspace Jail, Path Traversal Blocker, Private IP Blocker, Distroless Docker |
+| **Hardware Tools** | Remote VPS & CLI | **Physical Sensors (I2C/SPI) & GPIO Pins** | Standard local tools |
+| **Security & Guardrails**| 4 Autonomy Modes (`readonly`, `supervised`, `auto`, `yolo`), Bubblewrap Sandbox, Deny Rules, Cryptographic Receipts | Standard permissions, embedded sandbox | **Defense-in-depth**, Workspace Jail, Path Traversal Blocker, Private IP Blocker, Distroless Docker |
 | **RAG & Knowledge** | **Local Simhash & Vector RAG** (0 external DB) | Basic file context / search | Pluggable memory engines |
 
 ---
 
-## 🌐 2. Analisis Kemampuan Web Search & "Trik Pihak Ketiga"
+## 🌐 2. Web Search Capabilities & Third-Party Strategy Analysis
 
-Dalam ranah pencarian web (*web search*), terdapat perbedaan strategi yang sangat menarik antara ketiga proyek:
+In the realm of web search, the three projects take noticeably different strategic approaches:
 
-### 🦀 ZeroClaw (Raja Pihak Ketiga & Metasearch)
-ZeroClaw menduduki peringkat teratas dalam hal fleksibilitas search engine, namun kekuatannya didorong oleh ketergantungan pada layanan API komersial:
-* **Tavily Multi-Key Round-Robin:** Menggunakan API berbayar Tavily dengan mekanisme pemutaran kunci (*load-balancing*) agar tidak terkena limit.
-* **Brave Search API:** Menggunakan API komersial Brave.
-* **Jina Reader & Exa:** Memanfaatkan web reader eksternal untuk konversi LLM context.
-* **SearXNG (Self-Hosted):** Satu-satunya keunggulan non-pihak-ketiga di mana ZeroClaw dapat dihubungkan ke server metasearch pribadi untuk menghindari blokir scraper.
+### 🦀 ZeroClaw (Third-Party & Commercial Heavy)
+ZeroClaw provides flexible search engine integrations, but relies heavily on paid commercial APIs:
+* **Tavily Multi-Key Round-Robin:** Uses paid Tavily API keys with key rotation and load-balancing to mitigate rate limits.
+* **Brave Search API:** Relies on commercial Brave API keys.
+* **Jina Reader & Exa:** Leverages external reader services for LLM context transformation.
+* **SearXNG (Self-Hosted):** A strong non-third-party option connecting to a personal metasearch server to avoid scraper bans.
 
-### 🦞 PicoClaw (Fokus Multi-Region & Auto-Fallback)
-* Mengintegrasikan API komersial **Brave Search** sebagai backend utama.
-* Memiliki rute pencarian wilayah Asia/China ke **Baidu & Sogou API**.
-* Menyediakan fitur `provider: "auto"` yang otomatis turun (*fallback*) ke scraping DuckDuckGo jika kuota API pihak ketiga habis.
+### 🦞 PicoClaw (Multi-Region & Auto-Fallback Focus)
+* Integrates commercial **Brave Search** API as its primary backend.
+* Routes Asian/Chinese queries to **Baidu & Sogou APIs**.
+* Features `provider: "auto"`, falling back to DuckDuckGo scraping when third-party quotas are exhausted.
 
-### 🦂 Scorp (The Native Embedded Metasearch Winner)
-Scorp menerapkan arsitektur *clean engineering* yang sangat mandiri di mesin lokal:
+### 🦂 Scorp (Native Embedded Metasearch Champion)
+Scorp focuses on clean, self-contained local engineering:
 * **Embedded Native MetaSearch Cluster (Zero-RAM, Zero-Docker):**
-  Scorp kini memiliki metasearch engine bawaan yang berjalan paralel via Go goroutines menembak **Bing**, **DuckDuckGo**, **Wikipedia OpenSearch**, dan **GitHub Repositories**.
-  - *Consensus Ranking:* URL yang muncul di beberapa engine sekaligus otomatis mendapatkan skor relevansi lebih tinggi.
-  - *Smart Deduplication:* Mengelompokkan URL identik dan menggabungkan snippet terpanjang.
-  - *Anti-Single-Point-of-Failure:* Jika satu engine terkena limit/blokir (misal DDG 403), engine lain (Bing/Wiki/GitHub) tetap mengembalikan hasil tanpa membuat agen gagal.
-  - *Pluggable Hooks:* Jika user ingin memakai server **SearXNG pribadi** (`SEARXNG_URL`), **Brave API** (`BRAVE_API_KEY`), atau **Tavily API** (`TAVILY_API_KEY`), Scorp langsung menghubungkannya secara otomatis!
-* **Ekstraksi Konten Halaman Terbersih (`read_url`):**
-  Alih-alih langsung menyedot data mentah, Scorp membangun arsitektur **Tiered Web Engine (< 5MB RAM)**:
-  1. *Local Zero-RAM:* Mengambil HTML mentah via HTTP stream native.
-  2. *Mozilla Readability Parser:* Membersihkan boilerplate, iklan, dan navigasi menggunakan engine `go-shiori/go-readability`.
-  3. *AST Markdown Converter:* Mengubah konten bersih menjadi Markdown menggunakan `JohannesKaufmann/html-to-markdown`.
-  4. *Cloud Scraper Fallback:* Hanya jika halaman memblokir bot (Cloudflare) atau mewajibkan eksekusi JavaScript berat, barulah Scorp mengalihkan ke remote headless scraper (Firecrawl / Tavily API).
+  Scorp includes a built-in concurrent metasearch engine querying **Bing**, **DuckDuckGo**, **Wikipedia OpenSearch**, and **GitHub Repositories** in parallel via Go goroutines.
+  - *Consensus Ranking:* URLs discovered across multiple engines receive higher relevance weight.
+  - *Smart Deduplication:* Groups identical URLs and merges the most comprehensive snippet.
+  - *Anti-Single-Point-of-Failure:* If one engine rate-limits (e.g. DDG 403), the other engines (Bing/Wiki/GitHub) continue returning results seamlessly.
+  - *Pluggable Hooks:* If the operator configures a **personal SearXNG instance** (`SEARXNG_URL`), **Brave API** (`BRAVE_API_KEY`), or **Tavily API** (`TAVILY_API_KEY`), Scorp auto-connects them immediately.
+* **Clean Page Extraction Engine (`read_url`):**
+  Rather than raw page dumps, Scorp employs a **Tiered Web Engine (< 5MB RAM)**:
+  1. *Local Zero-RAM:* Streams raw HTML via native HTTP streams.
+  2. *Mozilla Readability Parser:* Strips boilerplate, ads, and navigation using `go-shiori/go-readability`.
+  3. *AST Markdown Converter:* Converts clean DOM into Markdown using `JohannesKaufmann/html-to-markdown`.
+  4. *Cloud Scraper Fallback:* Only if a page is Cloudflare-protected or JavaScript-heavy does Scorp offload to remote headless scrapers (Firecrawl / Tavily API).
 
 ---
 
-## 🎯 3. Posisi & Rekomendasi Pilihan
+## 🎯 3. Selection Recommendations
 
-1. **Gunakan SCORP jika:**
-   * Kebutuhan utama adalah **mengelola server Linux, DevOps, automation VPS**, dan coding mandiri jarak jauh langsung dari HP via **Telegram Bot interaktif** atau terminal CLI.
-   * Menginginkan efisiensi biaya nyata lewat integrasi **Command Code + OpenCode Zen** dengan prompt caching telemetri riil.
+1. **Choose SCORP if:**
+   * Your primary workflows are **Linux server operations, DevOps, VPS automation**, and autonomous remote coding from mobile via **Telegram** or terminal CLI.
+   * You demand genuine cost efficiency via prompt caching telemetry, native Go single-binary execution, and low memory usage (<25MB RAM).
 
-2. **Gunakan PICOCLAW jika:**
-   * Anda ingin memasang AI agent di **hardware mini $10** (LicheeRV Nano, NanoKVM, Raspberry Pi Zero) atau arsitektur **RISC-V** untuk membaca sensor IoT.
-   * Memerlukan integrasi ke chat messenger Asia (DingTalk, Feishu, WeCom, LINE).
+2. **Choose PICOCLAW if:**
+   * You need to deploy an AI agent onto **$10 single-board computers** (LicheeRV Nano, NanoKVM, Raspberry Pi Zero) or **RISC-V** hardware for IoT and GPIO sensor control.
+   * You require integration with Asian messaging platforms (DingTalk, Feishu, WeCom, LINE).
 
-3. **Gunakan ZEROCLAW jika:**
-   * Memerlukan **isolasi keamanan tingkat tinggi (sandboxing/jailing)** untuk lingkungan korporat/multi-tenant.
-   * Menginginkan ekosistem **Rust** murni dengan konsumsi RAM sub-5MB dan integrasi API search berbayar (Tavily/Brave).
+3. **Choose ZEROCLAW if:**
+   * You need **heavy container-grade sandboxing and process isolation** for corporate or multi-tenant hosting.
+   * You prefer a pure **Rust** stack with sub-5MB RAM targets and paid API integrations (Tavily/Brave).
 
 ---
 
-## 🚀 4. Status Implementasi Fitur Baru Scorp (Completed)
+## 🚀 4. Completed Scorp Feature Enhancements
 
-Sektor pencarian web Scorp telah resmi ditingkatkan tanpa menambah footprint memori:
-- [x] **Embedded Native Multi-Engine Metasearch** (`tools/metasearch.go`) berjalan paralel (Bing + DuckDuckGo + Wikipedia + GitHub).
-- [x] **Consensus Scoring & Deduplication** (URL yang muncul di banyak engine mendapat ranking teratas).
-- [x] **Anti-Pollution Regional Filters** (Enforce English locale headers & parameters pada search engine).
-- [x] **Pluggable Hooks Terintegrasi:**
-  - `SEARXNG_URL` untuk menghubungkan instance SearXNG lokal/eksternal.
-  - `BRAVE_API_KEY` untuk opsi komersial Brave Search.
-  - `TAVILY_API_KEY` untuk opsi komersial Tavily.
+Scorp's web search capabilities have been fully modernized without adding memory bloat:
+- [x] **Embedded Native Multi-Engine Metasearch** (`tools/metasearch.go`) running in parallel (Bing + DuckDuckGo + Wikipedia + GitHub).
+- [x] **Consensus Scoring & Deduplication** (URLs found across multiple sources rank first).
+- [x] **Regional & Anti-Pollution Filters** (Enforcing clean locale headers on search queries).
+- [x] **Integrated Pluggable Hooks:**
+  - `SEARXNG_URL` for local/remote SearXNG instances.
+  - `BRAVE_API_KEY` for commercial Brave Search integration.
+  - `TAVILY_API_KEY` for commercial Tavily integration.

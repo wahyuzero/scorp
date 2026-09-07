@@ -123,7 +123,7 @@ func ReplyMenuKeyboard() map[string]interface{} {
 		},
 		"resize_keyboard":         true,
 		"is_persistent":           true,
-		"input_field_placeholder": "Ketik pesan, atau pakai menu di bawah…",
+		"input_field_placeholder": "Type a message, or use the menu below…",
 	}
 }
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # ══════════════════════════════════════════════════════════════
-#  install-scorp.sh — Scorp Agent Installer
+#  install.sh — Scorp Agent Installer
 #  Repo   : https://github.com/wahyuzero/scorp
-#  Fokus  : Agent-first, build from source, systemd service
+#  Focus  : Agent-first, build from source, systemd service
 # ══════════════════════════════════════════════════════════════
 set -euo pipefail
 
@@ -30,35 +30,35 @@ echo -e "${B}║     Scorp Agent Installer        ║${N}"
 echo -e "${B}╚══════════════════════════════════╝${N}"
 echo ""
 
-# ── Step 0: Prasyarat ────────────────────────────────────────
+# ── Step 0: Prerequisites ────────────────────────────────────
 echo -e "${B}[0/4] Checking prerequisites...${N}"
 
-command -v git  >/dev/null 2>&1 || die "git tidak terinstall. Jalankan: apt install git"
-command -v curl >/dev/null 2>&1 || die "curl tidak terinstall. Jalankan: apt install curl"
+command -v git  >/dev/null 2>&1 || die "git is not installed. Run: apt install git"
+command -v curl >/dev/null 2>&1 || die "curl is not installed. Run: apt install curl"
 
-# Cari Go yang benar (prioritas /usr/local/go/bin/go)
+# Locate Go binary (prioritize /usr/local/go/bin/go)
 if [ -x "$GO_BIN" ]; then
     GO_VER=$("$GO_BIN" version | awk '{print $3}' | sed 's/go//')
-    ok "Go ditemukan: $GO_VER ($GO_BIN)"
+    ok "Go detected: $GO_VER ($GO_BIN)"
 elif command -v go >/dev/null 2>&1; then
     GO_BIN=$(command -v go)
     GO_VER=$(go version | awk '{print $3}' | sed 's/go//')
     GO_MINOR=$(echo "$GO_VER" | cut -d. -f2)
     if [ "$GO_MINOR" -lt 21 ]; then
-        die "Go $GO_VER terlalu lama (minimal 1.21). Install: https://go.dev/dl/"
+        die "Go $GO_VER is too old (minimum 1.21 required). Install: https://go.dev/dl/"
     fi
-    ok "Go ditemukan: $GO_VER"
+    ok "Go detected: $GO_VER"
 else
-    die "Go tidak terinstall. Install: https://go.dev/dl/"
+    die "Go is not installed. Install: https://go.dev/dl/"
 fi
 
-# CGO untuk fts5
+# CGO for SQLite FTS5
 if command -v gcc >/dev/null 2>&1; then
-    ok "gcc ditemukan (fts5 enabled)"
+    ok "gcc detected (fts5 enabled)"
     BUILD_TAGS="fts5"
     CGO_FLAG="CGO_ENABLED=1"
 else
-    warn "gcc tidak ada — build tanpa fts5"
+    warn "gcc not found — building without fts5"
     BUILD_TAGS=""
     CGO_FLAG="CGO_ENABLED=0"
 fi
@@ -74,26 +74,26 @@ if [ -f "$ENV_FILE" ]; then
     OLD_TG_CHATID=$(grep -oP '(?<=^TELEGRAM_CHAT_ID=).+' "$ENV_FILE" 2>/dev/null || true)
     OLD_DEEPSEEK=$(grep -oP '(?<=^DEEPSEEK_API_KEY=).+' "$ENV_FILE" 2>/dev/null || true)
     OLD_AGENTON=$(grep -oP '(?<=^AGENTON_API_KEY=).+' "$ENV_FILE" 2>/dev/null || true)
-    ok "Credentials lama ditemukan di $ENV_FILE"
+    ok "Existing credentials found in $ENV_FILE"
 fi
 
 # Telegram Token
 if [ -n "$OLD_TG_TOKEN" ]; then
-    echo -e "  Token lama: ${C}${OLD_TG_TOKEN:0:15}...${N}"
-    read -rp "  $(echo -e "${C}Gunakan token lama? [Y/n]: ${N}")" USE_OLD
-    [[ "$USE_OLD" =~ ^[Nn] ]] && TG_TOKEN=$(ask "Bot Token baru") || TG_TOKEN="$OLD_TG_TOKEN"
+    echo -e "  Existing token: ${C}${OLD_TG_TOKEN:0:15}...${N}"
+    read -rp "  $(echo -e "${C}Use existing token? [Y/n]: ${N}")" USE_OLD
+    [[ "$USE_OLD" =~ ^[Nn] ]] && TG_TOKEN=$(ask "New Bot Token") || TG_TOKEN="$OLD_TG_TOKEN"
 else
-    echo -e "  Dapatkan token dari ${C}@BotFather${N} di Telegram"
-    TG_TOKEN=$(ask "Bot Token (kosong = CLI-only mode)")
+    echo -e "  Get your bot token from ${C}@BotFather${N} on Telegram"
+    TG_TOKEN=$(ask "Bot Token (empty = CLI-only mode)")
 fi
 
 # Chat ID
 TG_CHATID=""
 if [ -n "$TG_TOKEN" ]; then
     if [ -n "$OLD_TG_CHATID" ]; then
-        echo -e "  Chat ID lama: ${C}$OLD_TG_CHATID${N}"
-        read -rp "  $(echo -e "${C}Gunakan Chat ID lama? [Y/n]: ${N}")" USE_OLD_ID
-        [[ "$USE_OLD_ID" =~ ^[Nn] ]] && TG_CHATID=$(ask "Chat ID baru") || TG_CHATID="$OLD_TG_CHATID"
+        echo -e "  Existing Chat ID: ${C}$OLD_TG_CHATID${N}"
+        read -rp "  $(echo -e "${C}Use existing Chat ID? [Y/n]: ${N}")" USE_OLD_ID
+        [[ "$USE_OLD_ID" =~ ^[Nn] ]] && TG_CHATID=$(ask "New Chat ID") || TG_CHATID="$OLD_TG_CHATID"
     else
         TG_CHATID=$(ask "Chat ID (Enter = auto-detect)")
         if [ -z "$TG_CHATID" ]; then
@@ -107,42 +107,42 @@ fi
 
 # DeepSeek Key
 if [ -n "$OLD_DEEPSEEK" ]; then
-    echo -e "  DeepSeek key lama: ${C}${OLD_DEEPSEEK:0:12}...${N}"
-    read -rp "  $(echo -e "${C}Gunakan key lama? [Y/n]: ${N}")" USE_DS
+    echo -e "  Existing DeepSeek key: ${C}${OLD_DEEPSEEK:0:12}...${N}"
+    read -rp "  $(echo -e "${C}Use existing key? [Y/n]: ${N}")" USE_DS
     [[ "$USE_DS" =~ ^[Nn] ]] && DEEPSEEK_KEY=$(ask "DeepSeek API Key") || DEEPSEEK_KEY="$OLD_DEEPSEEK"
 else
-    DEEPSEEK_KEY=$(ask "DeepSeek API Key (dari platform.deepseek.com)")
+    DEEPSEEK_KEY=$(ask "DeepSeek API Key (from platform.deepseek.com)")
 fi
 
 # AgentON Key
 AGENTON_KEY="${OLD_AGENTON:-}"
 if [ -z "$AGENTON_KEY" ]; then
-    AGENTON_KEY=$(ask "AgentON API Key (opsional, Enter skip)")
+    AGENTON_KEY=$(ask "AgentON API Key (optional, Enter to skip)")
 fi
-[ -n "$AGENTON_KEY" ] && ok "AgentON key tersimpan" || true
+[ -n "$AGENTON_KEY" ] && ok "AgentON key saved" || true
 
 # ── Step 2: Clone / Update ───────────────────────────────────
 echo ""
 echo -e "${B}[2/4] Source code...${N}"
 
 if [ -d "$SRC_DIR/.git" ]; then
-    echo "  Update repo..."
+    echo "  Updating repo..."
     git -C "$SRC_DIR" fetch origin
     git -C "$SRC_DIR" reset --hard origin/main 2>&1 | tail -2
-    ok "Source diupdate"
+    ok "Source updated"
 else
     echo "  Cloning $REPO_URL..."
     git clone "$REPO_URL" "$SRC_DIR" 2>&1 | tail -3
-    ok "Clone berhasil"
+    ok "Clone successful"
 fi
 
-# ── FIX BUG UPSTREAM: go.mod versi 3-part tidak valid ──
+# ── Upstream version check: ensure valid go.mod ──
 GOMOD_VER=$(grep '^go ' "$SRC_DIR/go.mod" | awk '{print $2}')
 GOMOD_PARTS=$(echo "$GOMOD_VER" | awk -F. '{print NF}')
 if [ "$GOMOD_PARTS" -gt 2 ]; then
-    warn "go.mod: versi '$GOMOD_VER' tidak valid (bug upstream). Auto-fix ke '1.24'..."
+    warn "go.mod: version '$GOMOD_VER' has 3 parts. Auto-fixing to '1.24'..."
     sed -i "s/^go $GOMOD_VER$/go 1.24/" "$SRC_DIR/go.mod"
-    ok "go.mod diperbaiki"
+    ok "go.mod updated"
 fi
 
 # ── Step 3: Build ────────────────────────────────────────────
@@ -162,22 +162,22 @@ else
 fi
 
 BIN_SIZE=$(du -h "$SRC_DIR/scorp" | cut -f1)
-ok "Build sukses: $BIN_SIZE"
+ok "Build successful: $BIN_SIZE"
 
-# Stop service lama jika jalan
+# Stop existing service if running
 systemctl stop scorp 2>/dev/null || true
 
 cp "$SRC_DIR/scorp" "$INSTALL_BIN"
 chmod +x "$INSTALL_BIN"
 ok "Binary: $INSTALL_BIN"
 
-# ── Step 4: Config & Service ─────────────────────────────────
+# ── Step 4: Configuration & Service ──────────────────────────
 echo ""
-echo -e "${B}[4/4] Konfigurasi...${N}"
+echo -e "${B}[4/4] Configuration...${N}"
 
 mkdir -p "$WORK_DIR" "$HOME/.scorp"
 
-# Tulis .env
+# Write .env
 {
     echo "# Scorp Agent — generated $(date '+%Y-%m-%d')"
     echo ""
@@ -198,7 +198,7 @@ mkdir -p "$WORK_DIR" "$HOME/.scorp"
 chmod 600 "$ENV_FILE"
 ok ".env → $ENV_FILE"
 
-# Tulis models.json jika belum ada
+# Write models.json if missing
 if [ ! -f "$MODELS_FILE" ] && [ -n "$DEEPSEEK_KEY" ]; then
     cat > "$MODELS_FILE" << MEOF
 {
@@ -252,20 +252,20 @@ EOF
     sleep 2
 
     if systemctl is-active --quiet scorp; then
-        ok "Service aktif! PID: $(systemctl show -p MainPID --value scorp)"
+        ok "Service active! PID: $(systemctl show -p MainPID --value scorp)"
     else
-        warn "Service gagal start → cek: journalctl -u scorp -e"
+        warn "Service failed to start → check: journalctl -u scorp -e"
     fi
 else
     rm -f "$SVC_FILE" 2>/dev/null || true
     systemctl daemon-reload 2>/dev/null || true
-    ok "Mode CLI (tanpa systemd)"
+    ok "CLI mode (running without systemd)"
 fi
 
 # ── Done ─────────────────────────────────────────────────────
 echo ""
 echo -e "${B}╔══════════════════════════════════╗${N}"
-echo -e "${B}║       Instalasi Selesai! ✓       ║${N}"
+echo -e "${B}║     Installation Complete! ✓     ║${N}"
 echo -e "${B}╚══════════════════════════════════╝${N}"
 echo ""
 echo -e "  Binary  : ${C}$INSTALL_BIN${N}"
@@ -275,13 +275,13 @@ echo -e "  Source  : ${C}$SRC_DIR${N}"
 echo ""
 
 if systemctl is-active --quiet scorp 2>/dev/null; then
-    echo -e "  ${G}● Bot berjalan 24/7 via systemd${N}"
+    echo -e "  ${G}● Bot running 24/7 via systemd${N}"
     echo ""
     echo "  Logs    : journalctl -u scorp -f"
     echo "  Stop    : systemctl stop scorp"
     echo "  Restart : systemctl restart scorp"
 else
-    echo "  Jalankan : scorp"
+    echo "  Launch  : scorp"
 fi
 
 echo ""
