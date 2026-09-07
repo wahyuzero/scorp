@@ -4,11 +4,6 @@
 
 Runs natively with a memory footprint of **under 25MB RAM** on Linux VPS, edge nodes, and Android Termux as a single standalone static binary.
 
-> 📋 **Architecture & Engineering Deep Dives:**
-> - [Scorp Architecture & Modernization Notes](MODERNIZATION_NOTES.md)
-> - [Head-to-Head Comparison: Scorp vs PicoClaw vs ZeroClaw](docs/COMPARISON_SCORP_PICOCLAW_ZEROCLAW.md)
-> - [Brutal Adversarial Test Plan & Live Results (100% Pass)](docs/TEST_RESULTS_BRUTAL_SCORP.md)
-
 ---
 
 ## ⚡ Core Architecture & Philosophy
