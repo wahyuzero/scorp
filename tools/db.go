@@ -8,6 +8,7 @@ import (
 	"os"
 	"scorp-agent/config"
 	"scorp-agent/internal/helpers"
+	"sort"
 	"strings"
 	"time"
 )
@@ -58,8 +59,22 @@ func ExecuteSQL(args map[string]interface{}, chatID int64) (string, bool) {
 		} else if conn, ok := conns["default"]; ok {
 			dbType = conn.Type
 			dsn = conn.Connection
+		} else if len(conns) == 1 {
+			// Exactly one unnamed/non-default connection configured: use it
+			// regardless of its key. The old behavior rejected a config the
+			// model had just written (e.g. key "sessions") and pushed it into
+			// a retry spiral.
+			for _, conn := range conns {
+				dbType = conn.Type
+				dsn = conn.Connection
+			}
 		} else {
-			return "Error: no connection specified. Provide db_type + dsn, or configure ~/.scorp/db_connections.json", false
+			names := make([]string, 0, len(conns))
+			for k := range conns {
+				names = append(names, k)
+			}
+			sort.Strings(names)
+			return fmt.Sprintf("Error: no connection specified. Provide db_type + dsn args, or pass connection: one of %v (from ~/.scorp/db_connections.json)", names), false
 		}
 	}
 

@@ -58,6 +58,16 @@ type MCPServer struct {
 	stdin      *json.Encoder
 	scanner    *bufio.Scanner
 	tools      []MCPTool
+	// closed marks an intentional shutdown so the watchdog does not count
+	// the process exit as a crash.
+	closed bool
+	// Single-flight process reaping: exec.Cmd.Wait must be called exactly
+	// once per process. reapWait() shares the result with every waiter
+	// (watchdog monitor, Close) — calling Wait from two goroutines raced on
+	// Cmd internals ("waitid: no child processes", -race DATA RACE).
+	waitOnce sync.Once
+	waitErr  error
+	waitDone chan struct{}
 	mu         sync.Mutex
 	reqID      int64
 	alive      bool
@@ -66,6 +76,26 @@ type MCPServer struct {
 	sseClient  *http.Client
 	sseRespCh  chan *jsonRPCResponse
 	sseCancel  context.CancelFunc
+}
+
+// reapWait performs the one-and-only cmd.Wait() for this server's process
+// and shares the result with every other waiter (watchdog monitor, Close).
+func (s *MCPServer) reapWait() error {
+	s.waitOnce.Do(func() {
+		if s.cmd != nil && s.cmd.Process != nil {
+			s.waitErr = s.cmd.Wait()
+		}
+		close(s.waitDone)
+	})
+	<-s.waitDone
+	return s.waitErr
+}
+
+// wasClosed reports whether the server was shut down intentionally.
+func (s *MCPServer) wasClosed() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.closed
 }
 
 // JSON-RPC 2.0 types
@@ -171,6 +201,10 @@ func StartMCPServers() {
 // StopMCPServers shuts down all running MCP servers gracefully
 func StopMCPServers() {
 	log.Println("[mcp] Initiating graceful shutdown of MCP servers...")
+
+	// Mark watchdogs stopped BEFORE closing servers: the process exits that
+	// follow are intentional shutdowns, not crashes to restart from.
+	StopWatchdogs()
 
 	// Cancel shutdown context to signal all server goroutines to close
 	if mcpShutdownCancel != nil {
@@ -438,12 +472,13 @@ func startMCPServer(name string, cfg MCPServerConfig) (*MCPServer, error) {
 	}
 
 	srv := &MCPServer{
-		Name:    name,
-		Config:  cfg,
-		cmd:     cmd,
-		stdin:   json.NewEncoder(stdinPipe),
-		scanner: bufio.NewScanner(stdoutPipe),
-		alive:   true,
+		Name:     name,
+		Config:   cfg,
+		cmd:      cmd,
+		stdin:    json.NewEncoder(stdinPipe),
+		scanner:  bufio.NewScanner(stdoutPipe),
+		alive:    true,
+		waitDone: make(chan struct{}),
 	}
 
 	// Set larger buffer for scanner (some responses can be big)
@@ -480,6 +515,7 @@ func ProbeServer(name string, cfg MCPServerConfig) (*MCPServer, []MCPTool, error
 func (s *MCPServer) Close() {
 	s.mu.Lock()
 	s.alive = false
+	s.closed = true
 	if s.isSSE {
 		if s.sseCancel != nil {
 			s.sseCancel()
@@ -503,23 +539,20 @@ func (s *MCPServer) Close() {
 			time.Sleep(200 * time.Millisecond)
 		}
 
-		// Try graceful exit first
+		// Try graceful exit first. reapWait is single-flight: if the watchdog
+		// monitor already waits on this process, we share its result instead
+		// of racing a second Wait on the same cmd.
 		s.cmd.Process.Signal(os.Interrupt)
-
-		// Wait for graceful exit with timeout
-		done := make(chan error, 1)
-		go func() {
-			done <- s.cmd.Wait()
-		}()
+		go s.reapWait()
 
 		select {
-		case <-done:
+		case <-s.waitDone:
 			// Process exited gracefully
 			return
 		case <-time.After(3 * time.Second):
 			// Force kill after timeout
 			s.cmd.Process.Kill()
-			<-done // wait for kill to complete
+			<-s.waitDone
 		}
 	}
 }

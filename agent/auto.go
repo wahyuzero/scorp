@@ -123,7 +123,20 @@ func autoAllowlisted(cmd string) bool {
 		}
 	})
 	for _, re := range autoAllowlist {
-		if re.MatchString(cmd) {
+		loc := re.FindStringIndex(cmd)
+		if loc == nil || loc[0] != 0 {
+			continue
+		}
+		// Prefix-anchored match: the entry must cover a whole leading token
+		// run of the command. `rm -rf /tmp/allowed-only` must match
+		// `/tmp/allowed-only` and `/tmp/allowed-only/a` (subpath), but NOT
+		// `/tmp/allowed-onlyx/b` (prefix-adjacent path that merely starts
+		// with the allowlisted text).
+		if loc[1] == len(cmd) {
+			return true
+		}
+		switch cmd[loc[1]] {
+		case ' ', '/':
 			return true
 		}
 	}

@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"sync"
 	"time"
@@ -40,8 +41,20 @@ func loadReceiptsLocked() {
 	}
 	receiptsLoaded = true
 	p := config.ScorpPath("receipts.json")
-	if data, err := os.ReadFile(p); err == nil {
-		_ = json.Unmarshal(data, &recentReceipts)
+	data, err := os.ReadFile(p)
+	if err != nil {
+		return
+	}
+	if err := json.Unmarshal(data, &recentReceipts); err != nil {
+		// Quarantine the corrupted file instead of silently dropping the old
+		// entries on the next save — post-mortem needs the evidence trail.
+		quarantine := fmt.Sprintf("%s.corrupt-%d", p, time.Now().Unix())
+		if qErr := os.WriteFile(quarantine, data, 0644); qErr == nil {
+			log.Printf("[receipts] receipts.json invalid (%v) — quarantined at %s, starting fresh", err, quarantine)
+		} else {
+			log.Printf("[receipts] receipts.json invalid (%v) — starting fresh", err)
+		}
+		recentReceipts = nil
 	}
 }
 
@@ -82,6 +95,16 @@ func RecordToolReceipt(toolName string, args map[string]interface{}, output stri
 		if v, ok := args[k].(string); ok && v != "" {
 			meta["path"] = v
 			break
+		}
+	}
+	// Structured-tool facts the operational claim gate (P4.16b) verifies
+	// against: which action, on which object. Truncated + redacted like cmd.
+	for _, k := range []string{"action", "id", "task_id", "name", "query", "url"} {
+		if v, ok := args[k].(string); ok && v != "" {
+			if len(v) > 200 {
+				v = v[:200]
+			}
+			meta[k] = RedactSecrets(v)
 		}
 	}
 	for _, extra := range extraMeta {

@@ -19,8 +19,13 @@ type ServerWatchdog struct {
 	restartCount int
 	maxRestarts  int
 	lastCrash    time.Time
-	mu           sync.Mutex
-	stopCh       chan struct{}
+	// current is the MCPServer instance this monitor run is responsible for.
+	// A monitor whose process was superseded (restart) or whose server was
+	// intentionally closed must not count the exit as a crash.
+	current *MCPServer
+	stopped bool
+	mu      sync.Mutex
+	stopCh  chan struct{}
 }
 
 var (
@@ -33,14 +38,24 @@ func RegisterWatchdog(serverName string, srv *MCPServer) {
 	watchdogsMu.Lock()
 	defer watchdogsMu.Unlock()
 
-	// Stop existing watchdog if already registered
 	if wd, exists := watchdogs[serverName]; exists {
-		close(wd.stopCh)
+		// Reuse the existing watchdog so restartCount persists across
+		// restarts — recreating it reset the counter to zero and a
+		// fast-crashing server restarted forever (always "Attempt 1/5").
+		// The previous monitor run exits on its own: it waits on the old
+		// process, and once reaped it sees current != old and bails without
+		// counting a crash.
+		wd.mu.Lock()
+		wd.current = srv
+		wd.mu.Unlock()
+		go wd.monitor(srv)
+		return
 	}
 
 	wd := &ServerWatchdog{
 		serverName:  serverName,
 		maxRestarts: 5,
+		current:     srv,
 		stopCh:      make(chan struct{}),
 	}
 	watchdogs[serverName] = wd
@@ -48,90 +63,119 @@ func RegisterWatchdog(serverName string, srv *MCPServer) {
 	go wd.monitor(srv)
 }
 
+// StopWatchdogs marks every watchdog stopped so intentional shutdowns are
+// not counted as crashes. Called from StopMCPServers before closing servers.
+func StopWatchdogs() {
+	watchdogsMu.Lock()
+	defer watchdogsMu.Unlock()
+	for _, wd := range watchdogs {
+		wd.mu.Lock()
+		wd.stopped = true
+		wd.mu.Unlock()
+	}
+}
+
 func (wd *ServerWatchdog) monitor(srv *MCPServer) {
 	if srv.cmd == nil || srv.cmd.Process == nil {
 		return
 	}
 
-	// Wait for process termination in a separate goroutine
-	done := make(chan error, 1)
-	go func() {
-		done <- srv.cmd.Wait()
-	}()
+	// Single-flight reap: shares cmd.Wait() with Close() instead of racing a
+	// second Wait on the same process.
+	err := srv.reapWait()
+
+	if srv.wasClosed() {
+		return
+	}
+
+	wd.mu.Lock()
+	superseded := wd.current != srv
+	stopped := wd.stopped
+	wd.mu.Unlock()
+	if superseded || stopped {
+		return
+	}
+
+	wd.mu.Lock()
+	wd.lastCrash = time.Now()
+	wd.restartCount++
+	count := wd.restartCount
+	wd.mu.Unlock()
+
+	log.Printf("[mcp-watchdog] Server '%s' crashed (exit: %v). Attempt %d/%d",
+		wd.serverName, err, count, wd.maxRestarts)
+
+	// Mark server dead
+	mcpServersMu.Lock()
+	if s, ok := mcpServers[wd.serverName]; ok && s == srv {
+		s.alive = false
+	}
+	mcpServersMu.Unlock()
+
+	if count > wd.maxRestarts {
+		log.Printf("[mcp-watchdog] Server '%s' exceeded max restarts. Disabling watchdog.", wd.serverName)
+		wd.mu.Lock()
+		wd.stopped = true
+		wd.mu.Unlock()
+		return
+	}
+
+	// Exponential backoff: 1s, 2s, 4s, 8s... cap 30s
+	backoff := time.Duration(1<<uint(count-1)) * time.Second
+	if backoff > 30*time.Second {
+		backoff = 30 * time.Second
+	}
+	log.Printf("[mcp-watchdog] Restarting '%s' in %s...", wd.serverName, backoff)
 
 	select {
 	case <-wd.stopCh:
-		// Normal shutdown requested
 		return
-
-	case err := <-done:
-		// Process terminated unexpectedly
-		wd.mu.Lock()
-		wd.lastCrash = time.Now()
-		wd.restartCount++
-		count := wd.restartCount
-		wd.mu.Unlock()
-
-		log.Printf("[mcp-watchdog] Server '%s' crashed (exit: %v). Attempt %d/%d",
-			wd.serverName, err, count, wd.maxRestarts)
-
-		// Mark server dead
-		mcpServersMu.Lock()
-		if s, ok := mcpServers[wd.serverName]; ok {
-			s.alive = false
-		}
-		mcpServersMu.Unlock()
-
-		if count > wd.maxRestarts {
-			log.Printf("[mcp-watchdog] Server '%s' exceeded max restarts. Disabling watchdog.", wd.serverName)
-			return
-		}
-
-		// Exponential backoff: 1s, 2s, 4s, 8s... cap 30s
-		backoff := time.Duration(1<<uint(count-1)) * time.Second
-		if backoff > 30*time.Second {
-			backoff = 30 * time.Second
-		}
-		log.Printf("[mcp-watchdog] Restarting '%s' in %s...", wd.serverName, backoff)
-
-		select {
-		case <-wd.stopCh:
-			return
-		case <-time.After(backoff):
-		}
-
-		// Attempt restart
-		cfg, err := LoadMCPConfig()
-		if err != nil {
-			log.Printf("[mcp-watchdog] Config reload error: %v", err)
-			return
-		}
-
-		serverCfg, exists := cfg.MCPServers[wd.serverName]
-		if !exists {
-			log.Printf("[mcp-watchdog] Server '%s' no longer in config.", wd.serverName)
-			return
-		}
-
-		newSrv, err := startMCPServer(wd.serverName, serverCfg)
-		if err != nil {
-			log.Printf("[mcp-watchdog] Failed to restart '%s': %v", wd.serverName, err)
-			// Trigger next retry
-			go wd.monitor(&MCPServer{Name: wd.serverName})
-			return
-		}
-
-		mcpServersMu.Lock()
-		mcpServers[wd.serverName] = newSrv
-		mcpServersMu.Unlock()
-
-		// Re-register tools
-		registerMCPToolsAsNative()
-		log.Printf("[mcp-watchdog] Server '%s' successfully recovered and running!", wd.serverName)
-
-		// Continue monitoring new process
-		RegisterWatchdog(wd.serverName, newSrv)
+	case <-time.After(backoff):
 	}
+
+	wd.mu.Lock()
+	stopped = wd.stopped
+	wd.mu.Unlock()
+	if stopped || srv.wasClosed() {
+		return
+	}
+
+	// Attempt restart
+	cfg, err := LoadMCPConfig()
+	if err != nil {
+		log.Printf("[mcp-watchdog] Config reload error: %v", err)
+		return
+	}
+
+	serverCfg, exists := cfg.MCPServers[wd.serverName]
+	if !exists {
+		log.Printf("[mcp-watchdog] Server '%s' no longer in config.", wd.serverName)
+		wd.mu.Lock()
+		wd.stopped = true
+		wd.mu.Unlock()
+		return
+	}
+
+	newSrv, err := startMCPServer(wd.serverName, serverCfg)
+	if err != nil {
+		log.Printf("[mcp-watchdog] Failed to restart '%s': %v", wd.serverName, err)
+		// Trigger next retry — stay the current monitor so the counter
+		// keeps incrementing toward maxRestarts.
+		go wd.monitor(srv)
+		return
+	}
+
+	mcpServersMu.Lock()
+	mcpServers[wd.serverName] = newSrv
+	mcpServersMu.Unlock()
+
+	// Re-register tools
+	registerMCPToolsAsNative()
+	log.Printf("[mcp-watchdog] Server '%s' successfully recovered and running!", wd.serverName)
+
+	// Hand monitoring to a fresh run bound to the new process. This reuses
+	// this watchdog (counter persists) and supersedes THIS run.
+	RegisterWatchdog(wd.serverName, newSrv)
 }
 
 // RestartServer manually forces an MCP server restart

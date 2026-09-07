@@ -89,7 +89,11 @@ func CheckServerContracts() []string {
 	path := contractFile()
 	stored := map[string]ServerContract{}
 	if data, err := os.ReadFile(path); err == nil {
-		_ = json.Unmarshal(data, &stored)
+		if err := json.Unmarshal(data, &stored); err != nil {
+			// Re-baselining below rewrites the file — leave a log trail so
+			// post-mortem can tell corruption from a legitimate change.
+			log.Printf("[mcp-watch] contract file %s invalid (%v) — re-baselining from live registry", path, err)
+		}
 	}
 
 	names := make([]string, 0, len(snap))

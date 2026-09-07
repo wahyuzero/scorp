@@ -52,9 +52,18 @@ func SummarizeOldToolResult(toolName, content string) string {
 		return stubFallback
 	}
 
+	prefix := fmt.Sprintf("%s ...[%d chars trimmed]", firstLine, len(content))
 	summary := strings.TrimSpace(reply)
 	if len(summary) > 180 {
 		summary = summary[:180] + "..."
 	}
-	return fmt.Sprintf("%s ...[%d chars trimmed]\n%s", firstLine, len(content), summary)
+	// The stub exists to shrink history: whatever the model replies, the
+	// TOTAL stub stays ≤200 chars (pinned by TestPrune_VeryOldToolResult_StubOnly).
+	// Before this cap a live model reply pushed the stub to 232+ chars.
+	if budget := 197 - len(prefix); budget <= 0 {
+		return prefix
+	} else if len(summary) > budget {
+		summary = summary[:budget]
+	}
+	return prefix + "\n" + summary
 }

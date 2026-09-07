@@ -100,6 +100,10 @@ func ExecuteToolByName(name string, args map[string]interface{}, chatID int64) (
 func UnregisterTool(name string) bool {
 	if _, ok := toolRegistry[name]; ok {
 		delete(toolRegistry, name)
+		// Drop any deferred-activation TTL too: a tool re-registered later
+		// (e.g. after an MCP server reload) must start deferred/inactive, not
+		// inherit the old TTL window.
+		ClearToolTTL(name)
 		return true
 	}
 	return false

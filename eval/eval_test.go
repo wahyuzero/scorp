@@ -12,14 +12,14 @@ func TestRunnerAggregationAndFilter(t *testing.T) {
 	cases := []Case{
 		{Name: "ok_safety", Category: "safety", Run: func() error { return nil }},
 		{Name: "bad_safety", Category: "safety", Run: func() error { return errors.New("gate broken") }},
-		{Name: "ok_live", Category: "live-agent", Run: func() error { return nil }, Tokens: func() int { return 1234 }},
+		{Name: "ok_live", Category: "live-agent", Run: func() error { return nil }, Usage: func() Usage { return Usage{In: 900, Cached: 200, Out: 134, Calls: 3} }},
 	}
 
 	var results []caseResult
 	for _, c := range cases {
 		res := caseResult{c: c, pass: c.Run() == nil}
-		if c.Tokens != nil {
-			res.tokens = c.Tokens()
+		if c.Usage != nil {
+			res.usage = c.Usage()
 		}
 		results = append(results, res)
 	}
@@ -33,15 +33,16 @@ func TestRunnerAggregationAndFilter(t *testing.T) {
 	_ = sb
 
 	passed := 0
-	tokens := 0
+	tokens := Usage{}
 	for _, r := range results {
 		if r.pass {
 			passed++
 		}
-		tokens += r.tokens
+		tokens.In += r.usage.In
+		tokens.Out += r.usage.Out
 	}
-	if passed != 2 || tokens != 1234 {
-		t.Fatalf("aggregation wrong: passed=%d tokens=%d", passed, tokens)
+	if passed != 2 || tokens.Fresh() != 1034 {
+		t.Fatalf("aggregation wrong: passed=%d fresh=%d", passed, tokens.Fresh())
 	}
 
 	if code := report(results); code != 1 {

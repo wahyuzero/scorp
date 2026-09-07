@@ -814,6 +814,16 @@ func HandleTelegramAction(action string, chatID int64, messageID int64, callback
 			return
 		}
 
+		// Pending dangerous-command confirmation: starting a new task now
+		// would either clobber the pending entry (StorePendingConfirmation
+		// replaces per chat) or push the model into re-running the old
+		// command — both observed when messages arrived mid-confirmation.
+		// Force an explicit yes/no first; the pending expires after 5 min.
+		if agent.HasPendingConfirmation(chatIDStr) || agent.HasPendingConfirmation(activeSess) {
+			SendMessage("⚠️ <b>Confirmation pending</b> — reply <code>/confirm_yes</code> or <code>/confirm_no</code> first (auto-expires after 5 minutes).", nil)
+			return
+		}
+
 		// Check if session is in agent mode, default to agent loop using current active session!
 		agent.EnterAgentMode(activeSess)
 		go agent.RunAgentSessionLoop(activeSess, chatID, action, 0)

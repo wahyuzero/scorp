@@ -26,11 +26,29 @@ import (
 
 // Case is one evaluation unit. Run returns an error on failure; the message
 // should state WHAT was independently verified, not just what broke.
+// Usage is the per-task token consumption breakdown captured from
+// model_usage.json deltas. cached is DISJOINT from In (cache reads are
+// billed and processed separately from fresh input), so the honest cost
+// picture is Fresh = In + Out, with Cached reported alongside — the old
+// single "tokens" number conflated cheap cache reads with fresh input.
+type Usage struct {
+	In     int // fresh (uncached) input tokens
+	Cached int // cache-read input tokens
+	Out    int // output tokens
+	Calls  int // model calls
+}
+
+// Fresh is the billable-attention volume: uncached input + output.
+func (u Usage) Fresh() int { return u.In + u.Out }
+
+// Total is every token the models processed for the task.
+func (u Usage) Total() int { return u.In + u.Cached + u.Out }
+
 type Case struct {
 	Name     string
 	Category string
 	Run      func() error
-	Tokens   func() int // optional: model tokens consumed (live cases)
+	Usage    func() Usage // optional: model usage delta (live cases)
 }
 
 type caseResult struct {
@@ -38,7 +56,7 @@ type caseResult struct {
 	pass     bool
 	err      error
 	duration time.Duration
-	tokens   int // live cases only: model tokens consumed by the task
+	usage    Usage // live cases only: model usage delta for the task
 }
 
 // Run executes the suite and returns the process exit code.
@@ -87,11 +105,18 @@ func Run(args []string) int {
 		}()
 		res.duration = time.Since(start)
 		res.pass = res.err == nil
-		if c.Tokens != nil {
-			res.tokens = c.Tokens()
+		if c.Usage != nil {
+			res.usage = c.Usage()
 		}
 		if res.pass {
-			fmt.Printf("✅ PASS (%s)\n", res.duration.Round(time.Millisecond))
+			if c.Usage != nil {
+				fmt.Printf("✅ PASS (%s) · in %s (cached %s) out %s · %d calls\n",
+					res.duration.Round(time.Millisecond),
+					humanCount(res.usage.In), humanCount(res.usage.Cached),
+					humanCount(res.usage.Out), res.usage.Calls)
+			} else {
+				fmt.Printf("✅ PASS (%s)\n", res.duration.Round(time.Millisecond))
+			}
 		} else {
 			fmt.Printf("❌ FAIL — %v\n", res.err)
 		}
@@ -106,7 +131,8 @@ func report(results []caseResult) int {
 	passed := 0
 	byCat := map[string][2]int{} // cat -> {passed, total}
 	catOrder := []string{}
-	var liveTokens, liveCount int
+	var liveUsage Usage
+	liveCount := 0
 
 	for _, r := range results {
 		cat := r.c.Category
@@ -121,7 +147,10 @@ func report(results []caseResult) int {
 		slot[1]++
 		byCat[cat] = slot
 		if strings.HasPrefix(cat, "live") {
-			liveTokens += r.tokens
+			liveUsage.In += r.usage.In
+			liveUsage.Cached += r.usage.Cached
+			liveUsage.Out += r.usage.Out
+			liveUsage.Calls += r.usage.Calls
 			liveCount++
 		}
 	}
@@ -136,11 +165,13 @@ func report(results []caseResult) int {
 	}
 	fmt.Printf("\nTOTAL: %d/%d passed (%d%%)", passed, len(results), pct)
 	if liveCount > 0 {
-		avg := 0
-		if liveCount > 0 {
-			avg = liveTokens / liveCount
-		}
-		fmt.Printf(" · tokens/task ≈ %d (%d live tasks)", avg, liveCount)
+		avgFresh := (liveUsage.Fresh()) / liveCount
+		avgCached := liveUsage.Cached / liveCount
+		avgCalls := liveUsage.Calls / liveCount
+		fmt.Printf(" · tokens/task ≈ %s fresh (in %s + out %s) + %s cached · %d calls/task (%d live tasks)",
+			humanCount(avgFresh),
+			humanCount(liveUsage.In/liveCount), humanCount(liveUsage.Out/liveCount),
+			humanCount(avgCached), avgCalls, liveCount)
 	}
 	fmt.Println()
 
@@ -162,4 +193,16 @@ func liveLabel(live bool) string {
 // evalSandboxDir creates a unique working directory for one live case.
 func evalSandboxDir(tag string) (string, error) {
 	return os.MkdirTemp("", "scorp-eval-"+tag+"-")
+}
+
+// humanCount renders counts with k/M suffixes for compact report lines.
+func humanCount(n int) string {
+	switch {
+	case n >= 1_000_000:
+		return fmt.Sprintf("%.1fM", float64(n)/1_000_000)
+	case n >= 1_000:
+		return fmt.Sprintf("%.1fk", float64(n)/1_000)
+	default:
+		return fmt.Sprintf("%d", n)
+	}
 }

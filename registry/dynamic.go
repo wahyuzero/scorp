@@ -112,3 +112,14 @@ func ResetDynamicTools() {
 	dynamicTTL = make(map[string]int)
 	ResetNativeToolCache()
 }
+
+// ClearToolTTL drops the deferred-activation TTL for a single tool. Called
+// from UnregisterTool so a re-registered tool starts deferred again.
+func ClearToolTTL(name string) {
+	dynamicTTLMu.Lock()
+	defer dynamicTTLMu.Unlock()
+	if _, ok := dynamicTTL[name]; ok {
+		delete(dynamicTTL, name)
+		ResetNativeToolCache()
+	}
+}

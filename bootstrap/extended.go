@@ -6,6 +6,7 @@ import (
 	"scorp-agent/mcp"
 	"scorp-agent/rag"
 	"scorp-agent/registry"
+	"scorp-agent/scheduler"
 	"scorp-agent/session"
 	"scorp-agent/skills"
 	"scorp-agent/tools"
@@ -13,6 +14,30 @@ import (
 
 // init() — register remaining tools (web, git, docker, mcp, vision, browser)
 func init() {
+	// ── Scheduled tasks (cron) ──
+	// The scheduler CRUD (scheduler.ExecuteSchedule) existed but was never
+	// registered as a tool — the only way to create a task was hand-editing
+	// scheduler.json. This exposes add/list/del/pause/resume/run to the agent.
+	registry.RegisterTool(registry.ToolDef{
+		Name:        "schedule_manage",
+		Description: "Manage scheduled cron tasks: add, list, remove (del), pause, resume, or run recurring jobs. Schedules accept natural syntax like 'every 30m'/'every 2h' or a 5-field cron expression like '0 9 * * *'.",
+		Category:    "automation",
+		Native:      true,
+		Execute: func(args map[string]interface{}, chatID int64) (string, bool) {
+			return scheduler.ExecuteSchedule(args)
+		},
+		Arguments: map[string]registry.ArgDef{
+			"action": {Type: "string", Required: true, Description: "Action: add, list, delete, pause, resume, run",
+				Enum: []string{"add", "list", "delete", "pause", "resume", "run"}},
+			"name":     {Type: "string", Description: "Task name (add)"},
+			"type":     {Type: "string", Description: "Task type: agent, shell, or script (add; default agent)", Enum: []string{"agent", "shell", "script"}},
+			"schedule": {Type: "string", Description: "Schedule: 'every 30m', 'every 1h' or 5-field cron '0 9 * * *' (add)"},
+			"task":     {Type: "string", Description: "The prompt (agent type) or shell command (shell type) to execute (add)"},
+			"id":       {Type: "string", Description: "Task id, e.g. 't1' (delete/pause/resume/run)"},
+			"timeout":  {Type: "integer", Description: "Shell timeout in seconds, max 600 (add; default 30)"},
+		},
+	})
+
 	// ── Web (Ultra-Low-RAM Web Engine) ──
 	registry.RegisterTool(registry.ToolDef{
 		Name:        "read_url",

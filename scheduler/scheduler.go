@@ -187,6 +187,12 @@ func GetTask(id string) *ScheduledTask {
 // ──────────────────────────────────────────────
 
 // Loop starts the scheduler loop, runs until done is closed
+// runningTasks tracks in-flight task IDs (guarded by scheduledTasksMu) so a
+// slow task is never dispatched twice concurrently. Without this, a 150s task
+// on an "every 2m" schedule fired on EVERY 30s tick — NextRun was only
+// advanced at completion, so the task stayed "due" the whole time it ran.
+var runningTasks = map[string]bool{}
+
 func Loop(done <-chan struct{}) {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
@@ -197,20 +203,41 @@ func Loop(done <-chan struct{}) {
 			log.Println("[scheduler] Stopping")
 			return
 		case now := <-ticker.C:
-			scheduledTasksMu.Lock()
-			var dueTasks []ScheduledTask
-			for i := range scheduledTasks {
-				if scheduledTasks[i].Enabled && !scheduledTasks[i].NextRun.IsZero() && now.After(scheduledTasks[i].NextRun) {
-					dueTasks = append(dueTasks, scheduledTasks[i])
-				}
-			}
-			scheduledTasksMu.Unlock()
-
-			for _, task := range dueTasks {
+			for _, task := range dispatchDueTasks(now) {
 				go RunTask(task)
 			}
 		}
 	}
+}
+
+// dispatchDueTasks claims and returns every task due at `now`. Claiming sets
+// the in-flight guard and advances NextRun immediately, so a long-running
+// task is never re-dispatched on subsequent ticks (previously a 150s task on
+// an "every 2m" schedule fired on EVERY 30s tick — six concurrent runs in
+// three minutes).
+func dispatchDueTasks(now time.Time) []ScheduledTask {
+	scheduledTasksMu.Lock()
+	defer scheduledTasksMu.Unlock()
+
+	var dueTasks []ScheduledTask
+	for i := range scheduledTasks {
+		t := &scheduledTasks[i]
+		if t.Enabled && !t.NextRun.IsZero() && now.After(t.NextRun) && !runningTasks[t.ID] {
+			runningTasks[t.ID] = true
+			// Anchor the cadence to the due time even while a run is still
+			// in flight.
+			if next, err := NextRunTime(t.Schedule, now); err == nil {
+				t.NextRun = next
+			} else {
+				// Broken schedule: park it far out instead of hot-looping
+				// every tick.
+				t.NextRun = now.Add(time.Hour)
+			}
+			dueTasks = append(dueTasks, *t)
+		}
+	}
+	saveTasks()
+	return dueTasks
 }
 
 // RunTask executes a scheduled task with retry logic
@@ -253,6 +280,7 @@ func RunTask(task ScheduledTask) {
 
 	// Update task state
 	scheduledTasksMu.Lock()
+	delete(runningTasks, task.ID)
 	for i := range scheduledTasks {
 		if scheduledTasks[i].ID == task.ID {
 			scheduledTasks[i].LastRun = time.Now()
@@ -273,10 +301,9 @@ func RunTask(task ScheduledTask) {
 				scheduledTasks[i].PrevResult = chainResult
 			}
 
-			next, err := NextRunTime(task.Schedule, time.Now())
-			if err == nil {
-				scheduledTasks[i].NextRun = next
-			}
+			// NextRun was already advanced at dispatch time (see Loop) —
+			// re-computing it here from completion time is unnecessary and
+			// would double-shift the cadence.
 			break
 		}
 	}

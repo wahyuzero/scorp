@@ -199,6 +199,19 @@ func ExecuteTool(tc ToolCall, chatID int64) (string, bool) {
 		}
 	}
 
+	// 3.9 Loop/human-approved auto decisions authorize the exec-layer danger
+	// gate for shell: the classifier (or the human on the auto-ask path) has
+	// already approved THIS exact call, and re-prompting inside ExecuteShell
+	// would make SCORP_AUTO_ALLOW unreachable end-to-end. AutoDecision is
+	// preset by the loop/resume code only (json:"-" — a model cannot forge
+	// it), and deterministic denies never reach this point.
+	if config.GetAutonomyLevel() == config.AutonomyAuto && tc.AutoDecision != "" && tc.Name == "shell" {
+		if tc.Args == nil {
+			tc.Args = make(map[string]interface{})
+		}
+		tc.Args["confirmed"] = true
+	}
+
 	hookCtx, hookBlocked, hookReason := tools.RunPreToolUseHooks(tc.Name, tc.Args, chatID)
 	if hookBlocked {
 		return "🪝 " + hookReason, false

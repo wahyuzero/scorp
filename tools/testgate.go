@@ -224,3 +224,307 @@ func HasGreenTestRun() bool {
 	}
 	return false
 }
+
+// ──────────────────────────────────────────────
+// Operational Claim Gate (P4.16b)
+//
+// Extends the anti-fabrication contract beyond test claims: a final report
+// that asserts an operation HAPPENED ("Task t1 deleted", "file /tmp/x was
+// removed", "service restarted") must be backed by a matching SUCCESSFUL
+// receipt inside the current task window. Real-world evidence for this gate:
+// an agent reported "Task t1 deleted" while the artifact showed the task
+// still running 33 more times — the artifact disagreed with the claim.
+//
+// The gate is deliberately conservative:
+//   - only confident past-tense success verbs (delete/create/lifecycle
+//     classes, EN+ID);
+//   - only claims naming a CONCRETE object (path, quoted/backticked name,
+//     filename, or scheduler-style ID) — unverifiable vague claims
+//     ("the report was made") are skipped, not nudged;
+//   - verification = the object appears in a SUCCESSFUL receipt whose tool
+//     or command matches the verb class. A failed or read-only receipt does
+//     not verify a mutation claim.
+// ──────────────────────────────────────────────
+
+// OperationalClaim is one detected claim with its verification class.
+type OperationalClaim struct {
+	Class    string // "delete" | "create" | "lifecycle"
+	Verb     string // the matched verb text
+	Object   string // the concrete object the claim is about
+	Sentence string // trimmed sentence containing the claim
+}
+
+var opClaimVerbClasses = []struct {
+	re    *regexp.Regexp
+	class string
+}{
+	// delete: EN + ID past-tense/present-perfect destruction verbs
+	{regexp.MustCompile(`(?i)\b(was |were |has been |have been |sudah |telah |berhasil )?(deleted|removed|uninstalled|dihapus|terhapus|sudah dihapus|sudah di-uninstall)\b`), "delete"},
+	// create: successful mutations
+	{regexp.MustCompile(`(?i)\b(was |were |has been |have been |sudah |telah |berhasil )?(created|written|deployed|installed|dibuat|tercipta|tertulis|terpasang|terdeploy)\b`), "create"},
+	// lifecycle: service/process state transitions
+	{regexp.MustCompile(`(?i)\b(was |were |has been |have been |sudah |telah |berhasil )?(restarted|stopped|reloaded|enabled|disabled|killed|dihidupkan|dimatikan|direstart|dihentikan|diaktifkan|dinonaktifkan)\b`), "lifecycle"},
+	// fixed: repair claims
+	{regexp.MustCompile(`(?i)\b(has been |was |sudah |telah |berhasil )?(fixed|repaired|patched|diperbaiki|terperbaiki|sudah diperbaiki)\b`), "lifecycle"},
+}
+
+var opObjectPatterns = []*regexp.Regexp{
+	regexp.MustCompile("`[^`]{1,120}`"),       // backticked
+	regexp.MustCompile(`"[^"]{1,120}"`),       // double-quoted
+	regexp.MustCompile(`'[^\']{1,120}'`),      // single-quoted
+	regexp.MustCompile(`(?:/[\w.\-@+]+){1,}`), // paths
+	regexp.MustCompile(`\b[\w.\-]+\.(?:txt|json|log|db|go|py|sh|ya?ml|md|html|csv|conf|ini|service|bin|tar|gz|zip)\b`), // filenames
+	regexp.MustCompile(`\bt\d+\b`), // scheduler-style IDs
+}
+
+// opObjectCapturePatterns extract the object from "service <name>"-style
+// phrases where the object is a bare word the generic patterns cannot see.
+var opObjectCapturePatterns = []*regexp.Regexp{
+	regexp.MustCompile(`(?i)\b(?:service|container|daemon|server|unit|process|job|cron task|task|database|db)\s+([\w.\-]{2,64})`),
+}
+
+var opObjectStopwords = map[string]bool{
+	"was": true, "were": true, "has": true, "have": true, "been": true,
+	"the": true, "a": true, "an": true, "it": true, "this": true, "that": true,
+}
+
+// opVerbWords excludes verb forms caught by the capture patterns —
+// "Task created: ID t1" must not yield "created" as an object.
+var opVerbWords = map[string]bool{
+	"created": true, "deleted": true, "removed": true, "written": true,
+	"deployed": true, "installed": true, "uninstalled": true, "restarted": true,
+	"stopped": true, "reloaded": true, "enabled": true, "disabled": true,
+	"killed": true, "fixed": true, "repaired": true, "patched": true,
+	"running": true, "complete": true, "completed": true, "done": true,
+	"ok": true, "success": true, "successful": true, "added": true,
+	"dihapus": true, "terhapus": true, "dibuat": true, "tercipta": true,
+	"direstart": true, "dihentikan": true, "diaktifkan": true,
+	"dinonaktifkan": true, "diperbaiki": true, "terdeploy": true,
+	"terpasang": true, "tertulis": true, "berhasil": true,
+}
+
+// dedupeOpObjects drops objects fully contained in a longer extracted object
+// ("/tmp/a/c14v3-runs.txt" and "c14v3-runs.txt" are the same claim) and
+// verb-shaped words. The longest object wins.
+func dedupeOpObjects(objects []string) []string {
+	var out []string
+	for _, obj := range objects {
+		lower := strings.ToLower(obj)
+		if opVerbWords[lower] {
+			continue
+		}
+		contained := false
+		for _, kept := range out {
+			if strings.Contains(strings.ToLower(kept), lower) {
+				contained = true
+				break
+			}
+		}
+		if !contained {
+			out = append(out, obj)
+		}
+	}
+	return out
+}
+
+// extractOpObjects pulls concrete, verifiable object tokens out of a
+// sentence. Order of patterns matters: richer tokens (paths, quoted) first.
+func extractOpObjects(sentence string) []string {
+	seen := map[string]bool{}
+	var objects []string
+	for _, re := range opObjectPatterns {
+		for _, m := range re.FindAllString(sentence, -1) {
+			obj := strings.Trim(m, "`\"'")
+			obj = strings.TrimSpace(obj)
+			lower := strings.ToLower(obj)
+			if obj == "" || len(obj) < 2 || opObjectStopwords[lower] || seen[lower] {
+				continue
+			}
+			seen[lower] = true
+			objects = append(objects, obj)
+			if len(objects) >= 3 {
+				return objects
+			}
+		}
+	}
+	for _, re := range opObjectCapturePatterns {
+		for _, m := range re.FindAllStringSubmatch(sentence, -1) {
+			if len(m) < 2 {
+				continue
+			}
+			obj := strings.TrimSpace(m[1])
+			lower := strings.ToLower(obj)
+			if obj == "" || len(obj) < 2 || opObjectStopwords[lower] || seen[lower] {
+				continue
+			}
+			seen[lower] = true
+			objects = append(objects, obj)
+			if len(objects) >= 3 {
+				return objects
+			}
+		}
+	}
+	return objects
+}
+
+// claimSentenceSplit: sentence boundaries are punctuation FOLLOWED BY
+// whitespace or a newline — a bare FieldsFunc('.') split would tear
+// "runs.txt was deleted" apart at the dot inside the filename and lose the
+// claim.
+var claimSentenceSplit = regexp.MustCompile(`(?:[.!?;]+\s+|\n+)`)
+
+func splitClaimSentences(text string) []string {
+	parts := claimSentenceSplit.Split(text, -1)
+	out := make([]string, 0, len(parts))
+	for _, s := range parts {
+		if s = strings.TrimSpace(s); s != "" {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
+// LooksLikeOperationalClaims detects operational claims with concrete objects.
+func LooksLikeOperationalClaims(text string) []OperationalClaim {
+	var claims []OperationalClaim
+	for _, sentence := range splitClaimSentences(text) {
+		for _, vc := range opClaimVerbClasses {
+			loc := vc.re.FindStringIndex(sentence)
+			if loc == nil {
+				continue
+			}
+			verb := strings.TrimSpace(sentence[loc[0]:loc[1]])
+			objects := dedupeOpObjects(extractOpObjects(sentence))
+			if len(objects) == 0 {
+				continue // vague claim — nothing verifiable, no nudge
+			}
+			for _, obj := range objects {
+				claims = append(claims, OperationalClaim{
+					Class: vc.class, Verb: verb, Object: obj, Sentence: sentence,
+				})
+			}
+			break // one class per sentence
+		}
+		if len(claims) >= 6 {
+			break // bound the nudge text
+		}
+	}
+	return claims
+}
+
+// opReceiptMatchesClass reports whether a receipt's tool or command is
+// consistent with the claimed verb class.
+func opReceiptMatchesClass(class, tool, cmd, action, query string) bool {
+	lowerTool := strings.ToLower(tool)
+	lowerCmd := strings.ToLower(cmd)
+	lowerAction := strings.ToLower(action)
+	lowerQuery := strings.ToLower(query)
+	switch class {
+	case "delete":
+		if strings.Contains(lowerAction, "delet") || strings.Contains(lowerAction, "remov") {
+			return true
+		}
+		if strings.Contains(lowerTool, "delet") || strings.Contains(lowerTool, "remov") || strings.Contains(lowerTool, "uninstall") {
+			return true
+		}
+		for _, m := range []string{"rm ", "rm -", "unlink", "rmdir"} {
+			if strings.Contains(lowerCmd, m) {
+				return true
+			}
+		}
+		for _, m := range []string{"delete from", "drop table", "drop index"} {
+			if strings.Contains(lowerQuery, m) {
+				return true
+			}
+		}
+	case "create":
+		if strings.Contains(lowerAction, "add") || strings.Contains(lowerAction, "creat") {
+			return true
+		}
+		if strings.Contains(lowerTool, "writ") || strings.Contains(lowerTool, "creat") || strings.Contains(lowerTool, "patch") || strings.Contains(lowerTool, "edit") || strings.Contains(lowerTool, "install") {
+			return true
+		}
+		for _, m := range []string{"touch ", "mkdir", ">", ">>", "tee ", "cp ", "mv ", "install"} {
+			if strings.Contains(lowerCmd, m) {
+				return true
+			}
+		}
+		for _, m := range []string{"insert into", "create table", "create index"} {
+			if strings.Contains(lowerQuery, m) {
+				return true
+			}
+		}
+	case "lifecycle":
+		if strings.Contains(lowerAction, "pause") || strings.Contains(lowerAction, "resume") || strings.Contains(lowerAction, "enable") || strings.Contains(lowerAction, "disable") || strings.Contains(lowerAction, "run") {
+			return true
+		}
+		for _, m := range []string{"systemctl", "service ", "kill ", "pkill", "start", "stop", "restart", "reload", "deploy"} {
+			if strings.Contains(lowerCmd, m) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// opObjectInReceipt checks whether the claimed object appears anywhere in the
+// receipt's plaintext meta facts (cmd, path, action, id, name, query, url).
+func opObjectInReceipt(obj string, meta map[string]string) bool {
+	if obj == "" {
+		return false
+	}
+	lowerObj := strings.ToLower(obj)
+	for _, v := range meta {
+		if v == "" {
+			continue
+		}
+		if strings.Contains(strings.ToLower(v), lowerObj) {
+			return true
+		}
+	}
+	return false
+}
+
+// UnverifiedOperationalClaims returns the detected claims that have NO
+// matching successful receipt in the current task window. Empty result =
+// every operational claim is receipt-backed (or nothing was claimed).
+func UnverifiedOperationalClaims(text string) []OperationalClaim {
+	claims := LooksLikeOperationalClaims(text)
+	if len(claims) == 0 {
+		return nil
+	}
+
+	type snapshot struct {
+		tool    string
+		success bool
+		meta    map[string]string
+	}
+	var window []snapshot
+	for _, r := range GetRecentReceipts() {
+		if !testGateBoundary.IsZero() && r.Timestamp.Before(testGateBoundary) {
+			continue
+		}
+		window = append(window, snapshot{tool: r.Tool, success: r.Success, meta: r.Meta})
+	}
+
+	var unverified []OperationalClaim
+	for _, claim := range claims {
+		backed := false
+		for _, r := range window {
+			if !r.success {
+				continue // a failed attempt does not verify a success claim
+			}
+			action := r.meta["action"]
+			cmd := r.meta["cmd"]
+			query := r.meta["query"]
+			if opObjectInReceipt(claim.Object, r.meta) && opReceiptMatchesClass(claim.Class, r.tool, cmd, action, query) {
+				backed = true
+				break
+			}
+		}
+		if !backed {
+			unverified = append(unverified, claim)
+		}
+	}
+	return unverified
+}

@@ -51,6 +51,10 @@ fi
 step "1/6 rsync source → $HOST:$REMOTE_DIR"
 rsync -az --delete --exclude .git --exclude .env --exclude 'scorp' --exclude '*.log' \
   -e ssh ./ "$HOST:$REMOTE_DIR/" || die "rsync failed"
+# Purge any stale .git on the receiver: --delete does not remove
+# excluded dirs, so leftovers from a manual git clone/pull would sit there
+# forever and risk mixing rsync state with git state.
+ssh "$HOST" "rm -rf $REMOTE_DIR/.git" || true
 ok "source synced (no .env, no .git)"
 
 # ── 2. Build on the VPS ───────────────────────────────────────────────
@@ -104,4 +108,10 @@ ok "service active"
 step "6/6 smoke"
 ssh "$HOST" "$BIN version 2>/dev/null || $BIN --version 2>/dev/null || echo '(no version cmd)'" || true
 
-printf '\n\033[1;32m✅ DEPLOY COMPLETE — %s running %s (md5 %s), eval gate passed.\033[0m\n' "$SVC" "$BIN" "$CAND_MD5"
+if [ "${SCORP_DEPLOY_SKIP_EVAL:-0}" = "1" ]; then
+  EVAL_NOTE="🚨 EVAL GATE BYPASSED (SCORP_DEPLOY_SKIP_EVAL=1)"
+else
+  EVAL_NOTE="eval gate passed"
+fi
+
+printf '\n\033[1;32m✅ DEPLOY COMPLETE — %s running %s (md5 %s), %s.\033[0m\n' "$SVC" "$BIN" "$CAND_MD5" "$EVAL_NOTE"

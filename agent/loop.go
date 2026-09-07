@@ -215,6 +215,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 	completeTaskGateNudged := false
 	testGateNudged := false
 	claimGateNudged := false
+	opClaimGateNudged := false
 	autoResumes := 0      // Task Ledger auto-resume budget (see maxAutoResumes)
 	lastFullThought := "" // full text of the last non-empty thought-only reply
 	recentToolSignatures := make(map[string]int)
@@ -391,6 +392,31 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 				claimGateAdvisory = "\n\n⚠️ <i>Advisory: this report claims tests pass, but no test-suite run was recorded this task. The claim is NOT receipt-backed.</i>"
 			}
 
+			// Operational claim gate (P4.16b): deletion/creation/lifecycle
+			// claims naming a concrete object must have a matching SUCCESSFUL
+			// receipt in this task window (e.g. "Task t1 deleted" requires a
+			// delete receipt mentioning t1). Real-world failure mode: an
+			// agent reported a task deleted while the artifact showed it
+			// still running.
+			opClaimAdvisory := ""
+			if unverifiedClaims := tools.UnverifiedOperationalClaims(reply + "\n" + explicitFinalResult); len(unverifiedClaims) > 0 {
+				if !opClaimGateNudged {
+					opClaimGateNudged = true
+					noToolRetries = 0
+					var listed []string
+					for _, c := range unverifiedClaims {
+						listed = append(listed, fmt.Sprintf("- [%s] %q (object: %s)", c.Class, c.Sentence, c.Object))
+					}
+					log.Printf("[agent] complete_task rejected — operational claims without matching receipts: %d", len(unverifiedClaims))
+					opNudge := "⚠️ COMPLETE_TASK REJECTED — your report asserts operations that have NO matching successful receipt in this task:\n" + strings.Join(listed, "\n") + "\nPerform the operation for real (and let its receipt record it), or restate the result accurately without claiming those operations succeeded. Claims must be backed by receipts."
+					history = append(history, AgentMessage{Role: "assistant", Content: reply})
+					history = append(history, AgentMessage{Role: "user", Content: opNudge})
+					thinkingLines = append(thinkingLines, "🛑 complete_task rejected: operational claims without receipts")
+					continue
+				}
+				opClaimAdvisory = "\n\n⚠️ <i>Advisory: the report contains operational claims without matching receipts (e.g. deletion/creation of specific objects). Those claims are NOT receipt-backed.</i>"
+			}
+
 			finalOutput := explicitFinalResult
 			if finalOutput == "" {
 				finalOutput = cleanToolCallTags(reply)
@@ -398,7 +424,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 			if finalOutput == "" {
 				finalOutput = "Task completed successfully."
 			}
-			finalOutput += testGateAdvisory + claimGateAdvisory
+			finalOutput += testGateAdvisory + claimGateAdvisory + opClaimAdvisory
 
 			history = append(history, AgentMessage{Role: "assistant", Content: reply})
 			appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: finalOutput})
@@ -721,6 +747,7 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 	noToolRetries := 0
 	testGateNudged := false
 	claimGateNudged := false
+	opClaimGateNudged := false
 	recentToolSignatures := make(map[string]int)
 
 	setLoopActive(chatIDStr, true)
@@ -820,11 +847,36 @@ func resumeAgentLoop(chatID int64, messages []AgentMessage, msgID int64) {
 				claimGateAdvisory = "\n\n⚠️ <i>Advisory: this report claims tests pass, but no test-suite run was recorded this task. The claim is NOT receipt-backed.</i>"
 			}
 
+			// Operational claim gate (P4.16b): deletion/creation/lifecycle
+			// claims naming a concrete object must have a matching SUCCESSFUL
+			// receipt in this task window (e.g. "Task t1 deleted" requires a
+			// delete receipt mentioning t1). Real-world failure mode: an
+			// agent reported a task deleted while the artifact showed it
+			// still running.
+			opClaimAdvisory := ""
+			if unverifiedClaims := tools.UnverifiedOperationalClaims(reply + "\n" + explicitFinalResult); len(unverifiedClaims) > 0 {
+				if !opClaimGateNudged {
+					opClaimGateNudged = true
+					noToolRetries = 0
+					var listed []string
+					for _, c := range unverifiedClaims {
+						listed = append(listed, fmt.Sprintf("- [%s] %q (object: %s)", c.Class, c.Sentence, c.Object))
+					}
+					log.Printf("[agent] complete_task rejected — operational claims without matching receipts: %d", len(unverifiedClaims))
+					opNudge := "⚠️ COMPLETE_TASK REJECTED — your report asserts operations that have NO matching successful receipt in this task:\n" + strings.Join(listed, "\n") + "\nPerform the operation for real (and let its receipt record it), or restate the result accurately without claiming those operations succeeded. Claims must be backed by receipts."
+					messages = append(messages, AgentMessage{Role: "assistant", Content: reply})
+					messages = append(messages, AgentMessage{Role: "user", Content: opNudge})
+					thinkingLines = append(thinkingLines, "🛑 complete_task rejected: operational claims without receipts")
+					continue
+				}
+				opClaimAdvisory = "\n\n⚠️ <i>Advisory: the report contains operational claims without matching receipts (e.g. deletion/creation of specific objects). Those claims are NOT receipt-backed.</i>"
+			}
+
 			finalOutput := explicitFinalResult
 			if finalOutput == "" {
 				finalOutput = cleanToolCallTags(reply)
 			}
-			finalOutput += testGateAdvisory + claimGateAdvisory
+			finalOutput += testGateAdvisory + claimGateAdvisory + opClaimAdvisory
 			messages = append(messages, AgentMessage{Role: "assistant", Content: reply})
 			appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: finalOutput})
 			sendScorpReply(chatID, msgID, finalOutput)
