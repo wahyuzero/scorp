@@ -161,6 +161,13 @@ func main() {
 			if strings.HasPrefix(arg, "--session=") {
 				continue
 			}
+			if (arg == "--model" || arg == "-m") && i+1 < len(os.Args) {
+				i++ // skip value
+				continue
+			}
+			if strings.HasPrefix(arg, "--model=") {
+				continue
+			}
 			promptArgs = append(promptArgs, arg)
 		}
 

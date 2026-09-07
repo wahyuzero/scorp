@@ -283,9 +283,6 @@ func CallModelStream(ctx context.Context, model *ModelConfig, messages []ChatMes
 	if model.Provider == "openrouter" {
 		req.Header.Set("HTTP-Referer", "https://scorp-agent.local")
 		req.Header.Set("X-Title", "ScorpAgent")
-	} else if model.Provider == "opencode" || model.Provider == "opencode-zen" {
-		req.Header.Set("User-Agent", "opencode/1.0.0")
-		req.Header.Set("x-opencode-session", "sess_scorp_cli")
 	}
 
 	client := GetAIClient(model.BaseURL)

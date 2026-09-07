@@ -314,7 +314,6 @@ func createCommandCodeRequest(ctx context.Context, apiKey string, payload *comma
 	req.Header.Set("x-cli-environment", "terminal")
 	req.Header.Set("x-taste-learning", "false")
 	req.Header.Set("x-session-id", "sess_scorp_cli")
-	req.Header.Set("x-opencode-session", "sess_scorp_cli")
 
 	return req, nil
 }

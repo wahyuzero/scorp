@@ -80,6 +80,15 @@ func startCLI(initialPrompts ...string) {
 		currentSessionID = envSess
 	}
 
+	// ── Model selection (--model <name> or -m <name>) ──
+	for i := 1; i < len(os.Args); i++ {
+		if (os.Args[i] == "--model" || os.Args[i] == "-m") && i+1 < len(os.Args) {
+			_ = models.SwitchActiveModel(os.Args[i+1])
+		} else if strings.HasPrefix(os.Args[i], "--model=") {
+			_ = models.SwitchActiveModel(strings.TrimPrefix(os.Args[i], "--model="))
+		}
+	}
+
 	chatIDStr := currentSessionID
 
 	// ── Acquire Exclusive Process Lock for Session to Prevent Runaway Collisions ──

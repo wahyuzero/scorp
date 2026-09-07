@@ -284,6 +284,9 @@ func ResolveAPIFormat(cfg *ModelConfig) string {
 	if cfg == nil {
 		return "openai"
 	}
+	if cfg.Provider == "opencode" || cfg.Provider == "opencode-zen" || cfg.Provider == "opencode-free" {
+		return "opencode"
+	}
 	if cfg.API != "" {
 		return cfg.API
 	}
