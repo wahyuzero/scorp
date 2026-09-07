@@ -225,6 +225,9 @@ func CallModelStream(ctx context.Context, model *ModelConfig, messages []ChatMes
 	if apiFormat == "command-code" || apiFormat == "commandcode" {
 		return CallCommandCodeStream(ctx, model, messages)
 	}
+	if apiFormat == "opencode" || apiFormat == "opencode-zen" || apiFormat == "opencode-free" {
+		return CallOpenCodeStream(ctx, model, messages)
+	}
 	if apiFormat != "openai" {
 		ch := make(chan StreamChunk, 2)
 		go func() {

@@ -42,14 +42,20 @@ var ProviderRegistry = map[string]ProviderPreset{
 	"opencode": {
 		KeyEnvs:     []string{"OPENCODE_API_KEY", "OPENCODE_ZEN_API_KEY"},
 		BaseURL:     "https://opencode.ai/zen/v1",
-		API:         "openai",
+		API:         "opencode",
 		DisplayName: "OpenCode Zen (Free AI Gateway)",
 	},
 	"opencode-zen": {
 		KeyEnvs:     []string{"OPENCODE_API_KEY", "OPENCODE_ZEN_API_KEY"},
 		BaseURL:     "https://opencode.ai/zen/v1",
-		API:         "openai",
+		API:         "opencode",
 		DisplayName: "OpenCode Zen (Free AI Gateway)",
+	},
+	"opencode-free": {
+		KeyEnvs:     []string{"OPENCODE_API_KEY", "OPENCODE_ZEN_API_KEY"},
+		BaseURL:     "https://opencode.ai/zen/v1",
+		API:         "opencode",
+		DisplayName: "OpenCode Zen Free",
 	},
 	"openai": {
 		KeyEnvs:     []string{"OPENAI_API_KEY"},
@@ -193,7 +199,7 @@ func ResolveAPIKey(cfg *ModelConfig) string {
 	}
 
 	// Tier 6: local auth fallback for opencode (~/.local/share/opencode/opencode.db)
-	if cfg.Provider == "opencode" || cfg.Provider == "opencode-zen" {
+	if cfg.Provider == "opencode" || cfg.Provider == "opencode-zen" || cfg.Provider == "opencode-free" {
 		if key := resolveOpenCodeKeyFromDisk(); key != "" {
 			return key
 		}
