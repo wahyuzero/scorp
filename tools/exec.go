@@ -133,15 +133,19 @@ func ExecuteShell(args map[string]interface{}, chatID int64) (string, bool) {
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
 	// Sanitize LD_PRELOAD for PRoot Linux environments inside Termux:
-	// Android Bionic libtermux-exec-ld-preload.so crashes glibc child processes with static TLS errors.
+	// When running inside a PRoot Linux distro (Debian, Ubuntu, Arch, etc.) on Android,
+	// Termux's Android Bionic libtermux-exec-ld-preload.so crashes glibc child processes with static TLS errors.
+	// Only strip when running inside a guest Linux rootfs (/etc/os-release exists) with Termux LD_PRELOAD present.
 	if lp := os.Getenv("LD_PRELOAD"); strings.Contains(lp, "libtermux-exec") {
-		var cleanEnv []string
-		for _, e := range os.Environ() {
-			if !strings.HasPrefix(e, "LD_PRELOAD=") {
-				cleanEnv = append(cleanEnv, e)
+		if isGuestLinuxRootfs() {
+			var cleanEnv []string
+			for _, e := range os.Environ() {
+				if !strings.HasPrefix(e, "LD_PRELOAD=") {
+					cleanEnv = append(cleanEnv, e)
+				}
 			}
+			cmd.Env = cleanEnv
 		}
-		cmd.Env = cleanEnv
 	}
 
 	var buf bytes.Buffer
@@ -426,4 +430,16 @@ func ExecuteSendFile(args map[string]interface{}, chatID int64) (string, bool) {
 	}
 
 	return fmt.Sprintf("File sent: %s (%d bytes)", filepath.Base(path), info.Size()), true
+}
+
+// isGuestLinuxRootfs detects if execution is occurring inside a guest Linux container (e.g. PRoot/Chroot)
+// on Android. Native Termux has no /etc/os-release or /etc/debian_version (only $PREFIX/etc).
+func isGuestLinuxRootfs() bool {
+	if _, err := os.Stat("/etc/os-release"); err == nil {
+		return true
+	}
+	if _, err := os.Stat("/etc/debian_version"); err == nil {
+		return true
+	}
+	return false
 }
