@@ -26,7 +26,7 @@ Resolved gaps: Real execution sandbox ✅ · Plan-mode workflow ✅ · Checkpoin
 
 ---
 
-## P0 — TRUST & SAFETY (Milestone v2.1)
+## P0 — TRUST & SAFETY
 *Highest priority: #1 community complaint is security/review burden; YOLO without sandbox is an "opt-in rootkit".*
 
 ### 1. Shell Execution Sandbox (Effort L, Impact H)
@@ -44,7 +44,7 @@ Resolved gaps: Real execution sandbox ✅ · Plan-mode workflow ✅ · Checkpoin
 
 ---
 
-## P1 — PLAN & CHECKPOINT (Milestone v2.2)
+## P1 — PLAN & CHECKPOINT
 *Priority: Plan mode is the #1 praised feature; checkpointing is #5; "state in files" is #1 consensus.*
 
 ### 4. Plan Mode Workflow (Effort M, Impact H)
@@ -63,7 +63,7 @@ Resolved gaps: Real execution sandbox ✅ · Plan-mode workflow ✅ · Checkpoin
 
 ---
 
-## P2 — TOKEN & CONTEXT ECONOMY (Milestone v2.3)
+## P2 — TOKEN & CONTEXT ECONOMY
 *Evidence: Harness overhead is the #2 complaint; Claude Code consumes 33k tokens before prompts vs. OpenCode's 7k.*
 
 ### 8. Subagent `delegate` (Effort L, Impact H)
@@ -81,7 +81,7 @@ Resolved gaps: Real execution sandbox ✅ · Plan-mode workflow ✅ · Checkpoin
 
 ---
 
-## P3 — EXTENSIBILITY & AUTONOMY UX (Milestone v3.0)
+## P3 — EXTENSIBILITY & AUTONOMY UX
 
 ### 12. PreToolUse/PostToolUse Hooks (Effort M, Impact M/H) — ✅ Implemented
 **Evidence**: "CLAUDE.md says 'please', hooks say 'must'" — deterministic enforcement praised by enterprise teams.  

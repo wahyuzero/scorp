@@ -2,7 +2,6 @@
 
 > **Status:** Executed — M0/M1/M2 completed and validated; M3 partial (container hardening deferred)  
 > **Blueprint Reference:** [`docs/MCP_MARKETPLACE_BLUEPRINT.md`](MCP_MARKETPLACE_BLUEPRINT.md)  
-> **Target Version:** Scorp Agent v2.5 / v3.0  
 > **Owner:** Wahyu  
 > **Created:** September 2026  
 
@@ -120,7 +119,7 @@ Implication: Existing `mcp_manage(action="add")` is the ultimate endpoint for AL
 - [x] `mcp/marketplace/search.go` — local search (name, description, tool, flavor).
 - [x] `mcp/marketplace/install.go` — Tri-Option orchestration:
   - [x] Option 1 (Prebuilt): download per-architecture artifact, **verify SHA-256 before execution**, store in `~/.scorp/mcp-binaries/`, register via `mcp_manage add`.
-  - [x] Option 2 (Rebuild): displayed with status "coming in v2.5 — run transpiler manually" (fully enabled in M2).
+  - [x] Option 2 (Rebuild): displayed with status "coming soon — run transpiler manually" (fully enabled in M2).
   - [x] Option 3 (Upstream): register `npx`/`uvx` directly — reuse existing pathway.
 - [x] Pre-install disclosure: health badge (🟢 full / 🟡 partial), disabled tools list + rationale, resource delta vs upstream.
 - [x] CLI: subcommands `/mcp search <term>` and `/mcp install <target>` in `cli_mcp.go` (interactive `[1/2/3]` prompts).

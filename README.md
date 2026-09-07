@@ -8,7 +8,7 @@ Runs natively with a memory footprint of **under 25MB RAM** on Linux VPS, edge n
 
 ## ⚡ Core Architecture & Philosophy
 
-Scorp is engineered around 2026 production agent principles:
+Scorp is engineered around modern production agent principles:
 - **State in Files, Not in Chat** — Active plans, shadow checkpoints, and long-term memory live on disk (`plans/<session>.plan.json`, `refs/scorp/ckpt`, `MEMORY.md`), completely surviving daemon restarts and session resets.
 - **Evidence Over Model Claims (Merge-Rate Mindset)** — Verbal assertions like *"all tests pass"* or *"file deleted"* are rejected by the Test-Integrity and Claim Gates unless backed by cryptographic SHA-256 receipts.
 - **Multi-Layered Trust & Safety** — Hard deny rules, Bubblewrap container sandboxing, and sensitive path protections stay enforced across *all* autonomy modes, including YOLO.
