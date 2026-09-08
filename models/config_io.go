@@ -114,9 +114,7 @@ func defaultModelConfig() *ModelRouterConfig {
 		DelegationModel: "deepseek/deepseek-v4-flash",
 		PremiumModel:    "deepseek/deepseek-v4-pro",
 		RoutingRules: map[string]string{
-			"agent":   "deepseek/deepseek-v4-flash",
-			"chat":    "deepseek/deepseek-v4-flash",
-			"complex": "deepseek/deepseek-v4-pro",
+			"vision": "gemini/gemini-3.1-flash-lite-preview",
 		},
 		FallbackModels: []string{
 			"z-ai/glm-5.3-flash",
