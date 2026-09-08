@@ -36,7 +36,16 @@ func RouteModel(taskType string) *ModelConfig {
 		}
 	}
 
-	// 2. Faithful Active Model Routing (Option A):
+	// 2. Optional memory role override: if routing_rules["memory"] is explicitly set, use it
+	if taskType == "memory" {
+		if name, ok := ModelCfg.RoutingRules["memory"]; ok && name != "" {
+			if m, ok := ModelCfg.Models[name]; ok {
+				return &m
+			}
+		}
+	}
+
+	// 3. Faithful Active Model Routing (Option A):
 	// All tasks (agent, chat, memory, tool, default) use the user's active AgentModel / DefaultModel.
 	// Explicit RoutingRules take effect only if the model actually exists.
 	var modelName string

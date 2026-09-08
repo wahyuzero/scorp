@@ -360,9 +360,9 @@
     "semantic_hash": ""
   },
   "models/model_router.go": {
-    "mtime": 1788866447.5071952,
-    "seen": 1788866545.826376,
-    "ast_hash": "62eeaf42a8f7e421e0431db2df707569",
+    "mtime": 1788868308.795049,
+    "seen": 1788868372.7201471,
+    "ast_hash": "daaaa18394e25400a2aed9ccfe921e1a",
     "semantic_hash": ""
   },
   "models/providers.go": {
@@ -1590,9 +1590,9 @@
     "semantic_hash": ""
   },
   "models/tool_schema_transform.go": {
-    "mtime": 1788859446.1449072,
-    "seen": 1788859548.9310808,
-    "ast_hash": "677d0a99050e275a40c5f26f0a20d52a",
+    "mtime": 1788868537.6933749,
+    "seen": 1788868585.3124194,
+    "ast_hash": "b0d583cd004ce854fde5e5d3761cf620",
     "semantic_hash": ""
   },
   "models/api_azure.go": {

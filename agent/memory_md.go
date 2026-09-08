@@ -234,7 +234,7 @@ Return ONLY a JSON array of strings. If nothing is worth remembering, return [].
 Task conversation tail:
 %s`, memoryExtractLimit, conv.String())
 
-	model := models.RouteModel("chat")
+	model := models.RouteModel("memory")
 	if model == nil {
 		return
 	}
