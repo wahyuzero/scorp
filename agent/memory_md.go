@@ -234,15 +234,10 @@ Return ONLY a JSON array of strings. If nothing is worth remembering, return [].
 Task conversation tail:
 %s`, memoryExtractLimit, conv.String())
 
-	model := models.RouteModel("memory")
-	if model == nil {
-		return
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	resp, err := models.CallModel(ctx, model, []models.ChatMessage{
+	resp, _, err := models.CallModelWithFallback(ctx, "memory", []models.ChatMessage{
 		{Role: "system", Content: "You are a memory extraction assistant. Return ONLY a valid JSON array of strings, no markdown fences, no explanation."},
 		{Role: "user", Content: prompt},
 	})
