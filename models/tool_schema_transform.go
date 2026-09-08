@@ -137,5 +137,12 @@ func sanitizeProperty(prop map[string]interface{}, mode string) map[string]inter
 		clean["type"] = "string"
 	}
 
+	// Gemini and strict OpenAPI schemas require 'items' for array properties
+	if clean["type"] == "array" {
+		if _, hasItems := clean["items"]; !hasItems {
+			clean["items"] = map[string]interface{}{"type": "string"}
+		}
+	}
+
 	return clean
 }
