@@ -82,3 +82,11 @@ Scorp's web search capabilities have been fully modernized without adding memory
   - `SEARXNG_URL` for local/remote SearXNG instances.
   - `BRAVE_API_KEY` for commercial Brave Search integration.
   - `TAVILY_API_KEY` for commercial Tavily integration.
+
+---
+
+## 📈 5. Empirical Benchmarks
+
+For empirical head-to-head testing on live VPS infrastructure, see:
+* [🥊 Benchmark Komparasi 20 Tugas Ringan: Scorp vs PicoClaw vs ZeroClaw](./BENCHMARK_LIGHT_20_SCORP_PICOCLAW_ZEROCLAW.md) — Live benchmark covering factual QA, arithmetic, logic riddles, code generation, formatting, and DevOps tasks on Google Gemini 3.5 Flash-Lite.
+
