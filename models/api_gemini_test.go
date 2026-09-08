@@ -38,7 +38,7 @@ func TestGemini_LiveModels(t *testing.T) {
 				return
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 			defer cancel()
 
 			reply, err := CallModel(ctx, cfg, []ChatMessage{
@@ -61,6 +61,10 @@ func TestGemini_LiveModels(t *testing.T) {
 				}
 				if strings.Contains(err.Error(), "429") || strings.Contains(err.Error(), "quota") {
 					t.Logf("[%s] Google API free-tier rate limit (429): %v", tc.modelID, err)
+					return
+				}
+				if strings.Contains(err.Error(), "context deadline exceeded") {
+					t.Logf("[%s] Google API free-tier latency spike/timeout: %v", tc.modelID, err)
 					return
 				}
 				t.Fatalf("[%s] CallModel failed: %v", tc.modelID, err)
@@ -89,7 +93,7 @@ func TestGemini_LiveStreaming(t *testing.T) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 	defer cancel()
 
 	streamCh, err := CallModelStream(ctx, cfg, []ChatMessage{
@@ -98,6 +102,10 @@ func TestGemini_LiveStreaming(t *testing.T) {
 	if err != nil {
 		if strings.Contains(err.Error(), "429") || strings.Contains(err.Error(), "quota") {
 			t.Logf("Gemini stream hit 429 free tier rate limit: %v", err)
+			return
+		}
+		if strings.Contains(err.Error(), "context deadline exceeded") {
+			t.Logf("Gemini stream hit latency spike/timeout: %v", err)
 			return
 		}
 		t.Fatalf("CallModelStream failed: %v", err)
@@ -144,7 +152,7 @@ func TestGemini_LiveToolCalling(t *testing.T) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 	defer cancel()
 
 	reply, toolCalls, err := CallGeminiWithTools(ctx, cfg, []ChatMessage{
@@ -153,6 +161,10 @@ func TestGemini_LiveToolCalling(t *testing.T) {
 	if err != nil {
 		if strings.Contains(err.Error(), "429") || strings.Contains(err.Error(), "quota") {
 			t.Logf("Gemini tool test hit 429 free tier rate limit: %v", err)
+			return
+		}
+		if strings.Contains(err.Error(), "context deadline exceeded") {
+			t.Logf("Gemini tool test hit latency spike/timeout: %v", err)
 			return
 		}
 		t.Fatalf("CallGeminiWithTools failed: %v", err)

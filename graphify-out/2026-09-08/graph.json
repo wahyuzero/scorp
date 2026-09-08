@@ -2051,37 +2051,81 @@
       "source_location": "L54"
     },
     {
-      "id": "mcp_transpiler_share",
-      "label": "share.go",
+      "id": "mcp_transpiler_probe_test",
+      "label": "probe_test.go",
       "_origin": "ast",
       "community": 10,
       "community_name": "Benchmark",
       "file_type": "code",
-      "norm_label": "share.go",
-      "source_file": "mcp/transpiler/share.go",
+      "norm_label": "probe_test.go",
+      "source_file": "mcp/transpiler/probe_test.go",
       "source_location": "L1"
     },
     {
-      "id": "mcp_transpiler_share_sharetomarketplace",
-      "label": "ShareToMarketplace()",
+      "id": "mcp_transpiler_probe_test_contains",
+      "label": "contains()",
       "_origin": "ast",
       "community": 10,
       "community_name": "Benchmark",
       "file_type": "code",
-      "norm_label": "sharetomarketplace()",
-      "source_file": "mcp/transpiler/share.go",
-      "source_location": "L17"
+      "norm_label": "contains()",
+      "source_file": "mcp/transpiler/probe_test.go",
+      "source_location": "L108"
     },
     {
-      "id": "mcp_transpiler_share_toolsformanifest",
-      "label": "toolsForManifest()",
+      "id": "mcp_transpiler_probe_test_goldenfilesystembinary",
+      "label": "goldenFilesystemBinary()",
       "_origin": "ast",
       "community": 10,
       "community_name": "Benchmark",
       "file_type": "code",
-      "norm_label": "toolsformanifest()",
-      "source_file": "mcp/transpiler/share.go",
-      "source_location": "L104"
+      "norm_label": "goldenfilesystembinary()",
+      "source_file": "mcp/transpiler/probe_test.go",
+      "source_location": "L15"
+    },
+    {
+      "id": "mcp_transpiler_probe_test_testdetectruntimemessages",
+      "label": "TestDetectRuntimeMessages()",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Benchmark",
+      "file_type": "code",
+      "norm_label": "testdetectruntimemessages()",
+      "source_file": "mcp/transpiler/probe_test.go",
+      "source_location": "L96"
+    },
+    {
+      "id": "mcp_transpiler_probe_test_testprobeandverifygoldenroundtrip",
+      "label": "TestProbeAndVerifyGoldenRoundTrip()",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Benchmark",
+      "file_type": "code",
+      "norm_label": "testprobeandverifygoldenroundtrip()",
+      "source_file": "mcp/transpiler/probe_test.go",
+      "source_location": "L45"
+    },
+    {
+      "id": "mcp_transpiler_probe_test_testprobeupstreamnpx",
+      "label": "TestProbeUpstreamNpx()",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Benchmark",
+      "file_type": "code",
+      "norm_label": "testprobeupstreamnpx()",
+      "source_file": "mcp/transpiler/probe_test.go",
+      "source_location": "L121"
+    },
+    {
+      "id": "mcp_transpiler_probe_test_teststripcodefences",
+      "label": "TestStripCodeFences()",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Benchmark",
+      "file_type": "code",
+      "norm_label": "teststripcodefences()",
+      "source_file": "mcp/transpiler/probe_test.go",
+      "source_location": "L140"
     },
     {
       "id": "mcp_transpiler_transpiler",
@@ -3041,17 +3085,6 @@
       "source_location": "L168"
     },
     {
-      "id": "telegram_telegram_test",
-      "label": "telegram_test.go",
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "HandleTelegramAction",
-      "file_type": "code",
-      "norm_label": "telegram_test.go",
-      "source_file": "telegram/telegram_test.go",
-      "source_location": "L1"
-    },
-    {
       "id": "telegram_telegram_test_testtelegramhelpers",
       "label": "TestTelegramHelpers()",
       "_origin": "ast",
@@ -3063,17 +3096,6 @@
       "source_location": "L10"
     },
     {
-      "id": "telegram_telegram_test_testwebhookhandlermalformedjson",
-      "label": "TestWebhookHandlerMalformedJSON()",
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "HandleTelegramAction",
-      "file_type": "code",
-      "norm_label": "testwebhookhandlermalformedjson()",
-      "source_file": "telegram/telegram_test.go",
-      "source_location": "L63"
-    },
-    {
       "id": "telegram_telegram_tgpost",
       "label": "TgPost()",
       "_origin": "ast",
@@ -3083,17 +3105,6 @@
       "norm_label": "tgpost()",
       "source_file": "telegram/telegram.go",
       "source_location": "L708"
-    },
-    {
-      "id": "telegram_telegram_webhookhandler",
-      "label": "WebhookHandler()",
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "HandleTelegramAction",
-      "file_type": "code",
-      "norm_label": "webhookhandler()",
-      "source_file": "telegram/telegram.go",
-      "source_location": "L761"
     },
     {
       "id": "telegram_tgcallback",
@@ -3844,6 +3855,39 @@
       "source_location": "L349"
     },
     {
+      "id": "skills_skillmeta",
+      "label": "SkillMeta",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "getAgentSystemPrompt",
+      "file_type": "code",
+      "norm_label": "skillmeta",
+      "source_file": "skills/v2_skills.go",
+      "source_location": "L20"
+    },
+    {
+      "id": "skills_v2_skills",
+      "label": "v2_skills.go",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "getAgentSystemPrompt",
+      "file_type": "code",
+      "norm_label": "v2_skills.go",
+      "source_file": "skills/v2_skills.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "skills_v2_skills_activateskill",
+      "label": "ActivateSkill()",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "getAgentSystemPrompt",
+      "file_type": "code",
+      "norm_label": "activateskill()",
+      "source_file": "skills/v2_skills.go",
+      "source_location": "L178"
+    },
+    {
       "id": "skills_v2_skills_formatskillsindexforsystemprompt",
       "label": "FormatSkillsIndexForSystemPrompt()",
       "_origin": "ast",
@@ -3864,6 +3908,72 @@
       "norm_label": "getactiveskillscontext()",
       "source_file": "skills/v2_skills.go",
       "source_location": "L212"
+    },
+    {
+      "id": "skills_v2_skills_listskillsoverview",
+      "label": "ListSkillsOverview()",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "getAgentSystemPrompt",
+      "file_type": "code",
+      "norm_label": "listskillsoverview()",
+      "source_file": "skills/v2_skills.go",
+      "source_location": "L247"
+    },
+    {
+      "id": "skills_v2_skills_loadallskills",
+      "label": "LoadAllSkills()",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "getAgentSystemPrompt",
+      "file_type": "code",
+      "norm_label": "loadallskills()",
+      "source_file": "skills/v2_skills.go",
+      "source_location": "L42"
+    },
+    {
+      "id": "skills_v2_skills_parseskillmetadata",
+      "label": "ParseSkillMetadata()",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "getAgentSystemPrompt",
+      "file_type": "code",
+      "norm_label": "parseskillmetadata()",
+      "source_file": "skills/v2_skills.go",
+      "source_location": "L84"
+    },
+    {
+      "id": "skills_v2_skills_readskillbody",
+      "label": "ReadSkillBody()",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "getAgentSystemPrompt",
+      "file_type": "code",
+      "norm_label": "readskillbody()",
+      "source_file": "skills/v2_skills.go",
+      "source_location": "L151"
+    },
+    {
+      "id": "skills_v2_skills_scanlegacyjsonskills",
+      "label": "scanLegacyJSONSkills()",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "getAgentSystemPrompt",
+      "file_type": "code",
+      "norm_label": "scanlegacyjsonskills()",
+      "source_file": "skills/v2_skills.go",
+      "source_location": "L267"
+    },
+    {
+      "id": "skills_v2_skills_scanskillsdirectory",
+      "label": "scanSkillsDirectory()",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "getAgentSystemPrompt",
+      "file_type": "code",
+      "norm_label": "scanskillsdirectory()",
+      "source_file": "skills/v2_skills.go",
+      "source_location": "L63"
     },
     {
       "id": "tools_memory",
@@ -3963,6 +4073,28 @@
       "norm_label": "setmemory()",
       "source_file": "tools/memory.go",
       "source_location": "L50"
+    },
+    {
+      "id": "tools_skill_activate",
+      "label": "skill_activate.go",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "getAgentSystemPrompt",
+      "file_type": "code",
+      "norm_label": "skill_activate.go",
+      "source_file": "tools/skill_activate.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "tools_skill_activate_init",
+      "label": "init()",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "getAgentSystemPrompt",
+      "file_type": "code",
+      "norm_label": "init()",
+      "source_file": "tools/skill_activate.go",
+      "source_location": "L10"
     },
     {
       "id": "agent_planmode_presentplantelegram",
@@ -4592,22 +4724,11 @@
       "source_location": "L92"
     },
     {
-      "id": "agent_prompt_test_testparsetoolcalls",
-      "label": "TestParseToolCalls()",
-      "_origin": "ast",
-      "community": 14,
-      "community_name": "ToolCall",
-      "file_type": "code",
-      "norm_label": "testparsetoolcalls()",
-      "source_file": "agent/prompt_test.go",
-      "source_location": "L279"
-    },
-    {
       "id": "models_chatresponse",
       "label": "ChatResponse",
       "_origin": "ast",
       "community": 14,
-      "community_name": "ToolCall",
+      "community_name": "StreamChunk",
       "file_type": "code",
       "norm_label": "chatresponse",
       "source_file": "models/model_router.go",
@@ -4618,7 +4739,7 @@
       "label": "getCheapestModel()",
       "_origin": "ast",
       "community": 14,
-      "community_name": "ToolCall",
+      "community_name": "StreamChunk",
       "file_type": "code",
       "norm_label": "getcheapestmodel()",
       "source_file": "models/cost_router.go",
@@ -4629,7 +4750,7 @@
       "label": "isBudgetExceeded()",
       "_origin": "ast",
       "community": 14,
-      "community_name": "ToolCall",
+      "community_name": "StreamChunk",
       "file_type": "code",
       "norm_label": "isbudgetexceeded()",
       "source_file": "models/cost_router.go",
@@ -4640,7 +4761,7 @@
       "label": "RouteModelCostAware()",
       "_origin": "ast",
       "community": 14,
-      "community_name": "ToolCall",
+      "community_name": "StreamChunk",
       "file_type": "code",
       "norm_label": "routemodelcostaware()",
       "source_file": "models/cost_router.go",
@@ -4651,7 +4772,7 @@
       "label": "CostTracker",
       "_origin": "ast",
       "community": 14,
-      "community_name": "ToolCall",
+      "community_name": "StreamChunk",
       "file_type": "code",
       "norm_label": "costtracker",
       "source_file": "models/cost_router.go",
@@ -4662,7 +4783,7 @@
       "label": ".getTotal()",
       "_origin": "ast",
       "community": 14,
-      "community_name": "ToolCall",
+      "community_name": "StreamChunk",
       "file_type": "code",
       "norm_label": ".gettotal()",
       "source_file": "models/cost_router.go",
@@ -4673,7 +4794,7 @@
       "label": "model_router.go",
       "_origin": "ast",
       "community": 14,
-      "community_name": "ToolCall",
+      "community_name": "StreamChunk",
       "file_type": "code",
       "norm_label": "model_router.go",
       "source_file": "models/model_router.go",
@@ -4684,7 +4805,7 @@
       "label": "CallModelWithFallback()",
       "_origin": "ast",
       "community": 14,
-      "community_name": "ToolCall",
+      "community_name": "StreamChunk",
       "file_type": "code",
       "norm_label": "callmodelwithfallback()",
       "source_file": "models/model_router.go",
@@ -4695,7 +4816,7 @@
       "label": "findFirstVisionModel()",
       "_origin": "ast",
       "community": 14,
-      "community_name": "ToolCall",
+      "community_name": "StreamChunk",
       "file_type": "code",
       "norm_label": "findfirstvisionmodel()",
       "source_file": "models/model_router.go",
@@ -4706,7 +4827,7 @@
       "label": "GetModelByName()",
       "_origin": "ast",
       "community": 14,
-      "community_name": "ToolCall",
+      "community_name": "StreamChunk",
       "file_type": "code",
       "norm_label": "getmodelbyname()",
       "source_file": "models/model_router.go",
@@ -4717,7 +4838,7 @@
       "label": "isVisionModelName()",
       "_origin": "ast",
       "community": 14,
-      "community_name": "ToolCall",
+      "community_name": "StreamChunk",
       "file_type": "code",
       "norm_label": "isvisionmodelname()",
       "source_file": "models/model_router.go",
@@ -4728,7 +4849,7 @@
       "label": "RouteModel()",
       "_origin": "ast",
       "community": 14,
-      "community_name": "ToolCall",
+      "community_name": "StreamChunk",
       "file_type": "code",
       "norm_label": "routemodel()",
       "source_file": "models/model_router.go",
@@ -4739,17 +4860,61 @@
       "label": "ShouldFallbackOnError()",
       "_origin": "ast",
       "community": 14,
-      "community_name": "ToolCall",
+      "community_name": "StreamChunk",
       "file_type": "code",
       "norm_label": "shouldfallbackonerror()",
       "source_file": "models/model_router.go",
       "source_location": "L354"
     },
     {
+      "id": "models_streamchunk",
+      "label": "StreamChunk",
+      "_origin": "ast",
+      "community": 14,
+      "community_name": "StreamChunk",
+      "file_type": "code",
+      "norm_label": "streamchunk",
+      "source_file": "models/model_router.go",
+      "source_location": "L202"
+    },
+    {
+      "id": "models_toolcallresp",
+      "label": "ToolCallResp",
+      "_origin": "ast",
+      "community": 14,
+      "community_name": "StreamChunk",
+      "file_type": "code",
+      "norm_label": "toolcallresp",
+      "source_file": "models/model_router.go",
+      "source_location": "L147"
+    },
+    {
+      "id": "models_tools_callmodelwithtoolsandfallback",
+      "label": "CallModelWithToolsAndFallback()",
+      "_origin": "ast",
+      "community": 14,
+      "community_name": "StreamChunk",
+      "file_type": "code",
+      "norm_label": "callmodelwithtoolsandfallback()",
+      "source_file": "models/tools.go",
+      "source_location": "L44"
+    },
+    {
+      "id": "agent_prompt_test_testparsetoolcalls",
+      "label": "TestParseToolCalls()",
+      "_origin": "ast",
+      "community": 15,
+      "community_name": "ToolCall",
+      "file_type": "code",
+      "norm_label": "testparsetoolcalls()",
+      "source_file": "agent/prompt_test.go",
+      "source_location": "L279"
+    },
+    {
       "id": "models_toolcall",
       "label": "ToolCall",
       "_origin": "ast",
-      "community": 14,
+      "community": 15,
       "community_name": "ToolCall",
       "file_type": "code",
       "norm_label": "toolcall",
@@ -4757,21 +4922,10 @@
       "source_location": "L4"
     },
     {
-      "id": "models_toolcallresp",
-      "label": "ToolCallResp",
-      "_origin": "ast",
-      "community": 14,
-      "community_name": "ToolCall",
-      "file_type": "code",
-      "norm_label": "toolcallresp",
-      "source_file": "models/model_router.go",
-      "source_location": "L147"
-    },
-    {
       "id": "models_tools",
       "label": "tools.go",
       "_origin": "ast",
-      "community": 14,
+      "community": 15,
       "community_name": "ToolCall",
       "file_type": "code",
       "norm_label": "tools.go",
@@ -4779,32 +4933,10 @@
       "source_location": "L1"
     },
     {
-      "id": "models_tools_callmodelwithtools",
-      "label": "CallModelWithTools()",
-      "_origin": "ast",
-      "community": 14,
-      "community_name": "ToolCall",
-      "file_type": "code",
-      "norm_label": "callmodelwithtools()",
-      "source_file": "models/tools.go",
-      "source_location": "L18"
-    },
-    {
-      "id": "models_tools_callmodelwithtoolsandfallback",
-      "label": "CallModelWithToolsAndFallback()",
-      "_origin": "ast",
-      "community": 14,
-      "community_name": "ToolCall",
-      "file_type": "code",
-      "norm_label": "callmodelwithtoolsandfallback()",
-      "source_file": "models/tools.go",
-      "source_location": "L44"
-    },
-    {
       "id": "models_tools_isratelimiterror",
       "label": "IsRateLimitError()",
       "_origin": "ast",
-      "community": 14,
+      "community": 15,
       "community_name": "ToolCall",
       "file_type": "code",
       "norm_label": "isratelimiterror()",
@@ -4815,7 +4947,7 @@
       "id": "models_tools_parsealltoolcalls",
       "label": "ParseAllToolCalls()",
       "_origin": "ast",
-      "community": 14,
+      "community": 15,
       "community_name": "ToolCall",
       "file_type": "code",
       "norm_label": "parsealltoolcalls()",
@@ -4826,7 +4958,7 @@
       "id": "models_tools_parsecodeblockfallback",
       "label": "ParseCodeBlockFallback()",
       "_origin": "ast",
-      "community": 14,
+      "community": 15,
       "community_name": "ToolCall",
       "file_type": "code",
       "norm_label": "parsecodeblockfallback()",
@@ -4837,7 +4969,7 @@
       "id": "models_tools_parsetoolcalls",
       "label": "ParseToolCalls()",
       "_origin": "ast",
-      "community": 14,
+      "community": 15,
       "community_name": "ToolCall",
       "file_type": "code",
       "norm_label": "parsetoolcalls()",
@@ -4845,180 +4977,37 @@
       "source_location": "L250"
     },
     {
+      "id": "models_tools_test",
+      "label": "tools_test.go",
+      "_origin": "ast",
+      "community": 15,
+      "community_name": "ToolCall",
+      "file_type": "code",
+      "norm_label": "tools_test.go",
+      "source_file": "models/tools_test.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "models_tools_test_testcallmodelwithtoolsnilmodel",
+      "label": "TestCallModelWithToolsNilModel()",
+      "_origin": "ast",
+      "community": 15,
+      "community_name": "ToolCall",
+      "file_type": "code",
+      "norm_label": "testcallmodelwithtoolsnilmodel()",
+      "source_file": "models/tools_test.go",
+      "source_location": "L40"
+    },
+    {
       "id": "models_tools_test_testisratelimiterror",
       "label": "TestIsRateLimitError()",
       "_origin": "ast",
-      "community": 14,
+      "community": 15,
       "community_name": "ToolCall",
       "file_type": "code",
       "norm_label": "testisratelimiterror()",
       "source_file": "models/tools_test.go",
       "source_location": "L11"
-    },
-    {
-      "id": "agent_auto_allowlist_test",
-      "label": "auto_allowlist_test.go",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "eval/core.go",
-      "file_type": "code",
-      "norm_label": "auto_allowlist_test.go",
-      "source_file": "agent/auto_allowlist_test.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "agent_auto_allowlist_test_testautoallowlistprefixanchoring",
-      "label": "TestAutoAllowlistPrefixAnchoring()",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "eval/core.go",
-      "file_type": "code",
-      "norm_label": "testautoallowlistprefixanchoring()",
-      "source_file": "agent/auto_allowlist_test.go",
-      "source_location": "L16"
-    },
-    {
-      "id": "agent_auto_allowlist_test_testexecutetoolautoallowlistreachesexec",
-      "label": "TestExecuteToolAutoAllowlistReachesExec()",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "eval/core.go",
-      "file_type": "code",
-      "norm_label": "testexecutetoolautoallowlistreachesexec()",
-      "source_file": "agent/auto_allowlist_test.go",
-      "source_location": "L44"
-    },
-    {
-      "id": "agent_auto_allowlist_test_testexecutetoolautodenynotbypassedbyconfirmedargs",
-      "label": "TestExecuteToolAutoDenyNotBypassedByConfirmedArgs()",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "eval/core.go",
-      "file_type": "code",
-      "norm_label": "testexecutetoolautodenynotbypassedbyconfirmedargs()",
-      "source_file": "agent/auto_allowlist_test.go",
-      "source_location": "L82"
-    },
-    {
-      "id": "agent_auto_autoallowlisted",
-      "label": "autoAllowlisted()",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "eval/core.go",
-      "file_type": "code",
-      "norm_label": "autoallowlisted()",
-      "source_file": "agent/auto.go",
-      "source_location": "L109"
-    },
-    {
-      "id": "agent_auto_resetautostats",
-      "label": "ResetAutoStats()",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "eval/core.go",
-      "file_type": "code",
-      "norm_label": "resetautostats()",
-      "source_file": "agent/auto.go",
-      "source_location": "L80"
-    },
-    {
-      "id": "eval_core",
-      "label": "eval/core.go",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "eval/core.go",
-      "file_type": "code",
-      "norm_label": "eval/core.go",
-      "source_file": "eval/core.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "eval_core_caseautoclassifier",
-      "label": "caseAutoClassifier()",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "eval/core.go",
-      "file_type": "code",
-      "norm_label": "caseautoclassifier()",
-      "source_file": "eval/core.go",
-      "source_location": "L196"
-    },
-    {
-      "id": "eval_core_casedenyinvalidskipped",
-      "label": "caseDenyInvalidSkipped()",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "eval/core.go",
-      "file_type": "code",
-      "norm_label": "casedenyinvalidskipped()",
-      "source_file": "eval/core.go",
-      "source_location": "L81"
-    },
-    {
-      "id": "eval_core_casedenyshellyolo",
-      "label": "caseDenyShellYOLO()",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "eval/core.go",
-      "file_type": "code",
-      "norm_label": "casedenyshellyolo()",
-      "source_file": "eval/core.go",
-      "source_location": "L58"
-    },
-    {
-      "id": "eval_core_casehooksblockandcontext",
-      "label": "caseHooksBlockAndContext()",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "eval/core.go",
-      "file_type": "code",
-      "norm_label": "casehooksblockandcontext()",
-      "source_file": "eval/core.go",
-      "source_location": "L156"
-    },
-    {
-      "id": "eval_core_caseledgerclear",
-      "label": "caseLedgerClear()",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "eval/core.go",
-      "file_type": "code",
-      "norm_label": "caseledgerclear()",
-      "source_file": "eval/core.go",
-      "source_location": "L335"
-    },
-    {
-      "id": "eval_core_caseledgerpersisted",
-      "label": "caseLedgerPersisted()",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "eval/core.go",
-      "file_type": "code",
-      "norm_label": "caseledgerpersisted()",
-      "source_file": "eval/core.go",
-      "source_location": "L310"
-    },
-    {
-      "id": "eval_core_withenv",
-      "label": "withEnv()",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "eval/core.go",
-      "file_type": "code",
-      "norm_label": "withenv()",
-      "source_file": "eval/core.go",
-      "source_location": "L42"
-    },
-    {
-      "id": "registry_registry_unregistertool",
-      "label": "UnregisterTool()",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "eval/core.go",
-      "file_type": "code",
-      "norm_label": "unregistertool()",
-      "source_file": "registry/registry.go",
-      "source_location": "L100"
     },
     {
       "id": "agent_hooks_agent_test",
@@ -5261,83 +5250,6 @@
       "norm_label": "testing.t",
       "source_file": "",
       "source_location": ""
-    },
-    {
-      "id": "mcp_transpiler_probe_test",
-      "label": "probe_test.go",
-      "_origin": "ast",
-      "community": 16,
-      "community_name": "testing.T",
-      "file_type": "code",
-      "norm_label": "probe_test.go",
-      "source_file": "mcp/transpiler/probe_test.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "mcp_transpiler_probe_test_contains",
-      "label": "contains()",
-      "_origin": "ast",
-      "community": 16,
-      "community_name": "testing.T",
-      "file_type": "code",
-      "norm_label": "contains()",
-      "source_file": "mcp/transpiler/probe_test.go",
-      "source_location": "L108"
-    },
-    {
-      "id": "mcp_transpiler_probe_test_goldenfilesystembinary",
-      "label": "goldenFilesystemBinary()",
-      "_origin": "ast",
-      "community": 16,
-      "community_name": "testing.T",
-      "file_type": "code",
-      "norm_label": "goldenfilesystembinary()",
-      "source_file": "mcp/transpiler/probe_test.go",
-      "source_location": "L15"
-    },
-    {
-      "id": "mcp_transpiler_probe_test_testdetectruntimemessages",
-      "label": "TestDetectRuntimeMessages()",
-      "_origin": "ast",
-      "community": 16,
-      "community_name": "testing.T",
-      "file_type": "code",
-      "norm_label": "testdetectruntimemessages()",
-      "source_file": "mcp/transpiler/probe_test.go",
-      "source_location": "L96"
-    },
-    {
-      "id": "mcp_transpiler_probe_test_testprobeandverifygoldenroundtrip",
-      "label": "TestProbeAndVerifyGoldenRoundTrip()",
-      "_origin": "ast",
-      "community": 16,
-      "community_name": "testing.T",
-      "file_type": "code",
-      "norm_label": "testprobeandverifygoldenroundtrip()",
-      "source_file": "mcp/transpiler/probe_test.go",
-      "source_location": "L45"
-    },
-    {
-      "id": "mcp_transpiler_probe_test_testprobeupstreamnpx",
-      "label": "TestProbeUpstreamNpx()",
-      "_origin": "ast",
-      "community": 16,
-      "community_name": "testing.T",
-      "file_type": "code",
-      "norm_label": "testprobeupstreamnpx()",
-      "source_file": "mcp/transpiler/probe_test.go",
-      "source_location": "L121"
-    },
-    {
-      "id": "mcp_transpiler_probe_test_teststripcodefences",
-      "label": "TestStripCodeFences()",
-      "_origin": "ast",
-      "community": 16,
-      "community_name": "testing.T",
-      "file_type": "code",
-      "norm_label": "teststripcodefences()",
-      "source_file": "mcp/transpiler/probe_test.go",
-      "source_location": "L140"
     },
     {
       "id": "mcp_watchdog_test",
@@ -6110,6 +6022,61 @@
       "source_location": "L102"
     },
     {
+      "id": "mcp_transpiler_share",
+      "label": "share.go",
+      "_origin": "ast",
+      "community": 17,
+      "community_name": "ScorpPath",
+      "file_type": "code",
+      "norm_label": "share.go",
+      "source_file": "mcp/transpiler/share.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "mcp_transpiler_share_sharetomarketplace",
+      "label": "ShareToMarketplace()",
+      "_origin": "ast",
+      "community": 17,
+      "community_name": "ScorpPath",
+      "file_type": "code",
+      "norm_label": "sharetomarketplace()",
+      "source_file": "mcp/transpiler/share.go",
+      "source_location": "L17"
+    },
+    {
+      "id": "mcp_transpiler_share_toolsformanifest",
+      "label": "toolsForManifest()",
+      "_origin": "ast",
+      "community": 17,
+      "community_name": "ScorpPath",
+      "file_type": "code",
+      "norm_label": "toolsformanifest()",
+      "source_file": "mcp/transpiler/share.go",
+      "source_location": "L104"
+    },
+    {
+      "id": "skills_builtin_skills",
+      "label": "builtin_skills.go",
+      "_origin": "ast",
+      "community": 17,
+      "community_name": "ScorpPath",
+      "file_type": "code",
+      "norm_label": "builtin_skills.go",
+      "source_file": "skills/builtin_skills.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "skills_builtin_skills_ensurebuiltinskills",
+      "label": "EnsureBuiltinSkills()",
+      "_origin": "ast",
+      "community": 17,
+      "community_name": "ScorpPath",
+      "file_type": "code",
+      "norm_label": "ensurebuiltinskills()",
+      "source_file": "skills/builtin_skills.go",
+      "source_location": "L10"
+    },
+    {
       "id": "tools_credentialentry",
       "label": "CredentialEntry",
       "_origin": "ast",
@@ -6341,176 +6308,44 @@
       "source_location": "L154"
     },
     {
-      "id": "internal_helpers_helpers_truncatestr",
-      "label": "TruncateStr()",
+      "id": "tools_vision",
+      "label": "vision.go",
       "_origin": "ast",
-      "community": 18,
-      "community_name": "TruncateStr",
+      "community": 17,
+      "community_name": "ScorpPath",
       "file_type": "code",
-      "norm_label": "truncatestr()",
-      "source_file": "internal/helpers/helpers.go",
-      "source_location": "L9"
-    },
-    {
-      "id": "models_api_azure",
-      "label": "api_azure.go",
-      "_origin": "ast",
-      "community": 18,
-      "community_name": "TruncateStr",
-      "file_type": "code",
-      "norm_label": "api_azure.go",
-      "source_file": "models/api_azure.go",
+      "norm_label": "vision.go",
+      "source_file": "tools/vision.go",
       "source_location": "L1"
     },
     {
-      "id": "models_api_azure_applyazureheaders",
-      "label": "applyAzureHeaders()",
+      "id": "tools_vision_callvisionmodel",
+      "label": "callVisionModel()",
       "_origin": "ast",
-      "community": 18,
-      "community_name": "TruncateStr",
+      "community": 17,
+      "community_name": "ScorpPath",
       "file_type": "code",
-      "norm_label": "applyazureheaders()",
-      "source_file": "models/api_azure.go",
-      "source_location": "L82"
+      "norm_label": "callvisionmodel()",
+      "source_file": "tools/vision.go",
+      "source_location": "L68"
     },
     {
-      "id": "models_api_azure_callazure",
-      "label": "callAzure()",
+      "id": "tools_vision_executeanalyzeimage",
+      "label": "ExecuteAnalyzeImage()",
       "_origin": "ast",
-      "community": 18,
-      "community_name": "TruncateStr",
+      "community": 17,
+      "community_name": "ScorpPath",
       "file_type": "code",
-      "norm_label": "callazure()",
-      "source_file": "models/api_azure.go",
-      "source_location": "L93"
-    },
-    {
-      "id": "models_api_azure_callazurestream",
-      "label": "callAzureStream()",
-      "_origin": "ast",
-      "community": 18,
-      "community_name": "TruncateStr",
-      "file_type": "code",
-      "norm_label": "callazurestream()",
-      "source_file": "models/api_azure.go",
-      "source_location": "L215"
-    },
-    {
-      "id": "models_api_azure_callazurewithtools",
-      "label": "callAzureWithTools()",
-      "_origin": "ast",
-      "community": 18,
-      "community_name": "TruncateStr",
-      "file_type": "code",
-      "norm_label": "callazurewithtools()",
-      "source_file": "models/api_azure.go",
-      "source_location": "L148"
-    },
-    {
-      "id": "models_api_azure_resolveazureendpoint",
-      "label": "resolveAzureEndpoint()",
-      "_origin": "ast",
-      "community": 18,
-      "community_name": "TruncateStr",
-      "file_type": "code",
-      "norm_label": "resolveazureendpoint()",
-      "source_file": "models/api_azure.go",
-      "source_location": "L60"
-    },
-    {
-      "id": "models_api_commandcode_callcommandcodewithtools",
-      "label": "CallCommandCodeWithTools()",
-      "_origin": "ast",
-      "community": 18,
-      "community_name": "TruncateStr",
-      "file_type": "code",
-      "norm_label": "callcommandcodewithtools()",
-      "source_file": "models/api_commandcode.go",
-      "source_location": "L386"
-    },
-    {
-      "id": "models_api_openai",
-      "label": "api_openai.go",
-      "_origin": "ast",
-      "community": 18,
-      "community_name": "TruncateStr",
-      "file_type": "code",
-      "norm_label": "api_openai.go",
-      "source_file": "models/api_openai.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "models_api_openai_applyopenaiheaders",
-      "label": "applyOpenAIHeaders()",
-      "_origin": "ast",
-      "community": 18,
-      "community_name": "TruncateStr",
-      "file_type": "code",
-      "norm_label": "applyopenaiheaders()",
-      "source_file": "models/api_openai.go",
-      "source_location": "L130"
-    },
-    {
-      "id": "models_api_openai_buildopenairequestbody",
-      "label": "buildOpenAIRequestBody()",
-      "_origin": "ast",
-      "community": 18,
-      "community_name": "TruncateStr",
-      "file_type": "code",
-      "norm_label": "buildopenairequestbody()",
-      "source_file": "models/api_openai.go",
-      "source_location": "L88"
-    },
-    {
-      "id": "models_api_openai_callopenai",
-      "label": "CallOpenAI()",
-      "_origin": "ast",
-      "community": 18,
-      "community_name": "TruncateStr",
-      "file_type": "code",
-      "norm_label": "callopenai()",
-      "source_file": "models/api_openai.go",
-      "source_location": "L149"
-    },
-    {
-      "id": "models_api_openai_callopenaistream",
-      "label": "CallOpenAIStream()",
-      "_origin": "ast",
-      "community": 18,
-      "community_name": "TruncateStr",
-      "file_type": "code",
-      "norm_label": "callopenaistream()",
-      "source_file": "models/api_openai.go",
-      "source_location": "L294"
-    },
-    {
-      "id": "models_api_openai_callopenaiwithtools",
-      "label": "CallOpenAIWithTools()",
-      "_origin": "ast",
-      "community": 18,
-      "community_name": "TruncateStr",
-      "file_type": "code",
-      "norm_label": "callopenaiwithtools()",
-      "source_file": "models/api_openai.go",
-      "source_location": "L216"
-    },
-    {
-      "id": "models_api_openai_formatopenaimessages",
-      "label": "formatOpenAIMessages()",
-      "_origin": "ast",
-      "community": 18,
-      "community_name": "TruncateStr",
-      "file_type": "code",
-      "norm_label": "formatopenaimessages()",
-      "source_file": "models/api_openai.go",
-      "source_location": "L61"
+      "norm_label": "executeanalyzeimage()",
+      "source_file": "tools/vision.go",
+      "source_location": "L23"
     },
     {
       "id": "models_api_opencode_free",
       "label": "api_opencode_free.go",
       "_origin": "ast",
       "community": 18,
-      "community_name": "TruncateStr",
+      "community_name": "CallOpenCodeWithTools",
       "file_type": "code",
       "norm_label": "api_opencode_free.go",
       "source_file": "models/api_opencode_free.go",
@@ -6521,7 +6356,7 @@
       "label": "CallOpenCode()",
       "_origin": "ast",
       "community": 18,
-      "community_name": "TruncateStr",
+      "community_name": "CallOpenCodeWithTools",
       "file_type": "code",
       "norm_label": "callopencode()",
       "source_file": "models/api_opencode_free.go",
@@ -6532,7 +6367,7 @@
       "label": "CallOpenCodeStream()",
       "_origin": "ast",
       "community": 18,
-      "community_name": "TruncateStr",
+      "community_name": "CallOpenCodeWithTools",
       "file_type": "code",
       "norm_label": "callopencodestream()",
       "source_file": "models/api_opencode_free.go",
@@ -6543,7 +6378,7 @@
       "label": "CallOpenCodeWithTools()",
       "_origin": "ast",
       "community": 18,
-      "community_name": "TruncateStr",
+      "community_name": "CallOpenCodeWithTools",
       "file_type": "code",
       "norm_label": "callopencodewithtools()",
       "source_file": "models/api_opencode_free.go",
@@ -6554,18 +6389,29 @@
       "label": "resolveOpenCodeBaseURL()",
       "_origin": "ast",
       "community": 18,
-      "community_name": "TruncateStr",
+      "community_name": "CallOpenCodeWithTools",
       "file_type": "code",
       "norm_label": "resolveopencodebaseurl()",
       "source_file": "models/api_opencode_free.go",
       "source_location": "L104"
     },
     {
+      "id": "models_api_opencode_free_resolveopencodekeyfromdisk",
+      "label": "resolveOpenCodeKeyFromDisk()",
+      "_origin": "ast",
+      "community": 18,
+      "community_name": "CallOpenCodeWithTools",
+      "file_type": "code",
+      "norm_label": "resolveopencodekeyfromdisk()",
+      "source_file": "models/api_opencode_free.go",
+      "source_location": "L80"
+    },
+    {
       "id": "models_api_opencode_free_resolveopencodesessionid",
       "label": "resolveOpenCodeSessionID()",
       "_origin": "ast",
       "community": 18,
-      "community_name": "TruncateStr",
+      "community_name": "CallOpenCodeWithTools",
       "file_type": "code",
       "norm_label": "resolveopencodesessionid()",
       "source_file": "models/api_opencode_free.go",
@@ -6576,44 +6422,88 @@
       "label": "RecordCostWithCache()",
       "_origin": "ast",
       "community": 18,
-      "community_name": "TruncateStr",
+      "community_name": "CallOpenCodeWithTools",
       "file_type": "code",
       "norm_label": "recordcostwithcache()",
       "source_file": "models/cost_router.go",
       "source_location": "L168"
     },
     {
+      "id": "models_opencodeprovider",
+      "label": "OpenCodeProvider",
+      "_origin": "ast",
+      "community": 18,
+      "community_name": "CallOpenCodeWithTools",
+      "file_type": "code",
+      "norm_label": "opencodeprovider",
+      "source_file": "models/api_opencode_free.go",
+      "source_location": "L45"
+    },
+    {
+      "id": "models_opencodeprovider_call",
+      "label": ".Call()",
+      "_origin": "ast",
+      "community": 18,
+      "community_name": "CallOpenCodeWithTools",
+      "file_type": "code",
+      "norm_label": ".call()",
+      "source_file": "models/api_opencode_free.go",
+      "source_location": "L63"
+    },
+    {
+      "id": "models_opencodeprovider_callstream",
+      "label": ".CallStream()",
+      "_origin": "ast",
+      "community": 18,
+      "community_name": "CallOpenCodeWithTools",
+      "file_type": "code",
+      "norm_label": ".callstream()",
+      "source_file": "models/api_opencode_free.go",
+      "source_location": "L71"
+    },
+    {
+      "id": "models_opencodeprovider_callwithtools",
+      "label": ".CallWithTools()",
+      "_origin": "ast",
+      "community": 18,
+      "community_name": "CallOpenCodeWithTools",
+      "file_type": "code",
+      "norm_label": ".callwithtools()",
+      "source_file": "models/api_opencode_free.go",
+      "source_location": "L67"
+    },
+    {
+      "id": "models_opencodeprovider_format",
+      "label": ".Format()",
+      "_origin": "ast",
+      "community": 18,
+      "community_name": "CallOpenCodeWithTools",
+      "file_type": "code",
+      "norm_label": ".format()",
+      "source_file": "models/api_opencode_free.go",
+      "source_location": "L59"
+    },
+    {
+      "id": "models_opencodeprovider_resolvekey",
+      "label": ".ResolveKey()",
+      "_origin": "ast",
+      "community": 18,
+      "community_name": "CallOpenCodeWithTools",
+      "file_type": "code",
+      "norm_label": ".resolvekey()",
+      "source_file": "models/api_opencode_free.go",
+      "source_location": "L75"
+    },
+    {
       "id": "models_telemetry_trackmodelusagewithcache",
       "label": "TrackModelUsageWithCache()",
       "_origin": "ast",
       "community": 18,
-      "community_name": "TruncateStr",
+      "community_name": "CallOpenCodeWithTools",
       "file_type": "code",
       "norm_label": "trackmodelusagewithcache()",
       "source_file": "models/telemetry.go",
       "source_location": "L38"
-    },
-    {
-      "id": "models_transports_getaiclient",
-      "label": "GetAIClient()",
-      "_origin": "ast",
-      "community": 18,
-      "community_name": "TruncateStr",
-      "file_type": "code",
-      "norm_label": "getaiclient()",
-      "source_file": "models/transports.go",
-      "source_location": "L119"
-    },
-    {
-      "id": "registry_registry_generatenativetoolsschema",
-      "label": "GenerateNativeToolsSchema()",
-      "_origin": "ast",
-      "community": 18,
-      "community_name": "TruncateStr",
-      "file_type": "code",
-      "norm_label": "generatenativetoolsschema()",
-      "source_file": "registry/registry.go",
-      "source_location": "L127"
     },
     {
       "id": "agent_agentmessage",
@@ -6647,6 +6537,17 @@
       "norm_label": "consumestoprequest()",
       "source_file": "agent/chat.go",
       "source_location": "L145"
+    },
+    {
+      "id": "agent_chat_sendscorpreply",
+      "label": "sendScorpReply()",
+      "_origin": "ast",
+      "community": 19,
+      "community_name": "RunAgentSessionLoop",
+      "file_type": "code",
+      "norm_label": "sendscorpreply()",
+      "source_file": "agent/chat.go",
+      "source_location": "L562"
     },
     {
       "id": "agent_confirmation_confirmkeyboard",
@@ -6748,83 +6649,6 @@
       "source_location": "L59"
     },
     {
-      "id": "agent_prompt_test_testbuildthinkingmessage",
-      "label": "TestBuildThinkingMessage()",
-      "_origin": "ast",
-      "community": 19,
-      "community_name": "RunAgentSessionLoop",
-      "file_type": "code",
-      "norm_label": "testbuildthinkingmessage()",
-      "source_file": "agent/prompt_test.go",
-      "source_location": "L342"
-    },
-    {
-      "id": "agent_prompt_test_testtooldescription",
-      "label": "TestToolDescription()",
-      "_origin": "ast",
-      "community": 19,
-      "community_name": "RunAgentSessionLoop",
-      "file_type": "code",
-      "norm_label": "testtooldescription()",
-      "source_file": "agent/prompt_test.go",
-      "source_location": "L309"
-    },
-    {
-      "id": "agent_session_title",
-      "label": "session_title.go",
-      "_origin": "ast",
-      "community": 19,
-      "community_name": "RunAgentSessionLoop",
-      "file_type": "code",
-      "norm_label": "session_title.go",
-      "source_file": "agent/session_title.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "agent_session_title_fallbacktitlefromtext",
-      "label": "fallbackTitleFromText()",
-      "_origin": "ast",
-      "community": 19,
-      "community_name": "RunAgentSessionLoop",
-      "file_type": "code",
-      "norm_label": "fallbacktitlefromtext()",
-      "source_file": "agent/session_title.go",
-      "source_location": "L87"
-    },
-    {
-      "id": "agent_session_title_generatecontextualsessiontitle",
-      "label": "GenerateContextualSessionTitle()",
-      "_origin": "ast",
-      "community": 19,
-      "community_name": "RunAgentSessionLoop",
-      "file_type": "code",
-      "norm_label": "generatecontextualsessiontitle()",
-      "source_file": "agent/session_title.go",
-      "source_location": "L39"
-    },
-    {
-      "id": "agent_session_title_sanitizesessiontitle",
-      "label": "sanitizeSessionTitle()",
-      "_origin": "ast",
-      "community": 19,
-      "community_name": "RunAgentSessionLoop",
-      "file_type": "code",
-      "norm_label": "sanitizesessiontitle()",
-      "source_file": "agent/session_title.go",
-      "source_location": "L72"
-    },
-    {
-      "id": "agent_session_title_shouldautotitlesession",
-      "label": "ShouldAutoTitleSession()",
-      "_origin": "ast",
-      "community": 19,
-      "community_name": "RunAgentSessionLoop",
-      "file_type": "code",
-      "norm_label": "shouldautotitlesession()",
-      "source_file": "agent/session_title.go",
-      "source_location": "L22"
-    },
-    {
       "id": "agent_thinking",
       "label": "thinking.go",
       "_origin": "ast",
@@ -6880,6 +6704,17 @@
       "source_location": "L45"
     },
     {
+      "id": "eval_core_caseclaimgate",
+      "label": "caseClaimGate()",
+      "_origin": "ast",
+      "community": 19,
+      "community_name": "RunAgentSessionLoop",
+      "file_type": "code",
+      "norm_label": "caseclaimgate()",
+      "source_file": "eval/core.go",
+      "source_location": "L247"
+    },
+    {
       "id": "skills_v2_skills_tickactiveskills",
       "label": "TickActiveSkills()",
       "_origin": "ast",
@@ -6889,6 +6724,72 @@
       "norm_label": "tickactiveskills()",
       "source_file": "skills/v2_skills.go",
       "source_location": "L197"
+    },
+    {
+      "id": "tools_claimgate_test",
+      "label": "claimgate_test.go",
+      "_origin": "ast",
+      "community": 19,
+      "community_name": "RunAgentSessionLoop",
+      "file_type": "code",
+      "norm_label": "claimgate_test.go",
+      "source_file": "tools/claimgate_test.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "tools_claimgate_test_testhasgreentestrun",
+      "label": "TestHasGreenTestRun()",
+      "_origin": "ast",
+      "community": 19,
+      "community_name": "RunAgentSessionLoop",
+      "file_type": "code",
+      "norm_label": "testhasgreentestrun()",
+      "source_file": "tools/claimgate_test.go",
+      "source_location": "L39"
+    },
+    {
+      "id": "tools_claimgate_test_testlooksliketestpassclaim",
+      "label": "TestLooksLikeTestPassClaim()",
+      "_origin": "ast",
+      "community": 19,
+      "community_name": "RunAgentSessionLoop",
+      "file_type": "code",
+      "norm_label": "testlooksliketestpassclaim()",
+      "source_file": "tools/claimgate_test.go",
+      "source_location": "L7"
+    },
+    {
+      "id": "tools_testgate_hasgreentestrun",
+      "label": "HasGreenTestRun()",
+      "_origin": "ast",
+      "community": 19,
+      "community_name": "RunAgentSessionLoop",
+      "file_type": "code",
+      "norm_label": "hasgreentestrun()",
+      "source_file": "tools/testgate.go",
+      "source_location": "L216"
+    },
+    {
+      "id": "tools_testgate_looksliketestpassclaim",
+      "label": "LooksLikeTestPassClaim()",
+      "_origin": "ast",
+      "community": 19,
+      "community_name": "RunAgentSessionLoop",
+      "file_type": "code",
+      "norm_label": "looksliketestpassclaim()",
+      "source_file": "tools/testgate.go",
+      "source_location": "L205"
+    },
+    {
+      "id": "tools_testgate_marktaskboundary",
+      "label": "MarkTaskBoundary()",
+      "_origin": "ast",
+      "community": 19,
+      "community_name": "RunAgentSessionLoop",
+      "file_type": "code",
+      "norm_label": "marktaskboundary()",
+      "source_file": "tools/testgate.go",
+      "source_location": "L31"
     },
     {
       "id": "agent_autonomous",
@@ -7210,6 +7111,17 @@
       "source_location": "L23"
     },
     {
+      "id": "agent_prompt_test_testgetfloatarg",
+      "label": "TestGetFloatArg()",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "cost_router.go",
+      "file_type": "code",
+      "norm_label": "testgetfloatarg()",
+      "source_file": "agent/prompt_test.go",
+      "source_location": "L100"
+    },
+    {
       "id": "config_config_manager_configmgr",
       "label": "ConfigMgr()",
       "_origin": "ast",
@@ -7219,6 +7131,17 @@
       "norm_label": "configmgr()",
       "source_file": "config/config_manager.go",
       "source_location": "L175"
+    },
+    {
+      "id": "internal_helpers_helpers_getfloatarg",
+      "label": "GetFloatArg()",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "cost_router.go",
+      "file_type": "code",
+      "norm_label": "getfloatarg()",
+      "source_file": "internal/helpers/helpers.go",
+      "source_location": "L40"
     },
     {
       "id": "models_cost_router",
@@ -8651,37 +8574,70 @@
       "source_location": "L41"
     },
     {
-      "id": "models_api_commandcode_callcommandcode",
-      "label": "CallCommandCode()",
+      "id": "models_api_openai",
+      "label": "api_openai.go",
       "_origin": "ast",
       "community": 23,
       "community_name": "context.Context",
       "file_type": "code",
-      "norm_label": "callcommandcode()",
-      "source_file": "models/api_commandcode.go",
-      "source_location": "L380"
+      "norm_label": "api_openai.go",
+      "source_file": "models/api_openai.go",
+      "source_location": "L1"
     },
     {
-      "id": "models_api_commandcode_callcommandcodestream",
-      "label": "CallCommandCodeStream()",
+      "id": "models_api_openai_applyopenaiheaders",
+      "label": "applyOpenAIHeaders()",
       "_origin": "ast",
       "community": 23,
       "community_name": "context.Context",
       "file_type": "code",
-      "norm_label": "callcommandcodestream()",
-      "source_file": "models/api_commandcode.go",
-      "source_location": "L610"
+      "norm_label": "applyopenaiheaders()",
+      "source_file": "models/api_openai.go",
+      "source_location": "L130"
     },
     {
-      "id": "models_api_opencode_free_resolveopencodekeyfromdisk",
-      "label": "resolveOpenCodeKeyFromDisk()",
+      "id": "models_api_openai_buildopenairequestbody",
+      "label": "buildOpenAIRequestBody()",
       "_origin": "ast",
       "community": 23,
       "community_name": "context.Context",
       "file_type": "code",
-      "norm_label": "resolveopencodekeyfromdisk()",
-      "source_file": "models/api_opencode_free.go",
-      "source_location": "L80"
+      "norm_label": "buildopenairequestbody()",
+      "source_file": "models/api_openai.go",
+      "source_location": "L88"
+    },
+    {
+      "id": "models_api_openai_callopenai",
+      "label": "CallOpenAI()",
+      "_origin": "ast",
+      "community": 23,
+      "community_name": "context.Context",
+      "file_type": "code",
+      "norm_label": "callopenai()",
+      "source_file": "models/api_openai.go",
+      "source_location": "L155"
+    },
+    {
+      "id": "models_api_openai_callopenaiwithtools",
+      "label": "CallOpenAIWithTools()",
+      "_origin": "ast",
+      "community": 23,
+      "community_name": "context.Context",
+      "file_type": "code",
+      "norm_label": "callopenaiwithtools()",
+      "source_file": "models/api_openai.go",
+      "source_location": "L222"
+    },
+    {
+      "id": "models_api_openai_formatopenaimessages",
+      "label": "formatOpenAIMessages()",
+      "_origin": "ast",
+      "community": 23,
+      "community_name": "context.Context",
+      "file_type": "code",
+      "norm_label": "formatopenaimessages()",
+      "source_file": "models/api_openai.go",
+      "source_location": "L61"
     },
     {
       "id": "models_azureprovider",
@@ -8803,28 +8759,6 @@
       "norm_label": ".format()",
       "source_file": "models/api_cohere.go",
       "source_location": "L33"
-    },
-    {
-      "id": "models_commandcodeprovider_call",
-      "label": ".Call()",
-      "_origin": "ast",
-      "community": 23,
-      "community_name": "context.Context",
-      "file_type": "code",
-      "norm_label": ".call()",
-      "source_file": "models/api_commandcode.go",
-      "source_location": "L46"
-    },
-    {
-      "id": "models_commandcodeprovider_callstream",
-      "label": ".CallStream()",
-      "_origin": "ast",
-      "community": 23,
-      "community_name": "context.Context",
-      "file_type": "code",
-      "norm_label": ".callstream()",
-      "source_file": "models/api_commandcode.go",
-      "source_location": "L54"
     },
     {
       "id": "models_dashscopeprovider",
@@ -9124,72 +9058,6 @@
       "source_location": "L43"
     },
     {
-      "id": "models_opencodeprovider",
-      "label": "OpenCodeProvider",
-      "_origin": "ast",
-      "community": 23,
-      "community_name": "context.Context",
-      "file_type": "code",
-      "norm_label": "opencodeprovider",
-      "source_file": "models/api_opencode_free.go",
-      "source_location": "L45"
-    },
-    {
-      "id": "models_opencodeprovider_call",
-      "label": ".Call()",
-      "_origin": "ast",
-      "community": 23,
-      "community_name": "context.Context",
-      "file_type": "code",
-      "norm_label": ".call()",
-      "source_file": "models/api_opencode_free.go",
-      "source_location": "L63"
-    },
-    {
-      "id": "models_opencodeprovider_callstream",
-      "label": ".CallStream()",
-      "_origin": "ast",
-      "community": 23,
-      "community_name": "context.Context",
-      "file_type": "code",
-      "norm_label": ".callstream()",
-      "source_file": "models/api_opencode_free.go",
-      "source_location": "L71"
-    },
-    {
-      "id": "models_opencodeprovider_callwithtools",
-      "label": ".CallWithTools()",
-      "_origin": "ast",
-      "community": 23,
-      "community_name": "context.Context",
-      "file_type": "code",
-      "norm_label": ".callwithtools()",
-      "source_file": "models/api_opencode_free.go",
-      "source_location": "L67"
-    },
-    {
-      "id": "models_opencodeprovider_format",
-      "label": ".Format()",
-      "_origin": "ast",
-      "community": 23,
-      "community_name": "context.Context",
-      "file_type": "code",
-      "norm_label": ".format()",
-      "source_file": "models/api_opencode_free.go",
-      "source_location": "L59"
-    },
-    {
-      "id": "models_opencodeprovider_resolvekey",
-      "label": ".ResolveKey()",
-      "_origin": "ast",
-      "community": 23,
-      "community_name": "context.Context",
-      "file_type": "code",
-      "norm_label": ".resolvekey()",
-      "source_file": "models/api_opencode_free.go",
-      "source_location": "L75"
-    },
-    {
       "id": "models_perplexityprovider",
       "label": "PerplexityProvider",
       "_origin": "ast",
@@ -9243,17 +9111,6 @@
       "norm_label": ".format()",
       "source_file": "models/api_perplexity.go",
       "source_location": "L34"
-    },
-    {
-      "id": "models_streamchunk",
-      "label": "StreamChunk",
-      "_origin": "ast",
-      "community": 23,
-      "community_name": "context.Context",
-      "file_type": "code",
-      "norm_label": "streamchunk",
-      "source_file": "models/model_router.go",
-      "source_location": "L202"
     },
     {
       "id": "models_xaiprovider",
@@ -9331,17 +9188,6 @@
       "norm_label": "getautonomylevel()",
       "source_file": "config/autonomy.go",
       "source_location": "L89"
-    },
-    {
-      "id": "config_autonomy_ispathrestricted",
-      "label": "IsPathRestricted()",
-      "_origin": "ast",
-      "community": 24,
-      "community_name": "GetAutonomyLevel",
-      "file_type": "code",
-      "norm_label": "ispathrestricted()",
-      "source_file": "config/autonomy.go",
-      "source_location": "L142"
     },
     {
       "id": "config_autonomy_istoolallowed",
@@ -9507,6 +9353,17 @@
       "norm_label": "testshelldenyruleblocksallmodesandconfirmation()",
       "source_file": "tools/deny_integration_test.go",
       "source_location": "L15"
+    },
+    {
+      "id": "tools_exec_executeshell",
+      "label": "ExecuteShell()",
+      "_origin": "ast",
+      "community": 24,
+      "community_name": "GetAutonomyLevel",
+      "file_type": "code",
+      "norm_label": "executeshell()",
+      "source_file": "tools/exec.go",
+      "source_location": "L83"
     },
     {
       "id": "tools_exec_gate_test",
@@ -10741,39 +10598,6 @@
       "source_location": "L442"
     },
     {
-      "id": "mcp_jsonrpcerror",
-      "label": "jsonRPCError",
-      "_origin": "ast",
-      "community": 27,
-      "community_name": "MCPServer",
-      "file_type": "code",
-      "norm_label": "jsonrpcerror",
-      "source_file": "mcp/client.go",
-      "source_location": "L116"
-    },
-    {
-      "id": "mcp_jsonrpcresponse",
-      "label": "jsonRPCResponse",
-      "_origin": "ast",
-      "community": 27,
-      "community_name": "MCPServer",
-      "file_type": "code",
-      "norm_label": "jsonrpcresponse",
-      "source_file": "mcp/client.go",
-      "source_location": "L109"
-    },
-    {
-      "id": "mcp_mcpserver_calltool",
-      "label": ".CallTool()",
-      "_origin": "ast",
-      "community": 27,
-      "community_name": "MCPServer",
-      "file_type": "code",
-      "norm_label": ".calltool()",
-      "source_file": "mcp/client.go",
-      "source_location": "L697"
-    },
-    {
       "id": "mcp_mcpserver_close",
       "label": ".Close()",
       "_origin": "ast",
@@ -10928,39 +10752,6 @@
       "source_location": "L11"
     },
     {
-      "id": "gateway_gateway_contextwithtimeout",
-      "label": "contextWithTimeout()",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "api_commandcode.go",
-      "file_type": "code",
-      "norm_label": "contextwithtimeout()",
-      "source_file": "gateway/gateway.go",
-      "source_location": "L161"
-    },
-    {
-      "id": "gateway_gateway_handlechat",
-      "label": "handleChat()",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "api_commandcode.go",
-      "file_type": "code",
-      "norm_label": "handlechat()",
-      "source_file": "gateway/gateway.go",
-      "source_location": "L104"
-    },
-    {
-      "id": "go_type_net_http_request",
-      "label": "net/http.Request",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "api_commandcode.go",
-      "file_type": "code",
-      "norm_label": "net/http.request",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
       "id": "models_api_commandcode",
       "label": "api_commandcode.go",
       "_origin": "ast",
@@ -10983,6 +10774,39 @@
       "source_location": "L160"
     },
     {
+      "id": "models_api_commandcode_callcommandcode",
+      "label": "CallCommandCode()",
+      "_origin": "ast",
+      "community": 28,
+      "community_name": "api_commandcode.go",
+      "file_type": "code",
+      "norm_label": "callcommandcode()",
+      "source_file": "models/api_commandcode.go",
+      "source_location": "L380"
+    },
+    {
+      "id": "models_api_commandcode_callcommandcodestream",
+      "label": "CallCommandCodeStream()",
+      "_origin": "ast",
+      "community": 28,
+      "community_name": "api_commandcode.go",
+      "file_type": "code",
+      "norm_label": "callcommandcodestream()",
+      "source_file": "models/api_commandcode.go",
+      "source_location": "L610"
+    },
+    {
+      "id": "models_api_commandcode_callcommandcodewithtools",
+      "label": "CallCommandCodeWithTools()",
+      "_origin": "ast",
+      "community": 28,
+      "community_name": "api_commandcode.go",
+      "file_type": "code",
+      "norm_label": "callcommandcodewithtools()",
+      "source_file": "models/api_commandcode.go",
+      "source_location": "L386"
+    },
+    {
       "id": "models_api_commandcode_createcommandcoderequest",
       "label": "createCommandCodeRequest()",
       "_origin": "ast",
@@ -11003,17 +10827,6 @@
       "norm_label": "extractfallbacktoolcalls()",
       "source_file": "models/api_commandcode.go",
       "source_location": "L700"
-    },
-    {
-      "id": "models_api_commandcode_init",
-      "label": "init()",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "api_commandcode.go",
-      "file_type": "code",
-      "norm_label": "init()",
-      "source_file": "models/api_commandcode.go",
-      "source_location": "L30"
     },
     {
       "id": "models_api_commandcode_resolvecommandcodekeyfromdisk",
@@ -11069,6 +10882,28 @@
       "norm_label": "commandcodeprovider",
       "source_file": "models/api_commandcode.go",
       "source_location": "L28"
+    },
+    {
+      "id": "models_commandcodeprovider_call",
+      "label": ".Call()",
+      "_origin": "ast",
+      "community": 28,
+      "community_name": "api_commandcode.go",
+      "file_type": "code",
+      "norm_label": ".call()",
+      "source_file": "models/api_commandcode.go",
+      "source_location": "L46"
+    },
+    {
+      "id": "models_commandcodeprovider_callstream",
+      "label": ".CallStream()",
+      "_origin": "ast",
+      "community": 28,
+      "community_name": "api_commandcode.go",
+      "file_type": "code",
+      "norm_label": ".callstream()",
+      "source_file": "models/api_commandcode.go",
+      "source_location": "L54"
     },
     {
       "id": "models_commandcodeprovider_callwithtools",
@@ -12281,81 +12116,92 @@
       "source_location": "L11"
     },
     {
-      "id": "models_tools_test",
-      "label": "tools_test.go",
+      "id": "eval_core",
+      "label": "eval/core.go",
       "_origin": "ast",
       "community": 30,
       "community_name": "RegisterTool",
       "file_type": "code",
-      "norm_label": "tools_test.go",
-      "source_file": "models/tools_test.go",
+      "norm_label": "eval/core.go",
+      "source_file": "eval/core.go",
       "source_location": "L1"
     },
     {
-      "id": "models_tools_test_testcallmodelwithtoolsnilmodel",
-      "label": "TestCallModelWithToolsNilModel()",
+      "id": "eval_core_caseautoclassifier",
+      "label": "caseAutoClassifier()",
       "_origin": "ast",
       "community": 30,
       "community_name": "RegisterTool",
       "file_type": "code",
-      "norm_label": "testcallmodelwithtoolsnilmodel()",
-      "source_file": "models/tools_test.go",
-      "source_location": "L40"
+      "norm_label": "caseautoclassifier()",
+      "source_file": "eval/core.go",
+      "source_location": "L196"
     },
     {
-      "id": "models_tools_test_testgeneratenativetoolsschema",
-      "label": "TestGenerateNativeToolsSchema()",
+      "id": "eval_core_casedenyinvalidskipped",
+      "label": "caseDenyInvalidSkipped()",
       "_origin": "ast",
       "community": 30,
       "community_name": "RegisterTool",
       "file_type": "code",
-      "norm_label": "testgeneratenativetoolsschema()",
-      "source_file": "models/tools_test.go",
-      "source_location": "L48"
+      "norm_label": "casedenyinvalidskipped()",
+      "source_file": "eval/core.go",
+      "source_location": "L81"
     },
     {
-      "id": "registry_registry",
-      "label": "registry/registry.go",
+      "id": "eval_core_casedenyshellyolo",
+      "label": "caseDenyShellYOLO()",
       "_origin": "ast",
       "community": 30,
       "community_name": "RegisterTool",
       "file_type": "code",
-      "norm_label": "registry/registry.go",
-      "source_file": "registry/registry.go",
-      "source_location": "L1"
+      "norm_label": "casedenyshellyolo()",
+      "source_file": "eval/core.go",
+      "source_location": "L58"
     },
     {
-      "id": "registry_registry_generatesystempromptdescriptions",
-      "label": "GenerateSystemPromptDescriptions()",
+      "id": "eval_core_casehooksblockandcontext",
+      "label": "caseHooksBlockAndContext()",
       "_origin": "ast",
       "community": 30,
       "community_name": "RegisterTool",
       "file_type": "code",
-      "norm_label": "generatesystempromptdescriptions()",
-      "source_file": "registry/registry.go",
-      "source_location": "L193"
+      "norm_label": "casehooksblockandcontext()",
+      "source_file": "eval/core.go",
+      "source_location": "L156"
     },
     {
-      "id": "registry_registry_gettoolsbycategory",
-      "label": "GetToolsByCategory()",
+      "id": "eval_core_caseledgerclear",
+      "label": "caseLedgerClear()",
       "_origin": "ast",
       "community": 30,
       "community_name": "RegisterTool",
       "file_type": "code",
-      "norm_label": "gettoolsbycategory()",
-      "source_file": "registry/registry.go",
-      "source_location": "L80"
+      "norm_label": "caseledgerclear()",
+      "source_file": "eval/core.go",
+      "source_location": "L335"
     },
     {
-      "id": "registry_registry_go_registry_argdef",
-      "label": "ArgDef",
+      "id": "eval_core_caseledgerpersisted",
+      "label": "caseLedgerPersisted()",
       "_origin": "ast",
       "community": 30,
       "community_name": "RegisterTool",
       "file_type": "code",
-      "norm_label": "argdef",
-      "source_file": "registry/registry.go",
-      "source_location": "L16"
+      "norm_label": "caseledgerpersisted()",
+      "source_file": "eval/core.go",
+      "source_location": "L310"
+    },
+    {
+      "id": "eval_core_withenv",
+      "label": "withEnv()",
+      "_origin": "ast",
+      "community": 30,
+      "community_name": "RegisterTool",
+      "file_type": "code",
+      "norm_label": "withenv()",
+      "source_file": "eval/core.go",
+      "source_location": "L42"
     },
     {
       "id": "registry_registry_registertool",
@@ -12367,28 +12213,6 @@
       "norm_label": "registertool()",
       "source_file": "registry/registry.go",
       "source_location": "L53"
-    },
-    {
-      "id": "registry_tooldef",
-      "label": "ToolDef",
-      "_origin": "ast",
-      "community": 30,
-      "community_name": "RegisterTool",
-      "file_type": "code",
-      "norm_label": "tooldef",
-      "source_file": "registry/registry.go",
-      "source_location": "L25"
-    },
-    {
-      "id": "registry_toolschemafunc",
-      "label": "ToolSchemaFunc",
-      "_origin": "ast",
-      "community": 30,
-      "community_name": "RegisterTool",
-      "file_type": "code",
-      "norm_label": "toolschemafunc",
-      "source_file": "registry/registry.go",
-      "source_location": "L43"
     },
     {
       "id": "tools_complete_task",
@@ -12435,147 +12259,81 @@
       "source_location": "L10"
     },
     {
-      "id": "cli_lock",
-      "label": "cli_lock.go",
+      "id": "config_autonomy_confirmationrequired",
+      "label": "ConfirmationRequired()",
       "_origin": "ast",
       "community": 31,
-      "community_name": "os.File",
+      "community_name": "ConfirmationRequired",
       "file_type": "code",
-      "norm_label": "cli_lock.go",
-      "source_file": "cli_lock.go",
+      "norm_label": "confirmationrequired()",
+      "source_file": "config/autonomy.go",
+      "source_location": "L100"
+    },
+    {
+      "id": "tools_db",
+      "label": "db.go",
+      "_origin": "ast",
+      "community": 31,
+      "community_name": "ConfirmationRequired",
+      "file_type": "code",
+      "norm_label": "db.go",
+      "source_file": "tools/db.go",
       "source_location": "L1"
     },
     {
-      "id": "cli_lock_acquiresessionlock",
-      "label": "acquireSessionLock()",
+      "id": "tools_db_executesql",
+      "label": "ExecuteSQL()",
       "_origin": "ast",
       "community": 31,
-      "community_name": "os.File",
+      "community_name": "ConfirmationRequired",
       "file_type": "code",
-      "norm_label": "acquiresessionlock()",
-      "source_file": "cli_lock.go",
+      "norm_label": "executesql()",
+      "source_file": "tools/db.go",
+      "source_location": "L37"
+    },
+    {
+      "id": "tools_db_loaddbconnections",
+      "label": "loadDBConnections()",
+      "_origin": "ast",
+      "community": 31,
+      "community_name": "ConfirmationRequired",
+      "file_type": "code",
+      "norm_label": "loaddbconnections()",
+      "source_file": "tools/db.go",
+      "source_location": "L27"
+    },
+    {
+      "id": "tools_dbconnection",
+      "label": "dbConnection",
+      "_origin": "ast",
+      "community": 31,
+      "community_name": "ConfirmationRequired",
+      "file_type": "code",
+      "norm_label": "dbconnection",
+      "source_file": "tools/db.go",
       "source_location": "L20"
     },
     {
-      "id": "cli_lock_test",
-      "label": "cli_lock_test.go",
+      "id": "tools_process",
+      "label": "process.go",
       "_origin": "ast",
       "community": 31,
-      "community_name": "os.File",
+      "community_name": "ConfirmationRequired",
       "file_type": "code",
-      "norm_label": "cli_lock_test.go",
-      "source_file": "cli_lock_test.go",
+      "norm_label": "process.go",
+      "source_file": "tools/process.go",
       "source_location": "L1"
     },
     {
-      "id": "cli_lock_test_testacquiresessionlock",
-      "label": "TestAcquireSessionLock()",
+      "id": "tools_process_executeprocess",
+      "label": "ExecuteProcess()",
       "_origin": "ast",
       "community": 31,
-      "community_name": "os.File",
+      "community_name": "ConfirmationRequired",
       "file_type": "code",
-      "norm_label": "testacquiresessionlock()",
-      "source_file": "cli_lock_test.go",
-      "source_location": "L7"
-    },
-    {
-      "id": "cli_lock_unix",
-      "label": "cli_lock_unix.go",
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "os.File",
-      "file_type": "code",
-      "norm_label": "cli_lock_unix.go",
-      "source_file": "cli_lock_unix.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "cli_lock_unix_lockfileexclusive",
-      "label": "lockFileExclusive()",
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "os.File",
-      "file_type": "code",
-      "norm_label": "lockfileexclusive()",
-      "source_file": "cli_lock_unix.go",
-      "source_location": "L10"
-    },
-    {
-      "id": "cli_lock_unix_unlockfile",
-      "label": "unlockFile()",
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "os.File",
-      "file_type": "code",
-      "norm_label": "unlockfile()",
-      "source_file": "cli_lock_unix.go",
-      "source_location": "L14"
-    },
-    {
-      "id": "cli_lock_windows",
-      "label": "cli_lock_windows.go",
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "os.File",
-      "file_type": "code",
-      "norm_label": "cli_lock_windows.go",
-      "source_file": "cli_lock_windows.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "cli_lock_windows_lockfileexclusive",
-      "label": "lockFileExclusive()",
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "os.File",
-      "file_type": "code",
-      "norm_label": "lockfileexclusive()",
-      "source_file": "cli_lock_windows.go",
-      "source_location": "L9"
-    },
-    {
-      "id": "cli_lock_windows_unlockfile",
-      "label": "unlockFile()",
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "os.File",
-      "file_type": "code",
-      "norm_label": "unlockfile()",
-      "source_file": "cli_lock_windows.go",
-      "source_location": "L14"
-    },
-    {
-      "id": "go_type_os_file",
-      "label": "os.File",
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "os.File",
-      "file_type": "code",
-      "norm_label": "os.file",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "scorp_sessionlockfile",
-      "label": "sessionLockFile",
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "os.File",
-      "file_type": "code",
-      "norm_label": "sessionlockfile",
-      "source_file": "cli_lock.go",
-      "source_location": "L12"
-    },
-    {
-      "id": "scorp_sessionlockfile_release",
-      "label": ".Release()",
-      "_origin": "ast",
-      "community": 31,
-      "community_name": "os.File",
-      "file_type": "code",
-      "norm_label": ".release()",
-      "source_file": "cli_lock.go",
-      "source_location": "L57"
+      "norm_label": "executeprocess()",
+      "source_file": "tools/process.go",
+      "source_location": "L17"
     },
     {
       "id": "tools_testgate_istestrelatedpath",
@@ -13007,17 +12765,6 @@
       "source_location": "L963"
     },
     {
-      "id": "mcp_client_mcptoolsdeferred",
-      "label": "MCPToolsDeferred()",
-      "_origin": "ast",
-      "community": 34,
-      "community_name": "client.go",
-      "file_type": "code",
-      "norm_label": "mcptoolsdeferred()",
-      "source_file": "mcp/client.go",
-      "source_location": "L291"
-    },
-    {
       "id": "mcp_client_mcptoolsforprompt",
       "label": "MCPToolsForPrompt()",
       "_origin": "ast",
@@ -13095,26 +12842,15 @@
       "source_location": "L838"
     },
     {
-      "id": "mcp_deferred_test",
-      "label": "deferred_test.go",
+      "id": "mcp_jsonrpcerror",
+      "label": "jsonRPCError",
       "_origin": "ast",
       "community": 34,
       "community_name": "client.go",
       "file_type": "code",
-      "norm_label": "deferred_test.go",
-      "source_file": "mcp/deferred_test.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "mcp_deferred_test_testmcptoolsdeferredenvparsing",
-      "label": "TestMCPToolsDeferredEnvParsing()",
-      "_origin": "ast",
-      "community": 34,
-      "community_name": "client.go",
-      "file_type": "code",
-      "norm_label": "testmcptoolsdeferredenvparsing()",
-      "source_file": "mcp/deferred_test.go",
-      "source_location": "L8"
+      "norm_label": "jsonrpcerror",
+      "source_file": "mcp/client.go",
+      "source_location": "L116"
     },
     {
       "id": "mcp_jsonrpcrequest",
@@ -13126,6 +12862,17 @@
       "norm_label": "jsonrpcrequest",
       "source_file": "mcp/client.go",
       "source_location": "L102"
+    },
+    {
+      "id": "mcp_jsonrpcresponse",
+      "label": "jsonRPCResponse",
+      "_origin": "ast",
+      "community": 34,
+      "community_name": "client.go",
+      "file_type": "code",
+      "norm_label": "jsonrpcresponse",
+      "source_file": "mcp/client.go",
+      "source_location": "L109"
     },
     {
       "id": "mcp_mcpconfig",
@@ -13181,6 +12928,17 @@
       "norm_label": "mcpservermodeconfig",
       "source_file": "mcp/client.go",
       "source_location": "L30"
+    },
+    {
+      "id": "registry_registry_executetoolbyname",
+      "label": "ExecuteToolByName()",
+      "_origin": "ast",
+      "community": 34,
+      "community_name": "client.go",
+      "file_type": "code",
+      "norm_label": "executetoolbyname()",
+      "source_file": "registry/registry.go",
+      "source_location": "L91"
     },
     {
       "id": "skills_manage",
@@ -13392,17 +13150,6 @@
       "source_location": "L94"
     },
     {
-      "id": "mcp_client_buildargdefsfrominputschema",
-      "label": "buildArgDefsFromInputSchema()",
-      "_origin": "ast",
-      "community": 36,
-      "community_name": "LoadMCPConfig",
-      "file_type": "code",
-      "norm_label": "buildargdefsfrominputschema()",
-      "source_file": "mcp/client.go",
-      "source_location": "L381"
-    },
-    {
       "id": "mcp_client_loadmcpconfig",
       "label": "LoadMCPConfig()",
       "_origin": "ast",
@@ -13412,28 +13159,6 @@
       "norm_label": "loadmcpconfig()",
       "source_file": "mcp/client.go",
       "source_location": "L138"
-    },
-    {
-      "id": "mcp_client_rebuildmcptoollist",
-      "label": "rebuildMCPToolList()",
-      "_origin": "ast",
-      "community": 36,
-      "community_name": "LoadMCPConfig",
-      "file_type": "code",
-      "norm_label": "rebuildmcptoollist()",
-      "source_file": "mcp/client.go",
-      "source_location": "L267"
-    },
-    {
-      "id": "mcp_client_registermcptoolsasnative",
-      "label": "registerMCPToolsAsNative()",
-      "_origin": "ast",
-      "community": 36,
-      "community_name": "LoadMCPConfig",
-      "file_type": "code",
-      "norm_label": "registermcptoolsasnative()",
-      "source_file": "mcp/client.go",
-      "source_location": "L313"
     },
     {
       "id": "mcp_client_reloadmcpservers",
@@ -13456,28 +13181,6 @@
       "norm_label": "sanitizemcpname()",
       "source_file": "mcp/client.go",
       "source_location": "L300"
-    },
-    {
-      "id": "mcp_client_startmcpservers",
-      "label": "StartMCPServers()",
-      "_origin": "ast",
-      "community": 36,
-      "community_name": "LoadMCPConfig",
-      "file_type": "code",
-      "norm_label": "startmcpservers()",
-      "source_file": "mcp/client.go",
-      "source_location": "L155"
-    },
-    {
-      "id": "mcp_client_stopmcpservers",
-      "label": "StopMCPServers()",
-      "_origin": "ast",
-      "community": 36,
-      "community_name": "LoadMCPConfig",
-      "file_type": "code",
-      "norm_label": "stopmcpservers()",
-      "source_file": "mcp/client.go",
-      "source_location": "L202"
     },
     {
       "id": "mcp_manage",
@@ -13568,94 +13271,6 @@
       "source_location": "L102"
     },
     {
-      "id": "mcp_serverwatchdog",
-      "label": "ServerWatchdog",
-      "_origin": "ast",
-      "community": 36,
-      "community_name": "LoadMCPConfig",
-      "file_type": "code",
-      "norm_label": "serverwatchdog",
-      "source_file": "mcp/watchdog.go",
-      "source_location": "L17"
-    },
-    {
-      "id": "mcp_serverwatchdog_monitor",
-      "label": ".monitor()",
-      "_origin": "ast",
-      "community": 36,
-      "community_name": "LoadMCPConfig",
-      "file_type": "code",
-      "norm_label": ".monitor()",
-      "source_file": "mcp/watchdog.go",
-      "source_location": "L78"
-    },
-    {
-      "id": "mcp_watchdog",
-      "label": "watchdog.go",
-      "_origin": "ast",
-      "community": 36,
-      "community_name": "LoadMCPConfig",
-      "file_type": "code",
-      "norm_label": "watchdog.go",
-      "source_file": "mcp/watchdog.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "mcp_watchdog_go_mcpserver",
-      "label": "MCPServer",
-      "_origin": "ast",
-      "community": 36,
-      "community_name": "LoadMCPConfig",
-      "file_type": "code",
-      "norm_label": "mcpserver",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "mcp_watchdog_registerwatchdog",
-      "label": "RegisterWatchdog()",
-      "_origin": "ast",
-      "community": 36,
-      "community_name": "LoadMCPConfig",
-      "file_type": "code",
-      "norm_label": "registerwatchdog()",
-      "source_file": "mcp/watchdog.go",
-      "source_location": "L37"
-    },
-    {
-      "id": "mcp_watchdog_restartserver",
-      "label": "RestartServer()",
-      "_origin": "ast",
-      "community": 36,
-      "community_name": "LoadMCPConfig",
-      "file_type": "code",
-      "norm_label": "restartserver()",
-      "source_file": "mcp/watchdog.go",
-      "source_location": "L182"
-    },
-    {
-      "id": "mcp_watchdog_stopwatchdogs",
-      "label": "StopWatchdogs()",
-      "_origin": "ast",
-      "community": 36,
-      "community_name": "LoadMCPConfig",
-      "file_type": "code",
-      "norm_label": "stopwatchdogs()",
-      "source_file": "mcp/watchdog.go",
-      "source_location": "L68"
-    },
-    {
-      "id": "agent_chat_sendscorpreply",
-      "label": "sendScorpReply()",
-      "_origin": "ast",
-      "community": 37,
-      "community_name": "prompt_test.go",
-      "file_type": "code",
-      "norm_label": "sendscorpreply()",
-      "source_file": "agent/chat.go",
-      "source_location": "L562"
-    },
-    {
       "id": "agent_prompt_test",
       "label": "prompt_test.go",
       "_origin": "ast",
@@ -13667,26 +13282,15 @@
       "source_location": "L1"
     },
     {
-      "id": "agent_prompt_test_testgetboolarg",
-      "label": "TestGetBoolArg()",
+      "id": "agent_prompt_test_testbuildthinkingmessage",
+      "label": "TestBuildThinkingMessage()",
       "_origin": "ast",
       "community": 37,
       "community_name": "prompt_test.go",
       "file_type": "code",
-      "norm_label": "testgetboolarg()",
+      "norm_label": "testbuildthinkingmessage()",
       "source_file": "agent/prompt_test.go",
-      "source_location": "L71"
-    },
-    {
-      "id": "agent_prompt_test_testgetfloatarg",
-      "label": "TestGetFloatArg()",
-      "_origin": "ast",
-      "community": 37,
-      "community_name": "prompt_test.go",
-      "file_type": "code",
-      "norm_label": "testgetfloatarg()",
-      "source_file": "agent/prompt_test.go",
-      "source_location": "L100"
+      "source_location": "L342"
     },
     {
       "id": "agent_prompt_test_testgetint64arg",
@@ -13698,6 +13302,17 @@
       "norm_label": "testgetint64arg()",
       "source_file": "agent/prompt_test.go",
       "source_location": "L174"
+    },
+    {
+      "id": "agent_prompt_test_testgetintarg",
+      "label": "TestGetIntArg()",
+      "_origin": "ast",
+      "community": 37,
+      "community_name": "prompt_test.go",
+      "file_type": "code",
+      "norm_label": "testgetintarg()",
+      "source_file": "agent/prompt_test.go",
+      "source_location": "L42"
     },
     {
       "id": "agent_prompt_test_testgetstringarg",
@@ -13733,6 +13348,17 @@
       "source_location": "L361"
     },
     {
+      "id": "agent_prompt_test_testtooldescription",
+      "label": "TestToolDescription()",
+      "_origin": "ast",
+      "community": 37,
+      "community_name": "prompt_test.go",
+      "file_type": "code",
+      "norm_label": "testtooldescription()",
+      "source_file": "agent/prompt_test.go",
+      "source_location": "L309"
+    },
+    {
       "id": "agent_prompt_test_testtruncoutput",
       "label": "TestTruncOutput()",
       "_origin": "ast",
@@ -13753,28 +13379,6 @@
       "norm_label": "helpers.go",
       "source_file": "internal/helpers/helpers.go",
       "source_location": "L1"
-    },
-    {
-      "id": "internal_helpers_helpers_getboolarg",
-      "label": "GetBoolArg()",
-      "_origin": "ast",
-      "community": 37,
-      "community_name": "prompt_test.go",
-      "file_type": "code",
-      "norm_label": "getboolarg()",
-      "source_file": "internal/helpers/helpers.go",
-      "source_location": "L73"
-    },
-    {
-      "id": "internal_helpers_helpers_getfloatarg",
-      "label": "GetFloatArg()",
-      "_origin": "ast",
-      "community": 37,
-      "community_name": "prompt_test.go",
-      "file_type": "code",
-      "norm_label": "getfloatarg()",
-      "source_file": "internal/helpers/helpers.go",
-      "source_location": "L40"
     },
     {
       "id": "internal_helpers_helpers_getint64arg",
@@ -13841,6 +13445,61 @@
       "norm_label": "auto.go",
       "source_file": "agent/auto.go",
       "source_location": "L1"
+    },
+    {
+      "id": "agent_auto_allowlist_test",
+      "label": "auto_allowlist_test.go",
+      "_origin": "ast",
+      "community": 38,
+      "community_name": "ExecuteTool",
+      "file_type": "code",
+      "norm_label": "auto_allowlist_test.go",
+      "source_file": "agent/auto_allowlist_test.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "agent_auto_allowlist_test_testautoallowlistprefixanchoring",
+      "label": "TestAutoAllowlistPrefixAnchoring()",
+      "_origin": "ast",
+      "community": 38,
+      "community_name": "ExecuteTool",
+      "file_type": "code",
+      "norm_label": "testautoallowlistprefixanchoring()",
+      "source_file": "agent/auto_allowlist_test.go",
+      "source_location": "L16"
+    },
+    {
+      "id": "agent_auto_allowlist_test_testexecutetoolautoallowlistreachesexec",
+      "label": "TestExecuteToolAutoAllowlistReachesExec()",
+      "_origin": "ast",
+      "community": 38,
+      "community_name": "ExecuteTool",
+      "file_type": "code",
+      "norm_label": "testexecutetoolautoallowlistreachesexec()",
+      "source_file": "agent/auto_allowlist_test.go",
+      "source_location": "L44"
+    },
+    {
+      "id": "agent_auto_allowlist_test_testexecutetoolautodenynotbypassedbyconfirmedargs",
+      "label": "TestExecuteToolAutoDenyNotBypassedByConfirmedArgs()",
+      "_origin": "ast",
+      "community": 38,
+      "community_name": "ExecuteTool",
+      "file_type": "code",
+      "norm_label": "testexecutetoolautodenynotbypassedbyconfirmedargs()",
+      "source_file": "agent/auto_allowlist_test.go",
+      "source_location": "L82"
+    },
+    {
+      "id": "agent_auto_autoallowlisted",
+      "label": "autoAllowlisted()",
+      "_origin": "ast",
+      "community": 38,
+      "community_name": "ExecuteTool",
+      "file_type": "code",
+      "norm_label": "autoallowlisted()",
+      "source_file": "agent/auto.go",
+      "source_location": "L109"
     },
     {
       "id": "agent_auto_autoclassify",
@@ -13918,6 +13577,17 @@
       "norm_label": "resetautoallowlist()",
       "source_file": "agent/auto.go",
       "source_location": "L89"
+    },
+    {
+      "id": "agent_auto_resetautostats",
+      "label": "ResetAutoStats()",
+      "_origin": "ast",
+      "community": 38,
+      "community_name": "ExecuteTool",
+      "file_type": "code",
+      "norm_label": "resetautostats()",
+      "source_file": "agent/auto.go",
+      "source_location": "L80"
     },
     {
       "id": "agent_auto_test",
@@ -14041,125 +13711,59 @@
       "source_location": "L106"
     },
     {
-      "id": "skills_skillmeta",
-      "label": "SkillMeta",
+      "id": "agent_session_title",
+      "label": "session_title.go",
       "_origin": "ast",
       "community": 39,
-      "community_name": "v2_skills.go",
+      "community_name": "GenerateContextualSessionTitle",
       "file_type": "code",
-      "norm_label": "skillmeta",
-      "source_file": "skills/v2_skills.go",
-      "source_location": "L20"
-    },
-    {
-      "id": "skills_v2_skills",
-      "label": "v2_skills.go",
-      "_origin": "ast",
-      "community": 39,
-      "community_name": "v2_skills.go",
-      "file_type": "code",
-      "norm_label": "v2_skills.go",
-      "source_file": "skills/v2_skills.go",
+      "norm_label": "session_title.go",
+      "source_file": "agent/session_title.go",
       "source_location": "L1"
     },
     {
-      "id": "skills_v2_skills_activateskill",
-      "label": "ActivateSkill()",
+      "id": "agent_session_title_fallbacktitlefromtext",
+      "label": "fallbackTitleFromText()",
       "_origin": "ast",
       "community": 39,
-      "community_name": "v2_skills.go",
+      "community_name": "GenerateContextualSessionTitle",
       "file_type": "code",
-      "norm_label": "activateskill()",
-      "source_file": "skills/v2_skills.go",
-      "source_location": "L178"
+      "norm_label": "fallbacktitlefromtext()",
+      "source_file": "agent/session_title.go",
+      "source_location": "L87"
     },
     {
-      "id": "skills_v2_skills_listskillsoverview",
-      "label": "ListSkillsOverview()",
+      "id": "agent_session_title_generatecontextualsessiontitle",
+      "label": "GenerateContextualSessionTitle()",
       "_origin": "ast",
       "community": 39,
-      "community_name": "v2_skills.go",
+      "community_name": "GenerateContextualSessionTitle",
       "file_type": "code",
-      "norm_label": "listskillsoverview()",
-      "source_file": "skills/v2_skills.go",
-      "source_location": "L247"
+      "norm_label": "generatecontextualsessiontitle()",
+      "source_file": "agent/session_title.go",
+      "source_location": "L39"
     },
     {
-      "id": "skills_v2_skills_loadallskills",
-      "label": "LoadAllSkills()",
+      "id": "agent_session_title_sanitizesessiontitle",
+      "label": "sanitizeSessionTitle()",
       "_origin": "ast",
       "community": 39,
-      "community_name": "v2_skills.go",
+      "community_name": "GenerateContextualSessionTitle",
       "file_type": "code",
-      "norm_label": "loadallskills()",
-      "source_file": "skills/v2_skills.go",
-      "source_location": "L42"
+      "norm_label": "sanitizesessiontitle()",
+      "source_file": "agent/session_title.go",
+      "source_location": "L72"
     },
     {
-      "id": "skills_v2_skills_parseskillmetadata",
-      "label": "ParseSkillMetadata()",
+      "id": "agent_session_title_shouldautotitlesession",
+      "label": "ShouldAutoTitleSession()",
       "_origin": "ast",
       "community": 39,
-      "community_name": "v2_skills.go",
+      "community_name": "GenerateContextualSessionTitle",
       "file_type": "code",
-      "norm_label": "parseskillmetadata()",
-      "source_file": "skills/v2_skills.go",
-      "source_location": "L84"
-    },
-    {
-      "id": "skills_v2_skills_readskillbody",
-      "label": "ReadSkillBody()",
-      "_origin": "ast",
-      "community": 39,
-      "community_name": "v2_skills.go",
-      "file_type": "code",
-      "norm_label": "readskillbody()",
-      "source_file": "skills/v2_skills.go",
-      "source_location": "L151"
-    },
-    {
-      "id": "skills_v2_skills_scanlegacyjsonskills",
-      "label": "scanLegacyJSONSkills()",
-      "_origin": "ast",
-      "community": 39,
-      "community_name": "v2_skills.go",
-      "file_type": "code",
-      "norm_label": "scanlegacyjsonskills()",
-      "source_file": "skills/v2_skills.go",
-      "source_location": "L267"
-    },
-    {
-      "id": "skills_v2_skills_scanskillsdirectory",
-      "label": "scanSkillsDirectory()",
-      "_origin": "ast",
-      "community": 39,
-      "community_name": "v2_skills.go",
-      "file_type": "code",
-      "norm_label": "scanskillsdirectory()",
-      "source_file": "skills/v2_skills.go",
-      "source_location": "L63"
-    },
-    {
-      "id": "tools_skill_activate",
-      "label": "skill_activate.go",
-      "_origin": "ast",
-      "community": 39,
-      "community_name": "v2_skills.go",
-      "file_type": "code",
-      "norm_label": "skill_activate.go",
-      "source_file": "tools/skill_activate.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "tools_skill_activate_init",
-      "label": "init()",
-      "_origin": "ast",
-      "community": 39,
-      "community_name": "v2_skills.go",
-      "file_type": "code",
-      "norm_label": "init()",
-      "source_file": "tools/skill_activate.go",
-      "source_location": "L10"
+      "norm_label": "shouldautotitlesession()",
+      "source_file": "agent/session_title.go",
+      "source_location": "L22"
     },
     {
       "id": "collectors_collector_system_formatduration",
@@ -15328,105 +14932,6 @@
       "source_location": "L17"
     },
     {
-      "id": "config_autonomy_confirmationrequired",
-      "label": "ConfirmationRequired()",
-      "_origin": "ast",
-      "community": 41,
-      "community_name": "HandleConfirmation",
-      "file_type": "code",
-      "norm_label": "confirmationrequired()",
-      "source_file": "config/autonomy.go",
-      "source_location": "L100"
-    },
-    {
-      "id": "tools_db",
-      "label": "db.go",
-      "_origin": "ast",
-      "community": 41,
-      "community_name": "HandleConfirmation",
-      "file_type": "code",
-      "norm_label": "db.go",
-      "source_file": "tools/db.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "tools_db_executesql",
-      "label": "ExecuteSQL()",
-      "_origin": "ast",
-      "community": 41,
-      "community_name": "HandleConfirmation",
-      "file_type": "code",
-      "norm_label": "executesql()",
-      "source_file": "tools/db.go",
-      "source_location": "L37"
-    },
-    {
-      "id": "tools_db_loaddbconnections",
-      "label": "loadDBConnections()",
-      "_origin": "ast",
-      "community": 41,
-      "community_name": "HandleConfirmation",
-      "file_type": "code",
-      "norm_label": "loaddbconnections()",
-      "source_file": "tools/db.go",
-      "source_location": "L27"
-    },
-    {
-      "id": "tools_dbconnection",
-      "label": "dbConnection",
-      "_origin": "ast",
-      "community": 41,
-      "community_name": "HandleConfirmation",
-      "file_type": "code",
-      "norm_label": "dbconnection",
-      "source_file": "tools/db.go",
-      "source_location": "L20"
-    },
-    {
-      "id": "tools_git",
-      "label": "git.go",
-      "_origin": "ast",
-      "community": 41,
-      "community_name": "HandleConfirmation",
-      "file_type": "code",
-      "norm_label": "git.go",
-      "source_file": "tools/git.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "tools_git_executegit",
-      "label": "ExecuteGit()",
-      "_origin": "ast",
-      "community": 41,
-      "community_name": "HandleConfirmation",
-      "file_type": "code",
-      "norm_label": "executegit()",
-      "source_file": "tools/git.go",
-      "source_location": "L18"
-    },
-    {
-      "id": "tools_process",
-      "label": "process.go",
-      "_origin": "ast",
-      "community": 41,
-      "community_name": "HandleConfirmation",
-      "file_type": "code",
-      "norm_label": "process.go",
-      "source_file": "tools/process.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "tools_process_executeprocess",
-      "label": "ExecuteProcess()",
-      "_origin": "ast",
-      "community": 41,
-      "community_name": "HandleConfirmation",
-      "file_type": "code",
-      "norm_label": "executeprocess()",
-      "source_file": "tools/process.go",
-      "source_location": "L17"
-    },
-    {
       "id": "docs_test_plan_brutal_scorp",
       "label": "TEST_PLAN_BRUTAL_SCORP.md",
       "_origin": "ast",
@@ -15691,15 +15196,15 @@
       "source_location": "L106"
     },
     {
-      "id": "agent_prompt_test_testgetintarg",
-      "label": "TestGetIntArg()",
+      "id": "agent_prompt_test_testgetboolarg",
+      "label": "TestGetBoolArg()",
       "_origin": "ast",
       "community": 43,
       "community_name": "GetStringArg",
       "file_type": "code",
-      "norm_label": "testgetintarg()",
+      "norm_label": "testgetboolarg()",
       "source_file": "agent/prompt_test.go",
-      "source_location": "L42"
+      "source_location": "L71"
     },
     {
       "id": "bootstrap_core",
@@ -15722,6 +15227,17 @@
       "norm_label": "init()",
       "source_file": "bootstrap/core.go",
       "source_location": "L9"
+    },
+    {
+      "id": "internal_helpers_helpers_getboolarg",
+      "label": "GetBoolArg()",
+      "_origin": "ast",
+      "community": 43,
+      "community_name": "GetStringArg",
+      "file_type": "code",
+      "norm_label": "getboolarg()",
+      "source_file": "internal/helpers/helpers.go",
+      "source_location": "L73"
     },
     {
       "id": "internal_helpers_helpers_getintarg",
@@ -15898,6 +15414,28 @@
       "norm_label": "shellquote()",
       "source_file": "tools/exec.go",
       "source_location": "L17"
+    },
+    {
+      "id": "tools_git",
+      "label": "git.go",
+      "_origin": "ast",
+      "community": 43,
+      "community_name": "GetStringArg",
+      "file_type": "code",
+      "norm_label": "git.go",
+      "source_file": "tools/git.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "tools_git_executegit",
+      "label": "ExecuteGit()",
+      "_origin": "ast",
+      "community": 43,
+      "community_name": "GetStringArg",
+      "file_type": "code",
+      "norm_label": "executegit()",
+      "source_file": "tools/git.go",
+      "source_location": "L18"
     },
     {
       "id": "tools_http",
@@ -16278,29 +15816,18 @@
       "label": "caseSandbox()",
       "_origin": "ast",
       "community": 45,
-      "community_name": "ExecuteShell",
+      "community_name": "SandboxActive",
       "file_type": "code",
       "norm_label": "casesandbox()",
       "source_file": "eval/core.go",
       "source_location": "L423"
     },
     {
-      "id": "tools_exec_executeshell",
-      "label": "ExecuteShell()",
-      "_origin": "ast",
-      "community": 45,
-      "community_name": "ExecuteShell",
-      "file_type": "code",
-      "norm_label": "executeshell()",
-      "source_file": "tools/exec.go",
-      "source_location": "L83"
-    },
-    {
       "id": "tools_sandbox",
       "label": "sandbox.go",
       "_origin": "ast",
       "community": 45,
-      "community_name": "ExecuteShell",
+      "community_name": "SandboxActive",
       "file_type": "code",
       "norm_label": "sandbox.go",
       "source_file": "tools/sandbox.go",
@@ -16311,7 +15838,7 @@
       "label": "SandboxActive()",
       "_origin": "ast",
       "community": 45,
-      "community_name": "ExecuteShell",
+      "community_name": "SandboxActive",
       "file_type": "code",
       "norm_label": "sandboxactive()",
       "source_file": "tools/sandbox.go",
@@ -16322,7 +15849,7 @@
       "label": "sandboxArgv()",
       "_origin": "ast",
       "community": 45,
-      "community_name": "ExecuteShell",
+      "community_name": "SandboxActive",
       "file_type": "code",
       "norm_label": "sandboxargv()",
       "source_file": "tools/sandbox.go",
@@ -16333,7 +15860,7 @@
       "label": "SandboxModeEnabled()",
       "_origin": "ast",
       "community": 45,
-      "community_name": "ExecuteShell",
+      "community_name": "SandboxActive",
       "file_type": "code",
       "norm_label": "sandboxmodeenabled()",
       "source_file": "tools/sandbox.go",
@@ -16344,7 +15871,7 @@
       "label": "sandboxRWPaths()",
       "_origin": "ast",
       "community": 45,
-      "community_name": "ExecuteShell",
+      "community_name": "SandboxActive",
       "file_type": "code",
       "norm_label": "sandboxrwpaths()",
       "source_file": "tools/sandbox.go",
@@ -16355,7 +15882,7 @@
       "label": "sandboxSmokeTest()",
       "_origin": "ast",
       "community": 45,
-      "community_name": "ExecuteShell",
+      "community_name": "SandboxActive",
       "file_type": "code",
       "norm_label": "sandboxsmoketest()",
       "source_file": "tools/sandbox.go",
@@ -16366,7 +15893,7 @@
       "label": "SandboxStatusNotice()",
       "_origin": "ast",
       "community": 45,
-      "community_name": "ExecuteShell",
+      "community_name": "SandboxActive",
       "file_type": "code",
       "norm_label": "sandboxstatusnotice()",
       "source_file": "tools/sandbox.go",
@@ -16377,7 +15904,7 @@
       "label": "SandboxVersion()",
       "_origin": "ast",
       "community": 45,
-      "community_name": "ExecuteShell",
+      "community_name": "SandboxActive",
       "file_type": "code",
       "norm_label": "sandboxversion()",
       "source_file": "tools/sandbox.go",
@@ -16388,7 +15915,7 @@
       "label": "SandboxWrap()",
       "_origin": "ast",
       "community": 45,
-      "community_name": "ExecuteShell",
+      "community_name": "SandboxActive",
       "file_type": "code",
       "norm_label": "sandboxwrap()",
       "source_file": "tools/sandbox.go",
@@ -16399,7 +15926,7 @@
       "label": "sandbox_test.go",
       "_origin": "ast",
       "community": 45,
-      "community_name": "ExecuteShell",
+      "community_name": "SandboxActive",
       "file_type": "code",
       "norm_label": "sandbox_test.go",
       "source_file": "tools/sandbox_test.go",
@@ -16410,7 +15937,7 @@
       "label": "stubDanger()",
       "_origin": "ast",
       "community": 45,
-      "community_name": "ExecuteShell",
+      "community_name": "SandboxActive",
       "file_type": "code",
       "norm_label": "stubdanger()",
       "source_file": "tools/sandbox_test.go",
@@ -16421,7 +15948,7 @@
       "label": "TestSandboxBlocksSystemWrite()",
       "_origin": "ast",
       "community": 45,
-      "community_name": "ExecuteShell",
+      "community_name": "SandboxActive",
       "file_type": "code",
       "norm_label": "testsandboxblockssystemwrite()",
       "source_file": "tools/sandbox_test.go",
@@ -16432,7 +15959,7 @@
       "label": "TestSandboxCrossCommandTmpfsFile()",
       "_origin": "ast",
       "community": 45,
-      "community_name": "ExecuteShell",
+      "community_name": "SandboxActive",
       "file_type": "code",
       "norm_label": "testsandboxcrosscommandtmpfsfile()",
       "source_file": "tools/sandbox_test.go",
@@ -16443,7 +15970,7 @@
       "label": "TestSandboxedShellExecutes()",
       "_origin": "ast",
       "community": 45,
-      "community_name": "ExecuteShell",
+      "community_name": "SandboxActive",
       "file_type": "code",
       "norm_label": "testsandboxedshellexecutes()",
       "source_file": "tools/sandbox_test.go",
@@ -16454,7 +15981,7 @@
       "label": "TestSandboxStatusNotice()",
       "_origin": "ast",
       "community": 45,
-      "community_name": "ExecuteShell",
+      "community_name": "SandboxActive",
       "file_type": "code",
       "norm_label": "testsandboxstatusnotice()",
       "source_file": "tools/sandbox_test.go",
@@ -16465,7 +15992,7 @@
       "label": "TestSandboxWrapArgvShape()",
       "_origin": "ast",
       "community": 45,
-      "community_name": "ExecuteShell",
+      "community_name": "SandboxActive",
       "file_type": "code",
       "norm_label": "testsandboxwrapargvshape()",
       "source_file": "tools/sandbox_test.go",
@@ -16755,7 +16282,7 @@
       "file_type": "code",
       "norm_label": "applyproviderdefaults()",
       "source_file": "models/providers.go",
-      "source_location": "L396"
+      "source_location": "L402"
     },
     {
       "id": "models_providers_go_models_providerpreset",
@@ -16777,17 +16304,6 @@
       "file_type": "code",
       "norm_label": "hasapikey()",
       "source_file": "models/providers.go",
-      "source_location": "L327"
-    },
-    {
-      "id": "models_providers_keysourcelabel",
-      "label": "KeySourceLabel()",
-      "_origin": "ast",
-      "community": 47,
-      "community_name": "ResolveAPIKey",
-      "file_type": "code",
-      "norm_label": "keysourcelabel()",
-      "source_file": "models/providers.go",
       "source_location": "L333"
     },
     {
@@ -16799,7 +16315,7 @@
       "file_type": "code",
       "norm_label": "migratemodelconfigs()",
       "source_file": "models/providers.go",
-      "source_location": "L417"
+      "source_location": "L423"
     },
     {
       "id": "models_providers_registerproviderpreset",
@@ -16868,6 +16384,17 @@
       "source_location": "L68"
     },
     {
+      "id": "models_tools_callmodelwithtools",
+      "label": "CallModelWithTools()",
+      "_origin": "ast",
+      "community": 47,
+      "community_name": "ResolveAPIKey",
+      "file_type": "code",
+      "norm_label": "callmodelwithtools()",
+      "source_file": "models/tools.go",
+      "source_location": "L18"
+    },
+    {
       "id": "agent_autostats",
       "label": "autoStats",
       "_origin": "ast",
@@ -16888,28 +16415,6 @@
       "norm_label": "sync.mutex",
       "source_file": "",
       "source_location": ""
-    },
-    {
-      "id": "mcp_client_unregistermcpnativetools",
-      "label": "unregisterMCPNativeTools()",
-      "_origin": "ast",
-      "community": 48,
-      "community_name": "sync.Mutex",
-      "file_type": "code",
-      "norm_label": "unregistermcpnativetools()",
-      "source_file": "mcp/client.go",
-      "source_location": "L245"
-    },
-    {
-      "id": "registry_registry_getalltools",
-      "label": "GetAllTools()",
-      "_origin": "ast",
-      "community": 48,
-      "community_name": "sync.Mutex",
-      "file_type": "code",
-      "norm_label": "getalltools()",
-      "source_file": "registry/registry.go",
-      "source_location": "L71"
     },
     {
       "id": "testutil_endpoint",
@@ -16945,176 +16450,44 @@
       "source_location": "L37"
     },
     {
-      "id": "tools_deferred",
-      "label": "deferred.go",
+      "id": "mcp_client_buildargdefsfrominputschema",
+      "label": "buildArgDefsFromInputSchema()",
       "_origin": "ast",
-      "community": 48,
-      "community_name": "sync.Mutex",
+      "community": 5,
+      "community_name": "UnregisterTool",
       "file_type": "code",
-      "norm_label": "deferred.go",
-      "source_file": "tools/deferred.go",
-      "source_location": "L1"
+      "norm_label": "buildargdefsfrominputschema()",
+      "source_file": "mcp/client.go",
+      "source_location": "L381"
     },
     {
-      "id": "tools_deferred_countactivetools",
-      "label": "countActiveTools()",
+      "id": "mcp_client_unregistermcpnativetools",
+      "label": "unregisterMCPNativeTools()",
       "_origin": "ast",
-      "community": 48,
-      "community_name": "sync.Mutex",
+      "community": 5,
+      "community_name": "UnregisterTool",
       "file_type": "code",
-      "norm_label": "countactivetools()",
-      "source_file": "tools/deferred.go",
-      "source_location": "L222"
+      "norm_label": "unregistermcpnativetools()",
+      "source_file": "mcp/client.go",
+      "source_location": "L245"
     },
     {
-      "id": "tools_deferred_countdeferredtools",
-      "label": "countDeferredTools()",
+      "id": "models_tools_test_testgeneratenativetoolsschema",
+      "label": "TestGenerateNativeToolsSchema()",
       "_origin": "ast",
-      "community": 48,
-      "community_name": "sync.Mutex",
+      "community": 5,
+      "community_name": "UnregisterTool",
       "file_type": "code",
-      "norm_label": "countdeferredtools()",
-      "source_file": "tools/deferred.go",
-      "source_location": "L232"
-    },
-    {
-      "id": "tools_deferred_executetoollist",
-      "label": "ExecuteToolList()",
-      "_origin": "ast",
-      "community": 48,
-      "community_name": "sync.Mutex",
-      "file_type": "code",
-      "norm_label": "executetoollist()",
-      "source_file": "tools/deferred.go",
-      "source_location": "L183"
-    },
-    {
-      "id": "tools_deferred_executetoolsearch",
-      "label": "ExecuteToolSearch()",
-      "_origin": "ast",
-      "community": 48,
-      "community_name": "sync.Mutex",
-      "file_type": "code",
-      "norm_label": "executetoolsearch()",
-      "source_file": "tools/deferred.go",
-      "source_location": "L20"
-    },
-    {
-      "id": "gateway_gateway",
-      "label": "gateway.go",
-      "_origin": "ast",
-      "community": 49,
-      "community_name": "TestGatewayEndpoints",
-      "file_type": "code",
-      "norm_label": "gateway.go",
-      "source_file": "gateway/gateway.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "gateway_gateway_handledashboard",
-      "label": "handleDashboard()",
-      "_origin": "ast",
-      "community": 49,
-      "community_name": "TestGatewayEndpoints",
-      "file_type": "code",
-      "norm_label": "handledashboard()",
-      "source_file": "gateway/gateway.go",
-      "source_location": "L166"
-    },
-    {
-      "id": "gateway_gateway_handlereceipts",
-      "label": "handleReceipts()",
-      "_origin": "ast",
-      "community": 49,
-      "community_name": "TestGatewayEndpoints",
-      "file_type": "code",
-      "norm_label": "handlereceipts()",
-      "source_file": "gateway/gateway.go",
-      "source_location": "L98"
-    },
-    {
-      "id": "gateway_gateway_handlesops",
-      "label": "handleSOPs()",
-      "_origin": "ast",
-      "community": 49,
-      "community_name": "TestGatewayEndpoints",
-      "file_type": "code",
-      "norm_label": "handlesops()",
-      "source_file": "gateway/gateway.go",
-      "source_location": "L92"
-    },
-    {
-      "id": "gateway_gateway_handlestatus",
-      "label": "handleStatus()",
-      "_origin": "ast",
-      "community": 49,
-      "community_name": "TestGatewayEndpoints",
-      "file_type": "code",
-      "norm_label": "handlestatus()",
-      "source_file": "gateway/gateway.go",
-      "source_location": "L68"
-    },
-    {
-      "id": "gateway_gateway_handletools",
-      "label": "handleTools()",
-      "_origin": "ast",
-      "community": 49,
-      "community_name": "TestGatewayEndpoints",
-      "file_type": "code",
-      "norm_label": "handletools()",
-      "source_file": "gateway/gateway.go",
-      "source_location": "L86"
-    },
-    {
-      "id": "gateway_gateway_startgateway",
-      "label": "StartGateway()",
-      "_origin": "ast",
-      "community": 49,
-      "community_name": "TestGatewayEndpoints",
-      "file_type": "code",
-      "norm_label": "startgateway()",
-      "source_file": "gateway/gateway.go",
-      "source_location": "L33"
-    },
-    {
-      "id": "gateway_gateway_test",
-      "label": "gateway_test.go",
-      "_origin": "ast",
-      "community": 49,
-      "community_name": "TestGatewayEndpoints",
-      "file_type": "code",
-      "norm_label": "gateway_test.go",
-      "source_file": "gateway/gateway_test.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "gateway_gateway_test_testgatewayendpoints",
-      "label": "TestGatewayEndpoints()",
-      "_origin": "ast",
-      "community": 49,
-      "community_name": "TestGatewayEndpoints",
-      "file_type": "code",
-      "norm_label": "testgatewayendpoints()",
-      "source_file": "gateway/gateway_test.go",
-      "source_location": "L15"
-    },
-    {
-      "id": "go_type_net_http_responsewriter",
-      "label": "net/http.ResponseWriter",
-      "_origin": "ast",
-      "community": 49,
-      "community_name": "TestGatewayEndpoints",
-      "file_type": "code",
-      "norm_label": "net/http.responsewriter",
-      "source_file": "",
-      "source_location": ""
+      "norm_label": "testgeneratenativetoolsschema()",
+      "source_file": "models/tools_test.go",
+      "source_location": "L48"
     },
     {
       "id": "registry_dynamic",
       "label": "dynamic.go",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "dynamic.go",
       "source_file": "registry/dynamic.go",
@@ -17125,7 +16498,7 @@
       "label": "ActivateToolWithTTL()",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "activatetoolwithttl()",
       "source_file": "registry/dynamic.go",
@@ -17136,7 +16509,7 @@
       "label": "ClearToolTTL()",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "cleartoolttl()",
       "source_file": "registry/dynamic.go",
@@ -17147,7 +16520,7 @@
       "label": "IsCoreTool()",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "iscoretool()",
       "source_file": "registry/dynamic.go",
@@ -17158,7 +16531,7 @@
       "label": "IsDynamicModeEnabled()",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "isdynamicmodeenabled()",
       "source_file": "registry/dynamic.go",
@@ -17169,7 +16542,7 @@
       "label": "IsToolActive()",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "istoolactive()",
       "source_file": "registry/dynamic.go",
@@ -17180,7 +16553,7 @@
       "label": "ResetDynamicTools()",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "resetdynamictools()",
       "source_file": "registry/dynamic.go",
@@ -17191,7 +16564,7 @@
       "label": "dynamic_test.go",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "dynamic_test.go",
       "source_file": "registry/dynamic_test.go",
@@ -17202,7 +16575,7 @@
       "label": "clearDynamicEnv()",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "cleardynamicenv()",
       "source_file": "registry/dynamic_test.go",
@@ -17213,7 +16586,7 @@
       "label": "registerTempTool()",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "registertemptool()",
       "source_file": "registry/dynamic_test.go",
@@ -17224,7 +16597,7 @@
       "label": "TestDynamicToolTTL()",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "testdynamictoolttl()",
       "source_file": "registry/dynamic_test.go",
@@ -17235,7 +16608,7 @@
       "label": "TestGenerateNativeToolsSchemaExcludesDeferred()",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "testgeneratenativetoolsschemaexcludesdeferred()",
       "source_file": "registry/dynamic_test.go",
@@ -17246,7 +16619,7 @@
       "label": "TestIsToolActiveNonDeferredAlwaysActiveInStaticMode()",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "testistoolactivenondeferredalwaysactiveinstaticmode()",
       "source_file": "registry/dynamic_test.go",
@@ -17257,7 +16630,7 @@
       "label": "TestIsToolActiveStaticModeWithTTL()",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "testistoolactivestaticmodewithttl()",
       "source_file": "registry/dynamic_test.go",
@@ -17268,40 +16641,194 @@
       "label": "TickToolTTL()",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "ticktoolttl()",
       "source_file": "registry/dynamic.go",
       "source_location": "L60"
     },
     {
+      "id": "registry_plugin",
+      "label": "plugin.go",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "UnregisterTool",
+      "file_type": "code",
+      "norm_label": "plugin.go",
+      "source_file": "registry/plugin.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "registry_plugin_registerplugin",
+      "label": "RegisterPlugin()",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "UnregisterTool",
+      "file_type": "code",
+      "norm_label": "registerplugin()",
+      "source_file": "registry/plugin.go",
+      "source_location": "L29"
+    },
+    {
+      "id": "registry_plugin_test_testregisterplugin",
+      "label": "TestRegisterPlugin()",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "UnregisterTool",
+      "file_type": "code",
+      "norm_label": "testregisterplugin()",
+      "source_file": "registry/plugin_test.go",
+      "source_location": "L30"
+    },
+    {
+      "id": "registry_registry",
+      "label": "registry/registry.go",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "UnregisterTool",
+      "file_type": "code",
+      "norm_label": "registry/registry.go",
+      "source_file": "registry/registry.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "registry_registry_generatesystempromptdescriptions",
+      "label": "GenerateSystemPromptDescriptions()",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "UnregisterTool",
+      "file_type": "code",
+      "norm_label": "generatesystempromptdescriptions()",
+      "source_file": "registry/registry.go",
+      "source_location": "L193"
+    },
+    {
+      "id": "registry_registry_getalltools",
+      "label": "GetAllTools()",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "UnregisterTool",
+      "file_type": "code",
+      "norm_label": "getalltools()",
+      "source_file": "registry/registry.go",
+      "source_location": "L71"
+    },
+    {
       "id": "registry_registry_gettool",
       "label": "GetTool()",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "gettool()",
       "source_file": "registry/registry.go",
       "source_location": "L65"
     },
     {
+      "id": "registry_registry_gettoolsbycategory",
+      "label": "GetToolsByCategory()",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "UnregisterTool",
+      "file_type": "code",
+      "norm_label": "gettoolsbycategory()",
+      "source_file": "registry/registry.go",
+      "source_location": "L80"
+    },
+    {
+      "id": "registry_registry_go_registry_argdef",
+      "label": "ArgDef",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "UnregisterTool",
+      "file_type": "code",
+      "norm_label": "argdef",
+      "source_file": "registry/registry.go",
+      "source_location": "L16"
+    },
+    {
       "id": "registry_registry_resetnativetoolcache",
       "label": "ResetNativeToolCache()",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "resetnativetoolcache()",
       "source_file": "registry/registry.go",
       "source_location": "L120"
     },
     {
+      "id": "registry_registry_unregistertool",
+      "label": "UnregisterTool()",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "UnregisterTool",
+      "file_type": "code",
+      "norm_label": "unregistertool()",
+      "source_file": "registry/registry.go",
+      "source_location": "L100"
+    },
+    {
+      "id": "registry_tooldef",
+      "label": "ToolDef",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "UnregisterTool",
+      "file_type": "code",
+      "norm_label": "tooldef",
+      "source_file": "registry/registry.go",
+      "source_location": "L25"
+    },
+    {
+      "id": "registry_toolplugin",
+      "label": "ToolPlugin",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "UnregisterTool",
+      "file_type": "code",
+      "norm_label": "toolplugin",
+      "source_file": "registry/plugin.go",
+      "source_location": "L16"
+    },
+    {
+      "id": "registry_toolpluginwithschema",
+      "label": "ToolPluginWithSchema",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "UnregisterTool",
+      "file_type": "code",
+      "norm_label": "toolpluginwithschema",
+      "source_file": "registry/plugin.go",
+      "source_location": "L23"
+    },
+    {
+      "id": "registry_toolschemafunc",
+      "label": "ToolSchemaFunc",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "UnregisterTool",
+      "file_type": "code",
+      "norm_label": "toolschemafunc",
+      "source_file": "registry/registry.go",
+      "source_location": "L43"
+    },
+    {
+      "id": "tools_deferred",
+      "label": "deferred.go",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "UnregisterTool",
+      "file_type": "code",
+      "norm_label": "deferred.go",
+      "source_file": "tools/deferred.go",
+      "source_location": "L1"
+    },
+    {
       "id": "tools_deferred_activation_test",
       "label": "deferred_activation_test.go",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "deferred_activation_test.go",
       "source_file": "tools/deferred_activation_test.go",
@@ -17312,7 +16839,7 @@
       "label": "deferredToolActive()",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "deferredtoolactive()",
       "source_file": "tools/deferred_activation_test.go",
@@ -17323,7 +16850,7 @@
       "label": "osUnsetDynamic()",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "osunsetdynamic()",
       "source_file": "tools/deferred_activation_test.go",
@@ -17334,7 +16861,7 @@
       "label": "registerSearchTarget()",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "registersearchtarget()",
       "source_file": "tools/deferred_activation_test.go",
@@ -17345,22 +16872,66 @@
       "label": "TestToolSearchActivatesDeferredToolInStaticMode()",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "testtoolsearchactivatesdeferredtoolinstaticmode()",
       "source_file": "tools/deferred_activation_test.go",
       "source_location": "L41"
     },
     {
+      "id": "tools_deferred_countactivetools",
+      "label": "countActiveTools()",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "UnregisterTool",
+      "file_type": "code",
+      "norm_label": "countactivetools()",
+      "source_file": "tools/deferred.go",
+      "source_location": "L222"
+    },
+    {
+      "id": "tools_deferred_countdeferredtools",
+      "label": "countDeferredTools()",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "UnregisterTool",
+      "file_type": "code",
+      "norm_label": "countdeferredtools()",
+      "source_file": "tools/deferred.go",
+      "source_location": "L232"
+    },
+    {
       "id": "tools_deferred_executetoolcall",
       "label": "ExecuteToolCall()",
       "_origin": "ast",
       "community": 5,
-      "community_name": "ResetNativeToolCache",
+      "community_name": "UnregisterTool",
       "file_type": "code",
       "norm_label": "executetoolcall()",
       "source_file": "tools/deferred.go",
       "source_location": "L146"
+    },
+    {
+      "id": "tools_deferred_executetoollist",
+      "label": "ExecuteToolList()",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "UnregisterTool",
+      "file_type": "code",
+      "norm_label": "executetoollist()",
+      "source_file": "tools/deferred.go",
+      "source_location": "L183"
+    },
+    {
+      "id": "tools_deferred_executetoolsearch",
+      "label": "ExecuteToolSearch()",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "UnregisterTool",
+      "file_type": "code",
+      "norm_label": "executetoolsearch()",
+      "source_file": "tools/deferred.go",
+      "source_location": "L20"
     },
     {
       "id": "agent_deny_test",
@@ -17528,213 +17099,103 @@
       "source_location": ""
     },
     {
-      "id": "sop_sop",
-      "label": "SOP",
+      "id": "agent_steering",
+      "label": "steering.go",
       "_origin": "ast",
-      "community": 51,
-      "community_name": "InitDefaultSOPs",
+      "community": 53,
+      "community_name": "startCLI",
       "file_type": "code",
-      "norm_label": "sop",
-      "source_file": "sop/sop.go",
-      "source_location": "L20"
-    },
-    {
-      "id": "sop_sop_dir",
-      "label": "Dir()",
-      "_origin": "ast",
-      "community": 51,
-      "community_name": "InitDefaultSOPs",
-      "file_type": "code",
-      "norm_label": "dir()",
-      "source_file": "sop/sop.go",
-      "source_location": "L32"
-    },
-    {
-      "id": "sop_sop_getsop",
-      "label": "GetSOP()",
-      "_origin": "ast",
-      "community": 51,
-      "community_name": "InitDefaultSOPs",
-      "file_type": "code",
-      "norm_label": "getsop()",
-      "source_file": "sop/sop.go",
-      "source_location": "L116"
-    },
-    {
-      "id": "sop_sop_initdefaultsops",
-      "label": "InitDefaultSOPs()",
-      "_origin": "ast",
-      "community": 51,
-      "community_name": "InitDefaultSOPs",
-      "file_type": "code",
-      "norm_label": "initdefaultsops()",
-      "source_file": "sop/sop.go",
-      "source_location": "L39"
-    },
-    {
-      "id": "sop_sop_listsops",
-      "label": "ListSOPs()",
-      "_origin": "ast",
-      "community": 51,
-      "community_name": "InitDefaultSOPs",
-      "file_type": "code",
-      "norm_label": "listsops()",
-      "source_file": "sop/sop.go",
-      "source_location": "L90"
-    },
-    {
-      "id": "sop_sop_savesop",
-      "label": "SaveSOP()",
-      "_origin": "ast",
-      "community": 51,
-      "community_name": "InitDefaultSOPs",
-      "file_type": "code",
-      "norm_label": "savesop()",
-      "source_file": "sop/sop.go",
-      "source_location": "L135"
-    },
-    {
-      "id": "sop_sop_test",
-      "label": "sop_test.go",
-      "_origin": "ast",
-      "community": 51,
-      "community_name": "InitDefaultSOPs",
-      "file_type": "code",
-      "norm_label": "sop_test.go",
-      "source_file": "sop/sop_test.go",
+      "norm_label": "steering.go",
+      "source_file": "agent/steering.go",
       "source_location": "L1"
     },
     {
-      "id": "sop_sop_test_testsoplifecycle",
-      "label": "TestSOPLifecycle()",
+      "id": "agent_steering_clearsteeringqueue",
+      "label": "ClearSteeringQueue()",
       "_origin": "ast",
-      "community": 51,
-      "community_name": "InitDefaultSOPs",
+      "community": 53,
+      "community_name": "startCLI",
       "file_type": "code",
-      "norm_label": "testsoplifecycle()",
-      "source_file": "sop/sop_test.go",
-      "source_location": "L7"
+      "norm_label": "clearsteeringqueue()",
+      "source_file": "agent/steering.go",
+      "source_location": "L55"
     },
     {
-      "id": "tools_sop",
-      "label": "sop.go",
+      "id": "agent_steering_hassteeringmessage",
+      "label": "HasSteeringMessage()",
       "_origin": "ast",
-      "community": 51,
-      "community_name": "InitDefaultSOPs",
+      "community": 53,
+      "community_name": "startCLI",
       "file_type": "code",
-      "norm_label": "sop.go",
-      "source_file": "tools/sop.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "tools_sop_executesop",
-      "label": "ExecuteSOP()",
-      "_origin": "ast",
-      "community": 51,
-      "community_name": "InitDefaultSOPs",
-      "file_type": "code",
-      "norm_label": "executesop()",
-      "source_file": "tools/sop.go",
-      "source_location": "L16"
-    },
-    {
-      "id": "cli_callbacks",
-      "label": "cli_callbacks.go",
-      "_origin": "ast",
-      "community": 52,
-      "community_name": "wireCLICallbacks",
-      "file_type": "code",
-      "norm_label": "cli_callbacks.go",
-      "source_file": "cli_callbacks.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "cli_callbacks_wireclicallbacks",
-      "label": "wireCLICallbacks()",
-      "_origin": "ast",
-      "community": 52,
-      "community_name": "wireCLICallbacks",
-      "file_type": "code",
-      "norm_label": "wireclicallbacks()",
-      "source_file": "cli_callbacks.go",
-      "source_location": "L15"
-    },
-    {
-      "id": "cli_format",
-      "label": "cli_format.go",
-      "_origin": "ast",
-      "community": 52,
-      "community_name": "wireCLICallbacks",
-      "file_type": "code",
-      "norm_label": "cli_format.go",
-      "source_file": "cli_format.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "cli_format_formatfinalresponse",
-      "label": "formatFinalResponse()",
-      "_origin": "ast",
-      "community": 52,
-      "community_name": "wireCLICallbacks",
-      "file_type": "code",
-      "norm_label": "formatfinalresponse()",
-      "source_file": "cli_format.go",
-      "source_location": "L11"
-    },
-    {
-      "id": "cli_format_isterminal",
-      "label": "isTerminal()",
-      "_origin": "ast",
-      "community": 52,
-      "community_name": "wireCLICallbacks",
-      "file_type": "code",
-      "norm_label": "isterminal()",
-      "source_file": "cli_format.go",
+      "norm_label": "hassteeringmessage()",
+      "source_file": "agent/steering.go",
       "source_location": "L47"
     },
     {
-      "id": "cli_format_striphtml",
-      "label": "stripHTML()",
+      "id": "agent_steering_popsteeringmessage",
+      "label": "PopSteeringMessage()",
       "_origin": "ast",
-      "community": 52,
-      "community_name": "wireCLICallbacks",
+      "community": 53,
+      "community_name": "startCLI",
       "file_type": "code",
-      "norm_label": "striphtml()",
-      "source_file": "cli_format.go",
-      "source_location": "L25"
+      "norm_label": "popsteeringmessage()",
+      "source_file": "agent/steering.go",
+      "source_location": "L29"
     },
     {
-      "id": "cli_test",
-      "label": "cli_test.go",
+      "id": "agent_steering_queuesteeringmessage",
+      "label": "QueueSteeringMessage()",
       "_origin": "ast",
-      "community": 52,
-      "community_name": "wireCLICallbacks",
+      "community": 53,
+      "community_name": "startCLI",
       "file_type": "code",
-      "norm_label": "cli_test.go",
-      "source_file": "cli_test.go",
+      "norm_label": "queuesteeringmessage()",
+      "source_file": "agent/steering.go",
+      "source_location": "L19"
+    },
+    {
+      "id": "agent_steering_test",
+      "label": "steering_test.go",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "steering_test.go",
+      "source_file": "agent/steering_test.go",
       "source_location": "L1"
     },
     {
-      "id": "cli_test_testformatfinalresponse",
-      "label": "TestFormatFinalResponse()",
+      "id": "agent_steering_test_teststeeringqueue",
+      "label": "TestSteeringQueue()",
       "_origin": "ast",
-      "community": 52,
-      "community_name": "wireCLICallbacks",
+      "community": 53,
+      "community_name": "startCLI",
       "file_type": "code",
-      "norm_label": "testformatfinalresponse()",
-      "source_file": "cli_test.go",
-      "source_location": "L26"
+      "norm_label": "teststeeringqueue()",
+      "source_file": "agent/steering_test.go",
+      "source_location": "L7"
     },
     {
-      "id": "cli_test_teststriphtml",
-      "label": "TestStripHTML()",
+      "id": "bootstrap_autonomous",
+      "label": "bootstrap/autonomous.go",
       "_origin": "ast",
-      "community": 52,
-      "community_name": "wireCLICallbacks",
+      "community": 53,
+      "community_name": "startCLI",
       "file_type": "code",
-      "norm_label": "teststriphtml()",
-      "source_file": "cli_test.go",
-      "source_location": "L8"
+      "norm_label": "bootstrap/autonomous.go",
+      "source_file": "bootstrap/autonomous.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "bootstrap_autonomous_registerautonomous",
+      "label": "RegisterAutonomous()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "registerautonomous()",
+      "source_file": "bootstrap/autonomous.go",
+      "source_location": "L10"
     },
     {
       "id": "cli",
@@ -17746,6 +17207,28 @@
       "norm_label": "cli.go",
       "source_file": "cli.go",
       "source_location": "L1"
+    },
+    {
+      "id": "cli_callbacks",
+      "label": "cli_callbacks.go",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "cli_callbacks.go",
+      "source_file": "cli_callbacks.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "cli_callbacks_wireclicallbacks",
+      "label": "wireCLICallbacks()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "wireclicallbacks()",
+      "source_file": "cli_callbacks.go",
+      "source_location": "L15"
     },
     {
       "id": "cli_executeoneshot",
@@ -17770,6 +17253,28 @@
       "source_location": "L438"
     },
     {
+      "id": "cli_format",
+      "label": "cli_format.go",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "cli_format.go",
+      "source_file": "cli_format.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "cli_format_formatfinalresponse",
+      "label": "formatFinalResponse()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "formatfinalresponse()",
+      "source_file": "cli_format.go",
+      "source_location": "L11"
+    },
+    {
       "id": "cli_format_formatterminaltext",
       "label": "formatTerminalText()",
       "_origin": "ast",
@@ -17779,6 +17284,28 @@
       "norm_label": "formatterminaltext()",
       "source_file": "cli_format.go",
       "source_location": "L20"
+    },
+    {
+      "id": "cli_format_isterminal",
+      "label": "isTerminal()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "isterminal()",
+      "source_file": "cli_format.go",
+      "source_location": "L47"
+    },
+    {
+      "id": "cli_format_striphtml",
+      "label": "stripHTML()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "striphtml()",
+      "source_file": "cli_format.go",
+      "source_location": "L25"
     },
     {
       "id": "cli_handleclisession",
@@ -17812,6 +17339,116 @@
       "norm_label": "hasdebugflag()",
       "source_file": "cli.go",
       "source_location": "L428"
+    },
+    {
+      "id": "cli_lock",
+      "label": "cli_lock.go",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "cli_lock.go",
+      "source_file": "cli_lock.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "cli_lock_acquiresessionlock",
+      "label": "acquireSessionLock()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "acquiresessionlock()",
+      "source_file": "cli_lock.go",
+      "source_location": "L20"
+    },
+    {
+      "id": "cli_lock_test",
+      "label": "cli_lock_test.go",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "cli_lock_test.go",
+      "source_file": "cli_lock_test.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "cli_lock_test_testacquiresessionlock",
+      "label": "TestAcquireSessionLock()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "testacquiresessionlock()",
+      "source_file": "cli_lock_test.go",
+      "source_location": "L7"
+    },
+    {
+      "id": "cli_lock_unix",
+      "label": "cli_lock_unix.go",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "cli_lock_unix.go",
+      "source_file": "cli_lock_unix.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "cli_lock_unix_lockfileexclusive",
+      "label": "lockFileExclusive()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "lockfileexclusive()",
+      "source_file": "cli_lock_unix.go",
+      "source_location": "L10"
+    },
+    {
+      "id": "cli_lock_unix_unlockfile",
+      "label": "unlockFile()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "unlockfile()",
+      "source_file": "cli_lock_unix.go",
+      "source_location": "L14"
+    },
+    {
+      "id": "cli_lock_windows",
+      "label": "cli_lock_windows.go",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "cli_lock_windows.go",
+      "source_file": "cli_lock_windows.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "cli_lock_windows_lockfileexclusive",
+      "label": "lockFileExclusive()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "lockfileexclusive()",
+      "source_file": "cli_lock_windows.go",
+      "source_location": "L9"
+    },
+    {
+      "id": "cli_lock_windows_unlockfile",
+      "label": "unlockFile()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "unlockfile()",
+      "source_file": "cli_lock_windows.go",
+      "source_location": "L14"
     },
     {
       "id": "cli_printbanner",
@@ -17946,6 +17583,226 @@
       "source_location": "L37"
     },
     {
+      "id": "cli_test",
+      "label": "cli_test.go",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "cli_test.go",
+      "source_file": "cli_test.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "cli_test_testformatfinalresponse",
+      "label": "TestFormatFinalResponse()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "testformatfinalresponse()",
+      "source_file": "cli_test.go",
+      "source_location": "L26"
+    },
+    {
+      "id": "cli_test_teststriphtml",
+      "label": "TestStripHTML()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "teststriphtml()",
+      "source_file": "cli_test.go",
+      "source_location": "L8"
+    },
+    {
+      "id": "gateway_gateway",
+      "label": "gateway.go",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "gateway.go",
+      "source_file": "gateway/gateway.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "gateway_gateway_contextwithtimeout",
+      "label": "contextWithTimeout()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "contextwithtimeout()",
+      "source_file": "gateway/gateway.go",
+      "source_location": "L161"
+    },
+    {
+      "id": "gateway_gateway_handlechat",
+      "label": "handleChat()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "handlechat()",
+      "source_file": "gateway/gateway.go",
+      "source_location": "L104"
+    },
+    {
+      "id": "gateway_gateway_handledashboard",
+      "label": "handleDashboard()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "handledashboard()",
+      "source_file": "gateway/gateway.go",
+      "source_location": "L166"
+    },
+    {
+      "id": "gateway_gateway_handlereceipts",
+      "label": "handleReceipts()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "handlereceipts()",
+      "source_file": "gateway/gateway.go",
+      "source_location": "L98"
+    },
+    {
+      "id": "gateway_gateway_handlesops",
+      "label": "handleSOPs()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "handlesops()",
+      "source_file": "gateway/gateway.go",
+      "source_location": "L92"
+    },
+    {
+      "id": "gateway_gateway_handlestatus",
+      "label": "handleStatus()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "handlestatus()",
+      "source_file": "gateway/gateway.go",
+      "source_location": "L68"
+    },
+    {
+      "id": "gateway_gateway_handletools",
+      "label": "handleTools()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "handletools()",
+      "source_file": "gateway/gateway.go",
+      "source_location": "L86"
+    },
+    {
+      "id": "gateway_gateway_startgateway",
+      "label": "StartGateway()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "startgateway()",
+      "source_file": "gateway/gateway.go",
+      "source_location": "L33"
+    },
+    {
+      "id": "gateway_gateway_test",
+      "label": "gateway_test.go",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "gateway_test.go",
+      "source_file": "gateway/gateway_test.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "gateway_gateway_test_testgatewayendpoints",
+      "label": "TestGatewayEndpoints()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "testgatewayendpoints()",
+      "source_file": "gateway/gateway_test.go",
+      "source_location": "L15"
+    },
+    {
+      "id": "go_type_net_http_request",
+      "label": "net/http.Request",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "net/http.request",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "go_type_net_http_responsewriter",
+      "label": "net/http.ResponseWriter",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "net/http.responsewriter",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "go_type_os_file",
+      "label": "os.File",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "os.file",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "main",
+      "label": "main.go",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "main.go",
+      "source_file": "main.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "main_isclimode",
+      "label": "isCLIMode()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "isclimode()",
+      "source_file": "main.go",
+      "source_location": "L187"
+    },
+    {
+      "id": "main_main",
+      "label": "main()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "main()",
+      "source_file": "main.go",
+      "source_location": "L26"
+    },
+    {
       "id": "models_model_router_switchactivemodel",
       "label": "SwitchActiveModel()",
       "_origin": "ast",
@@ -17957,11 +17814,187 @@
       "source_location": "L111"
     },
     {
+      "id": "scorp_sessionlockfile",
+      "label": "sessionLockFile",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "sessionlockfile",
+      "source_file": "cli_lock.go",
+      "source_location": "L12"
+    },
+    {
+      "id": "scorp_sessionlockfile_release",
+      "label": ".Release()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": ".release()",
+      "source_file": "cli_lock.go",
+      "source_location": "L57"
+    },
+    {
+      "id": "sop_sop",
+      "label": "SOP",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "sop",
+      "source_file": "sop/sop.go",
+      "source_location": "L20"
+    },
+    {
+      "id": "sop_sop_dir",
+      "label": "Dir()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "dir()",
+      "source_file": "sop/sop.go",
+      "source_location": "L32"
+    },
+    {
+      "id": "sop_sop_getsop",
+      "label": "GetSOP()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "getsop()",
+      "source_file": "sop/sop.go",
+      "source_location": "L116"
+    },
+    {
+      "id": "sop_sop_initdefaultsops",
+      "label": "InitDefaultSOPs()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "initdefaultsops()",
+      "source_file": "sop/sop.go",
+      "source_location": "L39"
+    },
+    {
+      "id": "sop_sop_listsops",
+      "label": "ListSOPs()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "listsops()",
+      "source_file": "sop/sop.go",
+      "source_location": "L90"
+    },
+    {
+      "id": "sop_sop_savesop",
+      "label": "SaveSOP()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "savesop()",
+      "source_file": "sop/sop.go",
+      "source_location": "L135"
+    },
+    {
+      "id": "sop_sop_test",
+      "label": "sop_test.go",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "sop_test.go",
+      "source_file": "sop/sop_test.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "sop_sop_test_testsoplifecycle",
+      "label": "TestSOPLifecycle()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "testsoplifecycle()",
+      "source_file": "sop/sop_test.go",
+      "source_location": "L7"
+    },
+    {
+      "id": "telegram_telegram_test",
+      "label": "telegram_test.go",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "telegram_test.go",
+      "source_file": "telegram/telegram_test.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "telegram_telegram_test_testwebhookhandlermalformedjson",
+      "label": "TestWebhookHandlerMalformedJSON()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "testwebhookhandlermalformedjson()",
+      "source_file": "telegram/telegram_test.go",
+      "source_location": "L63"
+    },
+    {
+      "id": "telegram_telegram_webhookhandler",
+      "label": "WebhookHandler()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "webhookhandler()",
+      "source_file": "telegram/telegram.go",
+      "source_location": "L761"
+    },
+    {
+      "id": "tools_sop",
+      "label": "sop.go",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "sop.go",
+      "source_file": "tools/sop.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "tools_sop_executesop",
+      "label": "ExecuteSOP()",
+      "_origin": "ast",
+      "community": 53,
+      "community_name": "startCLI",
+      "file_type": "code",
+      "norm_label": "executesop()",
+      "source_file": "tools/sop.go",
+      "source_location": "L16"
+    },
+    {
+      "id": "internal_helpers_helpers_truncatestr",
+      "label": "TruncateStr()",
+      "_origin": "ast",
+      "community": 54,
+      "community_name": "TruncateStr",
+      "file_type": "code",
+      "norm_label": "truncatestr()",
+      "source_file": "internal/helpers/helpers.go",
+      "source_location": "L9"
+    },
+    {
       "id": "models_anthropicresponse",
       "label": "anthropicResponse",
       "_origin": "ast",
       "community": 54,
-      "community_name": "CallAnthropicWithTools",
+      "community_name": "TruncateStr",
       "file_type": "code",
       "norm_label": "anthropicresponse",
       "source_file": "models/api_anthropic.go",
@@ -17972,7 +18005,7 @@
       "label": "anthropicTool",
       "_origin": "ast",
       "community": 54,
-      "community_name": "CallAnthropicWithTools",
+      "community_name": "TruncateStr",
       "file_type": "code",
       "norm_label": "anthropictool",
       "source_file": "models/api_anthropic.go",
@@ -17983,7 +18016,7 @@
       "label": "api_anthropic.go",
       "_origin": "ast",
       "community": 54,
-      "community_name": "CallAnthropicWithTools",
+      "community_name": "TruncateStr",
       "file_type": "code",
       "norm_label": "api_anthropic.go",
       "source_file": "models/api_anthropic.go",
@@ -17994,7 +18027,7 @@
       "label": "applyAnthropicHeaders()",
       "_origin": "ast",
       "community": 54,
-      "community_name": "CallAnthropicWithTools",
+      "community_name": "TruncateStr",
       "file_type": "code",
       "norm_label": "applyanthropicheaders()",
       "source_file": "models/api_anthropic.go",
@@ -18005,7 +18038,7 @@
       "label": "buildAnthropicMessages()",
       "_origin": "ast",
       "community": 54,
-      "community_name": "CallAnthropicWithTools",
+      "community_name": "TruncateStr",
       "file_type": "code",
       "norm_label": "buildanthropicmessages()",
       "source_file": "models/api_anthropic.go",
@@ -18016,7 +18049,7 @@
       "label": "buildAnthropicRequestBody()",
       "_origin": "ast",
       "community": 54,
-      "community_name": "CallAnthropicWithTools",
+      "community_name": "TruncateStr",
       "file_type": "code",
       "norm_label": "buildanthropicrequestbody()",
       "source_file": "models/api_anthropic.go",
@@ -18027,7 +18060,7 @@
       "label": "callAnthropic()",
       "_origin": "ast",
       "community": 54,
-      "community_name": "CallAnthropicWithTools",
+      "community_name": "TruncateStr",
       "file_type": "code",
       "norm_label": "callanthropic()",
       "source_file": "models/api_anthropic.go",
@@ -18038,7 +18071,7 @@
       "label": "callAnthropicStream()",
       "_origin": "ast",
       "community": 54,
-      "community_name": "CallAnthropicWithTools",
+      "community_name": "TruncateStr",
       "file_type": "code",
       "norm_label": "callanthropicstream()",
       "source_file": "models/api_anthropic.go",
@@ -18049,77 +18082,143 @@
       "label": "CallAnthropicWithTools()",
       "_origin": "ast",
       "community": 54,
-      "community_name": "CallAnthropicWithTools",
+      "community_name": "TruncateStr",
       "file_type": "code",
       "norm_label": "callanthropicwithtools()",
       "source_file": "models/api_anthropic.go",
       "source_location": "L267"
     },
     {
-      "id": "models_claudecliprovider",
-      "label": "ClaudeCliProvider",
+      "id": "models_api_azure",
+      "label": "api_azure.go",
       "_origin": "ast",
       "community": 54,
-      "community_name": "CallAnthropicWithTools",
+      "community_name": "TruncateStr",
       "file_type": "code",
-      "norm_label": "claudecliprovider",
-      "source_file": "models/api_claude_cli.go",
-      "source_location": "L17"
+      "norm_label": "api_azure.go",
+      "source_file": "models/api_azure.go",
+      "source_location": "L1"
     },
     {
-      "id": "models_claudecliprovider_call",
-      "label": ".Call()",
+      "id": "models_api_azure_applyazureheaders",
+      "label": "applyAzureHeaders()",
       "_origin": "ast",
       "community": 54,
-      "community_name": "CallAnthropicWithTools",
+      "community_name": "TruncateStr",
       "file_type": "code",
-      "norm_label": ".call()",
-      "source_file": "models/api_claude_cli.go",
-      "source_location": "L43"
+      "norm_label": "applyazureheaders()",
+      "source_file": "models/api_azure.go",
+      "source_location": "L82"
     },
     {
-      "id": "models_claudecliprovider_callwithtools",
-      "label": ".CallWithTools()",
+      "id": "models_api_azure_callazure",
+      "label": "callAzure()",
       "_origin": "ast",
       "community": 54,
-      "community_name": "CallAnthropicWithTools",
+      "community_name": "TruncateStr",
       "file_type": "code",
-      "norm_label": ".callwithtools()",
-      "source_file": "models/api_claude_cli.go",
-      "source_location": "L48"
+      "norm_label": "callazure()",
+      "source_file": "models/api_azure.go",
+      "source_location": "L93"
     },
     {
-      "id": "models_claudecliprovider_format",
-      "label": ".Format()",
+      "id": "models_api_azure_callazurestream",
+      "label": "callAzureStream()",
       "_origin": "ast",
       "community": 54,
-      "community_name": "CallAnthropicWithTools",
+      "community_name": "TruncateStr",
       "file_type": "code",
-      "norm_label": ".format()",
-      "source_file": "models/api_claude_cli.go",
-      "source_location": "L39"
+      "norm_label": "callazurestream()",
+      "source_file": "models/api_azure.go",
+      "source_location": "L215"
+    },
+    {
+      "id": "models_api_azure_callazurewithtools",
+      "label": "callAzureWithTools()",
+      "_origin": "ast",
+      "community": 54,
+      "community_name": "TruncateStr",
+      "file_type": "code",
+      "norm_label": "callazurewithtools()",
+      "source_file": "models/api_azure.go",
+      "source_location": "L148"
+    },
+    {
+      "id": "models_api_azure_resolveazureendpoint",
+      "label": "resolveAzureEndpoint()",
+      "_origin": "ast",
+      "community": 54,
+      "community_name": "TruncateStr",
+      "file_type": "code",
+      "norm_label": "resolveazureendpoint()",
+      "source_file": "models/api_azure.go",
+      "source_location": "L60"
+    },
+    {
+      "id": "models_api_openai_callopenaistream",
+      "label": "CallOpenAIStream()",
+      "_origin": "ast",
+      "community": 54,
+      "community_name": "TruncateStr",
+      "file_type": "code",
+      "norm_label": "callopenaistream()",
+      "source_file": "models/api_openai.go",
+      "source_location": "L300"
     },
     {
       "id": "models_cost_router_recordcost",
       "label": "RecordCost()",
       "_origin": "ast",
       "community": 54,
-      "community_name": "CallAnthropicWithTools",
+      "community_name": "TruncateStr",
       "file_type": "code",
       "norm_label": "recordcost()",
       "source_file": "models/cost_router.go",
       "source_location": "L163"
     },
     {
+      "id": "models_providers_keysourcelabel",
+      "label": "KeySourceLabel()",
+      "_origin": "ast",
+      "community": 54,
+      "community_name": "TruncateStr",
+      "file_type": "code",
+      "norm_label": "keysourcelabel()",
+      "source_file": "models/providers.go",
+      "source_location": "L339"
+    },
+    {
       "id": "models_telemetry_trackmodelusage",
       "label": "TrackModelUsage()",
       "_origin": "ast",
       "community": 54,
-      "community_name": "CallAnthropicWithTools",
+      "community_name": "TruncateStr",
       "file_type": "code",
       "norm_label": "trackmodelusage()",
       "source_file": "models/telemetry.go",
       "source_location": "L34"
+    },
+    {
+      "id": "models_transports_getaiclient",
+      "label": "GetAIClient()",
+      "_origin": "ast",
+      "community": 54,
+      "community_name": "TruncateStr",
+      "file_type": "code",
+      "norm_label": "getaiclient()",
+      "source_file": "models/transports.go",
+      "source_location": "L119"
+    },
+    {
+      "id": "registry_registry_generatenativetoolsschema",
+      "label": "GenerateNativeToolsSchema()",
+      "_origin": "ast",
+      "community": 54,
+      "community_name": "TruncateStr",
+      "file_type": "code",
+      "norm_label": "generatenativetoolsschema()",
+      "source_file": "registry/registry.go",
+      "source_location": "L127"
     },
     {
       "id": "tools_patch",
@@ -18771,6 +18870,17 @@
       "source_location": "L15"
     },
     {
+      "id": "models_api_commandcode_init",
+      "label": "init()",
+      "_origin": "ast",
+      "community": 58,
+      "community_name": "RegisterProvider",
+      "file_type": "code",
+      "norm_label": "init()",
+      "source_file": "models/api_commandcode.go",
+      "source_location": "L30"
+    },
+    {
       "id": "models_api_dashscope",
       "label": "api_dashscope.go",
       "_origin": "ast",
@@ -18912,6 +19022,50 @@
       "norm_label": "init()",
       "source_file": "models/api_xai.go",
       "source_location": "L16"
+    },
+    {
+      "id": "models_claudecliprovider",
+      "label": "ClaudeCliProvider",
+      "_origin": "ast",
+      "community": 58,
+      "community_name": "RegisterProvider",
+      "file_type": "code",
+      "norm_label": "claudecliprovider",
+      "source_file": "models/api_claude_cli.go",
+      "source_location": "L17"
+    },
+    {
+      "id": "models_claudecliprovider_call",
+      "label": ".Call()",
+      "_origin": "ast",
+      "community": 58,
+      "community_name": "RegisterProvider",
+      "file_type": "code",
+      "norm_label": ".call()",
+      "source_file": "models/api_claude_cli.go",
+      "source_location": "L43"
+    },
+    {
+      "id": "models_claudecliprovider_callwithtools",
+      "label": ".CallWithTools()",
+      "_origin": "ast",
+      "community": 58,
+      "community_name": "RegisterProvider",
+      "file_type": "code",
+      "norm_label": ".callwithtools()",
+      "source_file": "models/api_claude_cli.go",
+      "source_location": "L48"
+    },
+    {
+      "id": "models_claudecliprovider_format",
+      "label": ".Format()",
+      "_origin": "ast",
+      "community": 58,
+      "community_name": "RegisterProvider",
+      "file_type": "code",
+      "norm_label": ".format()",
+      "source_file": "models/api_claude_cli.go",
+      "source_location": "L39"
     },
     {
       "id": "models_keyresolver",
@@ -19783,61 +19937,6 @@
       "source_location": "L207"
     },
     {
-      "id": "tools_vision",
-      "label": "vision.go",
-      "_origin": "ast",
-      "community": 6,
-      "community_name": "init",
-      "file_type": "code",
-      "norm_label": "vision.go",
-      "source_file": "tools/vision.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "tools_vision_callvisionmodel",
-      "label": "callVisionModel()",
-      "_origin": "ast",
-      "community": 6,
-      "community_name": "init",
-      "file_type": "code",
-      "norm_label": "callvisionmodel()",
-      "source_file": "tools/vision.go",
-      "source_location": "L68"
-    },
-    {
-      "id": "tools_vision_executeanalyzeimage",
-      "label": "ExecuteAnalyzeImage()",
-      "_origin": "ast",
-      "community": 6,
-      "community_name": "init",
-      "file_type": "code",
-      "norm_label": "executeanalyzeimage()",
-      "source_file": "tools/vision.go",
-      "source_location": "L23"
-    },
-    {
-      "id": "skills_builtin_skills",
-      "label": "builtin_skills.go",
-      "_origin": "ast",
-      "community": 60,
-      "community_name": "EnsureBuiltinSkills",
-      "file_type": "code",
-      "norm_label": "builtin_skills.go",
-      "source_file": "skills/builtin_skills.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "skills_builtin_skills_ensurebuiltinskills",
-      "label": "EnsureBuiltinSkills()",
-      "_origin": "ast",
-      "community": 60,
-      "community_name": "EnsureBuiltinSkills",
-      "file_type": "code",
-      "norm_label": "ensurebuiltinskills()",
-      "source_file": "skills/builtin_skills.go",
-      "source_location": "L10"
-    },
-    {
       "id": "tools_termux",
       "label": "termux.go",
       "_origin": "ast",
@@ -20498,6 +20597,61 @@
       "source_location": "L47"
     },
     {
+      "id": "models_telemetry",
+      "label": "telemetry.go",
+      "_origin": "ast",
+      "community": 67,
+      "community_name": "HandleModelCallback",
+      "file_type": "code",
+      "norm_label": "telemetry.go",
+      "source_file": "models/telemetry.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "models_telemetry_formatmodellistwithhealth",
+      "label": "FormatModelListWithHealth()",
+      "_origin": "ast",
+      "community": 67,
+      "community_name": "HandleModelCallback",
+      "file_type": "code",
+      "norm_label": "formatmodellistwithhealth()",
+      "source_file": "models/telemetry.go",
+      "source_location": "L136"
+    },
+    {
+      "id": "models_telemetry_formatusagestats",
+      "label": "FormatUsageStats()",
+      "_origin": "ast",
+      "community": 67,
+      "community_name": "HandleModelCallback",
+      "file_type": "code",
+      "norm_label": "formatusagestats()",
+      "source_file": "models/telemetry.go",
+      "source_location": "L209"
+    },
+    {
+      "id": "models_telemetry_initmodelusage",
+      "label": "InitModelUsage()",
+      "_origin": "ast",
+      "community": 67,
+      "community_name": "HandleModelCallback",
+      "file_type": "code",
+      "norm_label": "initmodelusage()",
+      "source_file": "models/telemetry.go",
+      "source_location": "L19"
+    },
+    {
+      "id": "models_telemetry_switchmodel",
+      "label": "SwitchModel()",
+      "_origin": "ast",
+      "community": 67,
+      "community_name": "HandleModelCallback",
+      "file_type": "code",
+      "norm_label": "switchmodel()",
+      "source_file": "models/telemetry.go",
+      "source_location": "L280"
+    },
+    {
       "id": "tools_provider",
       "label": "tools/provider.go",
       "_origin": "ast",
@@ -21140,7 +21294,7 @@
       "label": "echoPlugin",
       "_origin": "ast",
       "community": 69,
-      "community_name": "TestRegisterPlugin",
+      "community_name": "echoPlugin",
       "file_type": "code",
       "norm_label": "echoplugin",
       "source_file": "registry/plugin_test.go",
@@ -21151,7 +21305,7 @@
       "label": ".Description()",
       "_origin": "ast",
       "community": 69,
-      "community_name": "TestRegisterPlugin",
+      "community_name": "echoPlugin",
       "file_type": "code",
       "norm_label": ".description()",
       "source_file": "registry/plugin_test.go",
@@ -21162,7 +21316,7 @@
       "label": ".Execute()",
       "_origin": "ast",
       "community": 69,
-      "community_name": "TestRegisterPlugin",
+      "community_name": "echoPlugin",
       "file_type": "code",
       "norm_label": ".execute()",
       "source_file": "registry/plugin_test.go",
@@ -21173,88 +21327,22 @@
       "label": ".Name()",
       "_origin": "ast",
       "community": 69,
-      "community_name": "TestRegisterPlugin",
+      "community_name": "echoPlugin",
       "file_type": "code",
       "norm_label": ".name()",
       "source_file": "registry/plugin_test.go",
       "source_location": "L12"
     },
     {
-      "id": "registry_plugin",
-      "label": "plugin.go",
-      "_origin": "ast",
-      "community": 69,
-      "community_name": "TestRegisterPlugin",
-      "file_type": "code",
-      "norm_label": "plugin.go",
-      "source_file": "registry/plugin.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "registry_plugin_registerplugin",
-      "label": "RegisterPlugin()",
-      "_origin": "ast",
-      "community": 69,
-      "community_name": "TestRegisterPlugin",
-      "file_type": "code",
-      "norm_label": "registerplugin()",
-      "source_file": "registry/plugin.go",
-      "source_location": "L29"
-    },
-    {
       "id": "registry_plugin_test",
       "label": "plugin_test.go",
       "_origin": "ast",
       "community": 69,
-      "community_name": "TestRegisterPlugin",
+      "community_name": "echoPlugin",
       "file_type": "code",
       "norm_label": "plugin_test.go",
       "source_file": "registry/plugin_test.go",
       "source_location": "L1"
-    },
-    {
-      "id": "registry_plugin_test_testregisterplugin",
-      "label": "TestRegisterPlugin()",
-      "_origin": "ast",
-      "community": 69,
-      "community_name": "TestRegisterPlugin",
-      "file_type": "code",
-      "norm_label": "testregisterplugin()",
-      "source_file": "registry/plugin_test.go",
-      "source_location": "L30"
-    },
-    {
-      "id": "registry_registry_executetoolbyname",
-      "label": "ExecuteToolByName()",
-      "_origin": "ast",
-      "community": 69,
-      "community_name": "TestRegisterPlugin",
-      "file_type": "code",
-      "norm_label": "executetoolbyname()",
-      "source_file": "registry/registry.go",
-      "source_location": "L91"
-    },
-    {
-      "id": "registry_toolplugin",
-      "label": "ToolPlugin",
-      "_origin": "ast",
-      "community": 69,
-      "community_name": "TestRegisterPlugin",
-      "file_type": "code",
-      "norm_label": "toolplugin",
-      "source_file": "registry/plugin.go",
-      "source_location": "L16"
-    },
-    {
-      "id": "registry_toolpluginwithschema",
-      "label": "ToolPluginWithSchema",
-      "_origin": "ast",
-      "community": 69,
-      "community_name": "TestRegisterPlugin",
-      "file_type": "code",
-      "norm_label": "toolpluginwithschema",
-      "source_file": "registry/plugin.go",
-      "source_location": "L23"
     },
     {
       "id": "agent_planitem",
@@ -21420,83 +21508,6 @@
       "norm_label": "testplanningstatetransitions()",
       "source_file": "agent/planmode_test.go",
       "source_location": "L9"
-    },
-    {
-      "id": "agent_steering",
-      "label": "steering.go",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "TaskPlan",
-      "file_type": "code",
-      "norm_label": "steering.go",
-      "source_file": "agent/steering.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "agent_steering_clearsteeringqueue",
-      "label": "ClearSteeringQueue()",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "TaskPlan",
-      "file_type": "code",
-      "norm_label": "clearsteeringqueue()",
-      "source_file": "agent/steering.go",
-      "source_location": "L55"
-    },
-    {
-      "id": "agent_steering_hassteeringmessage",
-      "label": "HasSteeringMessage()",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "TaskPlan",
-      "file_type": "code",
-      "norm_label": "hassteeringmessage()",
-      "source_file": "agent/steering.go",
-      "source_location": "L47"
-    },
-    {
-      "id": "agent_steering_popsteeringmessage",
-      "label": "PopSteeringMessage()",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "TaskPlan",
-      "file_type": "code",
-      "norm_label": "popsteeringmessage()",
-      "source_file": "agent/steering.go",
-      "source_location": "L29"
-    },
-    {
-      "id": "agent_steering_queuesteeringmessage",
-      "label": "QueueSteeringMessage()",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "TaskPlan",
-      "file_type": "code",
-      "norm_label": "queuesteeringmessage()",
-      "source_file": "agent/steering.go",
-      "source_location": "L19"
-    },
-    {
-      "id": "agent_steering_test",
-      "label": "steering_test.go",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "TaskPlan",
-      "file_type": "code",
-      "norm_label": "steering_test.go",
-      "source_file": "agent/steering_test.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "agent_steering_test_teststeeringqueue",
-      "label": "TestSteeringQueue()",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "TaskPlan",
-      "file_type": "code",
-      "norm_label": "teststeeringqueue()",
-      "source_file": "agent/steering_test.go",
-      "source_location": "L7"
     },
     {
       "id": "agent_taskplan",
@@ -22482,83 +22493,6 @@
       "source_location": "L99"
     },
     {
-      "id": "eval_core_caseclaimgate",
-      "label": "caseClaimGate()",
-      "_origin": "ast",
-      "community": 83,
-      "community_name": "HasGreenTestRun",
-      "file_type": "code",
-      "norm_label": "caseclaimgate()",
-      "source_file": "eval/core.go",
-      "source_location": "L247"
-    },
-    {
-      "id": "tools_claimgate_test",
-      "label": "claimgate_test.go",
-      "_origin": "ast",
-      "community": 83,
-      "community_name": "HasGreenTestRun",
-      "file_type": "code",
-      "norm_label": "claimgate_test.go",
-      "source_file": "tools/claimgate_test.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "tools_claimgate_test_testhasgreentestrun",
-      "label": "TestHasGreenTestRun()",
-      "_origin": "ast",
-      "community": 83,
-      "community_name": "HasGreenTestRun",
-      "file_type": "code",
-      "norm_label": "testhasgreentestrun()",
-      "source_file": "tools/claimgate_test.go",
-      "source_location": "L39"
-    },
-    {
-      "id": "tools_claimgate_test_testlooksliketestpassclaim",
-      "label": "TestLooksLikeTestPassClaim()",
-      "_origin": "ast",
-      "community": 83,
-      "community_name": "HasGreenTestRun",
-      "file_type": "code",
-      "norm_label": "testlooksliketestpassclaim()",
-      "source_file": "tools/claimgate_test.go",
-      "source_location": "L7"
-    },
-    {
-      "id": "tools_testgate_hasgreentestrun",
-      "label": "HasGreenTestRun()",
-      "_origin": "ast",
-      "community": 83,
-      "community_name": "HasGreenTestRun",
-      "file_type": "code",
-      "norm_label": "hasgreentestrun()",
-      "source_file": "tools/testgate.go",
-      "source_location": "L216"
-    },
-    {
-      "id": "tools_testgate_looksliketestpassclaim",
-      "label": "LooksLikeTestPassClaim()",
-      "_origin": "ast",
-      "community": 83,
-      "community_name": "HasGreenTestRun",
-      "file_type": "code",
-      "norm_label": "looksliketestpassclaim()",
-      "source_file": "tools/testgate.go",
-      "source_location": "L205"
-    },
-    {
-      "id": "tools_testgate_marktaskboundary",
-      "label": "MarkTaskBoundary()",
-      "_origin": "ast",
-      "community": 83,
-      "community_name": "HasGreenTestRun",
-      "file_type": "code",
-      "norm_label": "marktaskboundary()",
-      "source_file": "tools/testgate.go",
-      "source_location": "L31"
-    },
-    {
       "id": "tools_monitor_nobrowser",
       "label": "monitor_nobrowser.go",
       "_origin": "ast",
@@ -22592,114 +22526,169 @@
       "source_location": "L7"
     },
     {
-      "id": "bootstrap_autonomous",
-      "label": "bootstrap/autonomous.go",
+      "id": "mcp_client_mcptoolsdeferred",
+      "label": "MCPToolsDeferred()",
       "_origin": "ast",
       "community": 9,
-      "community_name": "main",
+      "community_name": "registerMCPToolsAsNative",
       "file_type": "code",
-      "norm_label": "bootstrap/autonomous.go",
-      "source_file": "bootstrap/autonomous.go",
+      "norm_label": "mcptoolsdeferred()",
+      "source_file": "mcp/client.go",
+      "source_location": "L291"
+    },
+    {
+      "id": "mcp_client_rebuildmcptoollist",
+      "label": "rebuildMCPToolList()",
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "registerMCPToolsAsNative",
+      "file_type": "code",
+      "norm_label": "rebuildmcptoollist()",
+      "source_file": "mcp/client.go",
+      "source_location": "L267"
+    },
+    {
+      "id": "mcp_client_registermcptoolsasnative",
+      "label": "registerMCPToolsAsNative()",
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "registerMCPToolsAsNative",
+      "file_type": "code",
+      "norm_label": "registermcptoolsasnative()",
+      "source_file": "mcp/client.go",
+      "source_location": "L313"
+    },
+    {
+      "id": "mcp_client_startmcpservers",
+      "label": "StartMCPServers()",
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "registerMCPToolsAsNative",
+      "file_type": "code",
+      "norm_label": "startmcpservers()",
+      "source_file": "mcp/client.go",
+      "source_location": "L155"
+    },
+    {
+      "id": "mcp_client_stopmcpservers",
+      "label": "StopMCPServers()",
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "registerMCPToolsAsNative",
+      "file_type": "code",
+      "norm_label": "stopmcpservers()",
+      "source_file": "mcp/client.go",
+      "source_location": "L202"
+    },
+    {
+      "id": "mcp_deferred_test",
+      "label": "deferred_test.go",
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "registerMCPToolsAsNative",
+      "file_type": "code",
+      "norm_label": "deferred_test.go",
+      "source_file": "mcp/deferred_test.go",
       "source_location": "L1"
     },
     {
-      "id": "bootstrap_autonomous_registerautonomous",
-      "label": "RegisterAutonomous()",
+      "id": "mcp_deferred_test_testmcptoolsdeferredenvparsing",
+      "label": "TestMCPToolsDeferredEnvParsing()",
       "_origin": "ast",
       "community": 9,
-      "community_name": "main",
+      "community_name": "registerMCPToolsAsNative",
       "file_type": "code",
-      "norm_label": "registerautonomous()",
-      "source_file": "bootstrap/autonomous.go",
-      "source_location": "L10"
+      "norm_label": "testmcptoolsdeferredenvparsing()",
+      "source_file": "mcp/deferred_test.go",
+      "source_location": "L8"
     },
     {
-      "id": "main",
-      "label": "main.go",
+      "id": "mcp_mcpserver_calltool",
+      "label": ".CallTool()",
       "_origin": "ast",
       "community": 9,
-      "community_name": "main",
+      "community_name": "registerMCPToolsAsNative",
       "file_type": "code",
-      "norm_label": "main.go",
-      "source_file": "main.go",
+      "norm_label": ".calltool()",
+      "source_file": "mcp/client.go",
+      "source_location": "L697"
+    },
+    {
+      "id": "mcp_serverwatchdog",
+      "label": "ServerWatchdog",
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "registerMCPToolsAsNative",
+      "file_type": "code",
+      "norm_label": "serverwatchdog",
+      "source_file": "mcp/watchdog.go",
+      "source_location": "L17"
+    },
+    {
+      "id": "mcp_serverwatchdog_monitor",
+      "label": ".monitor()",
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "registerMCPToolsAsNative",
+      "file_type": "code",
+      "norm_label": ".monitor()",
+      "source_file": "mcp/watchdog.go",
+      "source_location": "L78"
+    },
+    {
+      "id": "mcp_watchdog",
+      "label": "watchdog.go",
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "registerMCPToolsAsNative",
+      "file_type": "code",
+      "norm_label": "watchdog.go",
+      "source_file": "mcp/watchdog.go",
       "source_location": "L1"
     },
     {
-      "id": "main_isclimode",
-      "label": "isCLIMode()",
+      "id": "mcp_watchdog_go_mcpserver",
+      "label": "MCPServer",
       "_origin": "ast",
       "community": 9,
-      "community_name": "main",
+      "community_name": "registerMCPToolsAsNative",
       "file_type": "code",
-      "norm_label": "isclimode()",
-      "source_file": "main.go",
-      "source_location": "L187"
+      "norm_label": "mcpserver",
+      "source_file": "",
+      "source_location": ""
     },
     {
-      "id": "main_main",
-      "label": "main()",
+      "id": "mcp_watchdog_registerwatchdog",
+      "label": "RegisterWatchdog()",
       "_origin": "ast",
       "community": 9,
-      "community_name": "main",
+      "community_name": "registerMCPToolsAsNative",
       "file_type": "code",
-      "norm_label": "main()",
-      "source_file": "main.go",
-      "source_location": "L26"
+      "norm_label": "registerwatchdog()",
+      "source_file": "mcp/watchdog.go",
+      "source_location": "L37"
     },
     {
-      "id": "models_telemetry",
-      "label": "telemetry.go",
+      "id": "mcp_watchdog_restartserver",
+      "label": "RestartServer()",
       "_origin": "ast",
       "community": 9,
-      "community_name": "main",
+      "community_name": "registerMCPToolsAsNative",
       "file_type": "code",
-      "norm_label": "telemetry.go",
-      "source_file": "models/telemetry.go",
-      "source_location": "L1"
+      "norm_label": "restartserver()",
+      "source_file": "mcp/watchdog.go",
+      "source_location": "L182"
     },
     {
-      "id": "models_telemetry_formatmodellistwithhealth",
-      "label": "FormatModelListWithHealth()",
+      "id": "mcp_watchdog_stopwatchdogs",
+      "label": "StopWatchdogs()",
       "_origin": "ast",
       "community": 9,
-      "community_name": "main",
+      "community_name": "registerMCPToolsAsNative",
       "file_type": "code",
-      "norm_label": "formatmodellistwithhealth()",
-      "source_file": "models/telemetry.go",
-      "source_location": "L136"
-    },
-    {
-      "id": "models_telemetry_formatusagestats",
-      "label": "FormatUsageStats()",
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "main",
-      "file_type": "code",
-      "norm_label": "formatusagestats()",
-      "source_file": "models/telemetry.go",
-      "source_location": "L209"
-    },
-    {
-      "id": "models_telemetry_initmodelusage",
-      "label": "InitModelUsage()",
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "main",
-      "file_type": "code",
-      "norm_label": "initmodelusage()",
-      "source_file": "models/telemetry.go",
-      "source_location": "L19"
-    },
-    {
-      "id": "models_telemetry_switchmodel",
-      "label": "SwitchModel()",
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "main",
-      "file_type": "code",
-      "norm_label": "switchmodel()",
-      "source_file": "models/telemetry.go",
-      "source_location": "L280"
+      "norm_label": "stopwatchdogs()",
+      "source_file": "mcp/watchdog.go",
+      "source_location": "L68"
     },
     {
       "id": "tools_login_nobrowser",
@@ -22792,11 +22781,22 @@
       "source_location": "L1"
     },
     {
+      "id": "config_autonomy_ispathrestricted",
+      "label": "IsPathRestricted()",
+      "_origin": "ast",
+      "community": 99,
+      "community_name": "IsPathRestricted",
+      "file_type": "code",
+      "norm_label": "ispathrestricted()",
+      "source_file": "config/autonomy.go",
+      "source_location": "L142"
+    },
+    {
       "id": "tools_exec_code",
       "label": "exec_code.go",
       "_origin": "ast",
       "community": 99,
-      "community_name": "serviceBridgeRequests",
+      "community_name": "IsPathRestricted",
       "file_type": "code",
       "norm_label": "exec_code.go",
       "source_file": "tools/exec_code.go",
@@ -22807,7 +22807,7 @@
       "label": "executeCodeTool()",
       "_origin": "ast",
       "community": 99,
-      "community_name": "serviceBridgeRequests",
+      "community_name": "IsPathRestricted",
       "file_type": "code",
       "norm_label": "executecodetool()",
       "source_file": "tools/exec_code.go",
@@ -22818,7 +22818,7 @@
       "label": "init()",
       "_origin": "ast",
       "community": 99,
-      "community_name": "serviceBridgeRequests",
+      "community_name": "IsPathRestricted",
       "file_type": "code",
       "norm_label": "init()",
       "source_file": "tools/exec_code.go",
@@ -22829,7 +22829,7 @@
       "label": "serviceBridgeRequests()",
       "_origin": "ast",
       "community": 99,
-      "community_name": "serviceBridgeRequests",
+      "community_name": "IsPathRestricted",
       "file_type": "code",
       "norm_label": "servicebridgerequests()",
       "source_file": "tools/exec_code.go",
@@ -22840,11 +22840,27 @@
       "label": "writeBridgeResponse()",
       "_origin": "ast",
       "community": 99,
-      "community_name": "serviceBridgeRequests",
+      "community_name": "IsPathRestricted",
       "file_type": "code",
       "norm_label": "writebridgeresponse()",
       "source_file": "tools/exec_code.go",
       "source_location": "L298"
+    },
+    {
+      "id": "docs_implementation_plan_scorp_claim_gate",
+      "label": "Evidence-Based Claim Gate (P4.16)",
+      "_origin": "semantic",
+      "author": null,
+      "captured_at": null,
+      "community": 19,
+      "community_name": "RunAgentSessionLoop",
+      "contributor": null,
+      "file_type": "concept",
+      "norm_label": "evidence-based claim gate (p4.16)",
+      "rationale": "Receipt-backed test-pass verification preventing false all tests pass declarations",
+      "source_file": "docs/IMPLEMENTATION_PLAN_SCORP.md",
+      "source_location": "docs/IMPLEMENTATION_PLAN_SCORP.md:167-174",
+      "source_url": null
     },
     {
       "id": "docs_implementation_plan_scorp_compaction_preservation",
@@ -22860,6 +22876,22 @@
       "rationale": "Preserves active task ledger, user goal, and final reports during context compaction",
       "source_file": "docs/IMPLEMENTATION_PLAN_SCORP.md",
       "source_location": "docs/IMPLEMENTATION_PLAN_SCORP.md:110-114",
+      "source_url": null
+    },
+    {
+      "id": "docs_implementation_plan_scorp_sandbox_bwrap",
+      "label": "Sandbox Shell Bubblewrap (P0.1)",
+      "_origin": "semantic",
+      "author": null,
+      "captured_at": null,
+      "community": 24,
+      "community_name": "GetAutonomyLevel",
+      "contributor": null,
+      "file_type": "rationale",
+      "norm_label": "sandbox shell bubblewrap (p0.1)",
+      "rationale": "Dual isolation (filesystem + network) via bubblewrap (--ro-bind, --tmpfs, --unshare-all) preventing destructive modifications, non-root daemon requirement",
+      "source_file": "docs/IMPLEMENTATION_PLAN_SCORP.md",
+      "source_location": "docs/IMPLEMENTATION_PLAN_SCORP.md:41-49",
       "source_url": null
     },
     {
@@ -22988,22 +23020,6 @@
       "rationale": "Review burden, harness overhead, prompt fatigue, SWE-bench collapse, false positive verification",
       "source_file": "docs/RESEARCH_AI_AGENT_FEATURES_2026.md",
       "source_location": "docs/RESEARCH_AI_AGENT_FEATURES_2026.md:90-123",
-      "source_url": null
-    },
-    {
-      "id": "docs_implementation_plan_scorp_sandbox_bwrap",
-      "label": "Sandbox Shell Bubblewrap (P0.1)",
-      "_origin": "semantic",
-      "author": null,
-      "captured_at": null,
-      "community": 45,
-      "community_name": "ExecuteShell",
-      "contributor": null,
-      "file_type": "rationale",
-      "norm_label": "sandbox shell bubblewrap (p0.1)",
-      "rationale": "Dual isolation (filesystem + network) via bubblewrap (--ro-bind, --tmpfs, --unshare-all) preventing destructive modifications, non-root daemon requirement",
-      "source_file": "docs/IMPLEMENTATION_PLAN_SCORP.md",
-      "source_location": "docs/IMPLEMENTATION_PLAN_SCORP.md:41-49",
       "source_url": null
     },
     {
@@ -24047,22 +24063,6 @@
       "rationale": "User selects risk level: readonly for safe inspection/audit, supervised (prompts before dangerous commands), yolo for full unattended autonomy.",
       "source_file": "README.md",
       "source_location": null,
-      "source_url": null
-    },
-    {
-      "id": "docs_implementation_plan_scorp_claim_gate",
-      "label": "Evidence-Based Claim Gate (P4.16)",
-      "_origin": "semantic",
-      "author": null,
-      "captured_at": null,
-      "community": 83,
-      "community_name": "HasGreenTestRun",
-      "contributor": null,
-      "file_type": "concept",
-      "norm_label": "evidence-based claim gate (p4.16)",
-      "rationale": "Receipt-backed test-pass verification preventing false all tests pass declarations",
-      "source_file": "docs/IMPLEMENTATION_PLAN_SCORP.md",
-      "source_location": "docs/IMPLEMENTATION_PLAN_SCORP.md:167-174",
       "source_url": null
     },
     {
@@ -35432,7 +35432,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L156",
+      "source_location": "L162",
       "weight": 1.0
     },
     {
@@ -35444,7 +35444,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L170",
+      "source_location": "L176",
       "weight": 1.0
     },
     {
@@ -35456,7 +35456,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L186",
+      "source_location": "L192",
       "weight": 1.0
     },
     {
@@ -35468,7 +35468,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L301",
+      "source_location": "L307",
       "weight": 1.0
     },
     {
@@ -35480,7 +35480,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L315",
+      "source_location": "L321",
       "weight": 1.0
     },
     {
@@ -35492,7 +35492,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L327",
+      "source_location": "L333",
       "weight": 1.0
     },
     {
@@ -35504,7 +35504,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L222",
+      "source_location": "L228",
       "weight": 1.0
     },
     {
@@ -35516,7 +35516,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L222",
+      "source_location": "L228",
       "weight": 1.0
     },
     {
@@ -35528,7 +35528,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L235",
+      "source_location": "L241",
       "weight": 1.0
     },
     {
@@ -35540,7 +35540,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L249",
+      "source_location": "L255",
       "weight": 1.0
     },
     {
@@ -36320,7 +36320,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "models/providers.go",
-      "source_location": "L328",
+      "source_location": "L334",
       "weight": 1.0
     },
     {
@@ -36332,7 +36332,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "models/providers.go",
-      "source_location": "L347",
+      "source_location": "L353",
       "weight": 1.0
     },
     {
@@ -36344,7 +36344,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "models/providers.go",
-      "source_location": "L424",
+      "source_location": "L430",
       "weight": 1.0
     },
     {
@@ -51452,7 +51452,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/api_openai.go",
-      "source_location": "L149",
+      "source_location": "L155",
       "weight": 1.0
     },
     {
@@ -51464,7 +51464,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/api_openai.go",
-      "source_location": "L149",
+      "source_location": "L155",
       "weight": 1.0
     },
     {
@@ -51476,7 +51476,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/api_openai.go",
-      "source_location": "L149",
+      "source_location": "L155",
       "weight": 1.0
     },
     {
@@ -51488,7 +51488,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/api_openai.go",
-      "source_location": "L294",
+      "source_location": "L300",
       "weight": 1.0
     },
     {
@@ -51500,7 +51500,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/api_openai.go",
-      "source_location": "L294",
+      "source_location": "L300",
       "weight": 1.0
     },
     {
@@ -51512,7 +51512,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/api_openai.go",
-      "source_location": "L294",
+      "source_location": "L300",
       "weight": 1.0
     },
     {
@@ -51524,7 +51524,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/api_openai.go",
-      "source_location": "L216",
+      "source_location": "L222",
       "weight": 1.0
     },
     {
@@ -51536,7 +51536,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/api_openai.go",
-      "source_location": "L216",
+      "source_location": "L222",
       "weight": 1.0
     },
     {
@@ -51548,7 +51548,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/api_openai.go",
-      "source_location": "L216",
+      "source_location": "L222",
       "weight": 1.0
     },
     {
@@ -53204,7 +53204,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/providers.go",
-      "source_location": "L396",
+      "source_location": "L402",
       "weight": 1.0
     },
     {
@@ -53216,7 +53216,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/providers.go",
-      "source_location": "L327",
+      "source_location": "L333",
       "weight": 1.0
     },
     {
@@ -53228,7 +53228,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/providers.go",
-      "source_location": "L333",
+      "source_location": "L339",
       "weight": 1.0
     },
     {
@@ -53240,7 +53240,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/providers.go",
-      "source_location": "L417",
+      "source_location": "L423",
       "weight": 1.0
     },
     {
@@ -56828,7 +56828,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "models/api_openai.go",
-      "source_location": "L294",
+      "source_location": "L300",
       "weight": 1.0
     },
     {
@@ -56840,7 +56840,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "models/api_openai.go",
-      "source_location": "L216",
+      "source_location": "L222",
       "weight": 1.0
     },
     {
@@ -67901,7 +67901,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "models/api_openai.go",
-      "source_location": "L149",
+      "source_location": "L155",
       "weight": 1.0
     },
     {
@@ -67912,18 +67912,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "models/api_openai.go",
-      "source_location": "L216",
-      "weight": 1.0
-    },
-    {
-      "source": "models_api_openai",
-      "target": "models_api_openai_callopenaistream",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "models/api_openai.go",
-      "source_location": "L294",
+      "source_location": "L222",
       "weight": 1.0
     },
     {
@@ -67935,6 +67924,17 @@
       "confidence_score": 1.0,
       "source_file": "models/api_openai.go",
       "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "models_api_openai",
+      "target": "models_api_openai_callopenaistream",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "models/api_openai.go",
+      "source_location": "L300",
       "weight": 1.0
     },
     {
@@ -68902,7 +68902,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "models/providers.go",
-      "source_location": "L327",
+      "source_location": "L333",
       "weight": 1.0
     },
     {
@@ -68913,7 +68913,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "models/providers.go",
-      "source_location": "L333",
+      "source_location": "L339",
       "weight": 1.0
     },
     {
@@ -68924,7 +68924,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "models/providers.go",
-      "source_location": "L396",
+      "source_location": "L402",
       "weight": 1.0
     },
     {
@@ -68935,7 +68935,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "models/providers.go",
-      "source_location": "L417",
+      "source_location": "L423",
       "weight": 1.0
     },
     {
@@ -83827,6 +83827,18 @@
       "weight": 1.0
     },
     {
+      "source": "models_api_openai_applyopenaiheaders",
+      "target": "models_api_opencode_free_resolveopencodesessionid",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "call",
+      "source_file": "models/api_openai.go",
+      "source_location": "L145",
+      "weight": 1.0
+    },
+    {
       "source": "models_api_openai_buildopenairequestbody",
       "target": "models_tool_schema_transform_transformtooldefinitions",
       "relation": "calls",
@@ -83847,7 +83859,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L150",
+      "source_location": "L156",
       "weight": 1.0
     },
     {
@@ -83859,7 +83871,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L153",
+      "source_location": "L159",
       "weight": 1.0
     },
     {
@@ -83871,7 +83883,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L173",
+      "source_location": "L179",
       "weight": 1.0
     },
     {
@@ -83883,7 +83895,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L209",
+      "source_location": "L215",
       "weight": 1.0
     },
     {
@@ -83895,7 +83907,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L210",
+      "source_location": "L216",
       "weight": 1.0
     },
     {
@@ -83907,7 +83919,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L295",
+      "source_location": "L301",
       "weight": 1.0
     },
     {
@@ -83919,7 +83931,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L298",
+      "source_location": "L304",
       "weight": 1.0
     },
     {
@@ -83931,7 +83943,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L318",
+      "source_location": "L324",
       "weight": 1.0
     },
     {
@@ -83943,7 +83955,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L409",
+      "source_location": "L415",
       "weight": 1.0
     },
     {
@@ -83955,7 +83967,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L410",
+      "source_location": "L416",
       "weight": 1.0
     },
     {
@@ -83967,7 +83979,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L217",
+      "source_location": "L223",
       "weight": 1.0
     },
     {
@@ -83979,7 +83991,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L219",
+      "source_location": "L225",
       "weight": 1.0
     },
     {
@@ -83991,7 +84003,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L237",
+      "source_location": "L243",
       "weight": 1.0
     },
     {
@@ -84003,7 +84015,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L287",
+      "source_location": "L293",
       "weight": 1.0
     },
     {
@@ -84015,7 +84027,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/api_openai.go",
-      "source_location": "L288",
+      "source_location": "L294",
       "weight": 1.0
     },
     {
@@ -84855,7 +84867,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/providers.go",
-      "source_location": "L348",
+      "source_location": "L354",
       "weight": 1.0
     },
     {
@@ -89832,5 +89844,5 @@
       "source_file": "docs/BUILD_PLAN_MCP_MARKETPLACE.md"
     }
   ],
-  "built_at_commit": "983e2794701854641c82aa63ae4daeec9bfd5f46"
+  "built_at_commit": "45f9b571cc3b137f3cefac79961cc0844e7711d9"
 }

@@ -16161,7 +16161,7 @@
       "file_type": "code",
       "norm_label": "testgemini_livestreaming()",
       "source_file": "models/api_gemini_test.go",
-      "source_location": "L80"
+      "source_location": "L84"
     },
     {
       "id": "models_api_gemini_test_testgemini_livetoolcalling",
@@ -16172,7 +16172,7 @@
       "file_type": "code",
       "norm_label": "testgemini_livetoolcalling()",
       "source_file": "models/api_gemini_test.go",
-      "source_location": "L120"
+      "source_location": "L128"
     },
     {
       "id": "models_api_opencode_free_test",
@@ -35396,7 +35396,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "models/api_gemini_test.go",
-      "source_location": "L121",
+      "source_location": "L129",
       "weight": 1.0
     },
     {
@@ -35408,7 +35408,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "models/api_gemini_test.go",
-      "source_location": "L134",
+      "source_location": "L142",
       "weight": 1.0
     },
     {
@@ -51368,7 +51368,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/api_gemini_test.go",
-      "source_location": "L80",
+      "source_location": "L84",
       "weight": 1.0
     },
     {
@@ -51380,7 +51380,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/api_gemini_test.go",
-      "source_location": "L120",
+      "source_location": "L128",
       "weight": 1.0
     },
     {
@@ -67824,7 +67824,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "models/api_gemini_test.go",
-      "source_location": "L120",
+      "source_location": "L128",
       "weight": 1.0
     },
     {
@@ -67857,7 +67857,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "models/api_gemini_test.go",
-      "source_location": "L80",
+      "source_location": "L84",
       "weight": 1.0
     },
     {
@@ -83763,7 +83763,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/api_gemini_test.go",
-      "source_location": "L86",
+      "source_location": "L90",
       "weight": 1.0
     },
     {
@@ -83775,7 +83775,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/api_gemini_test.go",
-      "source_location": "L95",
+      "source_location": "L99",
       "weight": 1.0
     },
     {
@@ -83787,7 +83787,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/api_gemini_test.go",
-      "source_location": "L141",
+      "source_location": "L149",
       "weight": 1.0
     },
     {
@@ -83799,7 +83799,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/api_gemini_test.go",
-      "source_location": "L150",
+      "source_location": "L158",
       "weight": 1.0
     },
     {
@@ -89844,5 +89844,5 @@
       "source_file": "docs/BUILD_PLAN_MCP_MARKETPLACE.md"
     }
   ],
-  "built_at_commit": "45f9b571cc3b137f3cefac79961cc0844e7711d9"
+  "built_at_commit": "5c3c9a57fd3b00f4f54fb2af4537cf174576f85d"
 }
