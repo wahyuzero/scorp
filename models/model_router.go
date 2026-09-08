@@ -62,12 +62,16 @@ func findFirstVisionModel() string {
 	}
 	// 1. High-priority known vision models
 	candidates := []string{
+		"gemini/gemini-3.7-flash",
+		"gemini/gemini-3.1-flash-lite-preview",
+		"gemini/gemini-3.8-flash",
+		"gpt-4o",
+		"gpt-4o-mini",
+		"claude-3-7-sonnet",
+		"claude-3-5-sonnet",
 		"opencode/mimo-v2.5-free",
 		"gpt-5.6-luna",
 		"z-ai/glm-5.3-flash",
-		"gpt-4o",
-		"gpt-4o-mini",
-		"claude-3-5-sonnet",
 	}
 	for _, c := range candidates {
 		if _, ok := ModelCfg.Models[c]; ok {
@@ -263,6 +267,10 @@ func CallModelWithFallback(ctx context.Context, taskType string, messages []Chat
 			log.Printf("[models] Fallback model '%s' not found in config, skipping", name)
 			continue
 		}
+		// For vision tasks, only fall back to vision-capable models
+		if taskType == "vision" && !isVisionModelName(m.Model) && !isVisionModelName(m.Provider) {
+			continue
+		}
 		// Skip duplicates
 		dup := false
 		for _, existing := range models {
@@ -276,17 +284,38 @@ func CallModelWithFallback(ctx context.Context, taskType string, messages []Chat
 		}
 	}
 
-	// 3. Default chat model as last resort
-	if dm := RouteModel("chat"); dm != nil {
-		dup := false
-		for _, existing := range models {
-			if existing.Model == dm.Model {
-				dup = true
-				break
+	// For vision tasks, if no vision fallbacks found, add all vision models in config
+	if taskType == "vision" && len(models) <= 1 {
+		for name, m := range cfg.Models {
+			mc := m
+			if isVisionModelName(name) || isVisionModelName(mc.Model) || isVisionModelName(mc.Provider) {
+				dup := false
+				for _, existing := range models {
+					if existing.Model == mc.Model {
+						dup = true
+						break
+					}
+				}
+				if !dup {
+					models = append(models, &mc)
+				}
 			}
 		}
-		if !dup {
-			models = append(models, dm)
+	}
+
+	// 3. Default chat model as last resort (skip for vision tasks)
+	if taskType != "vision" {
+		if dm := RouteModel("chat"); dm != nil {
+			dup := false
+			for _, existing := range models {
+				if existing.Model == dm.Model {
+					dup = true
+					break
+				}
+			}
+			if !dup {
+				models = append(models, dm)
+			}
 		}
 	}
 

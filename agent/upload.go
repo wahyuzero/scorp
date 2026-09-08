@@ -72,6 +72,10 @@ func HandleUploadInAgentMode(doc TGDocument) {
 	isImage := ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".gif" || ext == ".webp"
 
 	if isImage {
+		// Also cache image to /tmp for subsequent tool operations (send_file, inspection, etc.)
+		savePath := fmt.Sprintf("/tmp/scorp_upload_%d_%s", time.Now().Unix(), filepath.Base(fileResp.Result.FilePath))
+		_ = os.WriteFile(savePath, fileData, 0644)
+
 		// Send as vision message
 		b64 := base64Encode(fileData)
 		mimeType := "image/jpeg"
@@ -83,13 +87,14 @@ func HandleUploadInAgentMode(doc TGDocument) {
 			mimeType = "image/webp"
 		}
 
-		parts := []contentPart{
-			{Type: "image_url", ImageURL: &imageURL{URL: fmt.Sprintf("data:%s;base64,%s", mimeType, b64)}},
-			{Type: "text", Text: "Analyze this image. Describe what you see."},
+		questionText := "Analyze this image. Describe what you see in detail."
+		if doc.Caption != "" {
+			questionText = doc.Caption
 		}
 
-		if doc.Caption != "" {
-			parts[1].Text = doc.Caption
+		parts := []contentPart{
+			{Type: "text", Text: questionText},
+			{Type: "image_url", ImageURL: &imageURL{URL: fmt.Sprintf("data:%s;base64,%s", mimeType, b64)}},
 		}
 
 		// Build message with vision content
@@ -97,11 +102,19 @@ func HandleUploadInAgentMode(doc TGDocument) {
 		msgs = append(msgs, AgentMessage{Role: "user", Content: parts})
 		appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: parts})
 
-		msgID := tools.SendMessageGetID("👁 Analyzing image with agent...", doc.ChatID)
+		msgID := tools.SendMessageGetID("👁 Analyzing image with vision model...", doc.ChatID)
+
+		// Keep only recent messages for vision context to prevent history confusion
+		var recentMsgs []AgentMessage
+		if len(msgs) > 6 {
+			recentMsgs = msgs[len(msgs)-6:]
+		} else {
+			recentMsgs = msgs
+		}
 
 		// Convert to models.ChatMessage format
-		chatMsgs := make([]models.ChatMessage, len(msgs))
-		for i, m := range msgs {
+		chatMsgs := make([]models.ChatMessage, len(recentMsgs))
+		for i, m := range recentMsgs {
 			switch c := m.Content.(type) {
 			case string:
 				chatMsgs[i] = models.ChatMessage{Role: m.Role, Content: c}
@@ -116,7 +129,7 @@ func HandleUploadInAgentMode(doc TGDocument) {
 
 		reply, _, err := models.CallModelWithFallback(ctx, "vision", chatMsgs)
 		if err != nil {
-			tools.EditMessageByID(doc.ChatID, msgID, fmt.Sprintf("❌ Error: %v", err), nil)
+			tools.EditMessageByID(doc.ChatID, msgID, fmt.Sprintf("❌ Vision Error: %v", err), nil)
 			return
 		}
 

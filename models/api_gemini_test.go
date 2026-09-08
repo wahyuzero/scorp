@@ -212,3 +212,42 @@ func TestGemini_LiveToolCalling(t *testing.T) {
 		}
 	}
 }
+
+func TestGemini_MultimodalParsing(t *testing.T) {
+	testJSON := `[
+		{"type": "text", "text": "What is in this image?"},
+		{"type": "image_url", "image_url": {"url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="}}
+	]`
+
+	msgs := []ChatMessage{
+		{Role: "user", Content: testJSON},
+	}
+
+	contents, sys := geminiMessages(msgs)
+	if sys != nil {
+		t.Errorf("expected nil system instruction")
+	}
+	if len(contents) != 1 {
+		t.Fatalf("expected 1 content entry, got %d", len(contents))
+	}
+	if len(contents[0].Parts) != 2 {
+		t.Fatalf("expected 2 parts (text + inlineData), got %d", len(contents[0].Parts))
+	}
+
+	part1 := contents[0].Parts[0]
+	if part1.Text != "What is in this image?" {
+		t.Errorf("expected text 'What is in this image?', got %q", part1.Text)
+	}
+
+	part2 := contents[0].Parts[1]
+	if part2.InlineData == nil {
+		t.Fatalf("expected part2 to have InlineData")
+	}
+	if part2.InlineData.MimeType != "image/png" {
+		t.Errorf("expected mimeType 'image/png', got %q", part2.InlineData.MimeType)
+	}
+	if !strings.HasPrefix(part2.InlineData.Data, "iVBOR") {
+		t.Errorf("expected base64 data to start with 'iVBOR', got %q", part2.InlineData.Data)
+	}
+}
+

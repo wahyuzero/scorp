@@ -84,10 +84,10 @@
     "semantic_hash": "3607e1626e9d774f8c007e0c5d9abe9e"
   },
   "bootstrap/core.go": {
-    "mtime": 1788648166.6622226,
-    "seen": 1788649372.895828,
-    "ast_hash": "ac437ebcb23907ffc4005eac1c543c9a",
-    "semantic_hash": "ac437ebcb23907ffc4005eac1c543c9a"
+    "mtime": 1788865394.9080825,
+    "seen": 1788865455.0573344,
+    "ast_hash": "9ac85c2fc23f2d0bbed561ff25354bd7",
+    "semantic_hash": ""
   },
   "bootstrap/extended.go": {
     "mtime": 1788736079.5183668,
@@ -486,10 +486,10 @@
     "semantic_hash": ""
   },
   "telegram/files.go": {
-    "mtime": 1788648166.4122224,
-    "seen": 1788649372.8962655,
-    "ast_hash": "11cf9a1ad217434efa3e5ae0184e9105",
-    "semantic_hash": "11cf9a1ad217434efa3e5ae0184e9105"
+    "mtime": 1788865340.5940113,
+    "seen": 1788865455.0576255,
+    "ast_hash": "698bc7b5265445b6bd5e62629914526e",
+    "semantic_hash": ""
   },
   "telegram/telegram.go": {
     "mtime": 1788754559.5895655,
@@ -516,10 +516,10 @@
     "semantic_hash": "e03cd4f4c44a334a6631aaa08bccd7d1"
   },
   "tools/callbacks.go": {
-    "mtime": 1788682242.2872007,
-    "seen": 1788698813.715175,
-    "ast_hash": "2424034daba2293511e356bb157cd8f0",
-    "semantic_hash": "2424034daba2293511e356bb157cd8f0"
+    "mtime": 1788865325.1459908,
+    "seen": 1788865455.0576413,
+    "ast_hash": "9e34687a1e0562e8ca470f2fe7479c8e",
+    "semantic_hash": ""
   },
   "tools/clarify.go": {
     "mtime": 1788485109.882153,
@@ -552,9 +552,9 @@
     "semantic_hash": ""
   },
   "tools/exec.go": {
-    "mtime": 1788762050.2102044,
-    "seen": 1788762171.0106487,
-    "ast_hash": "4f9935d471dfda084c4e1522bacdae0f",
+    "mtime": 1788865388.7810745,
+    "seen": 1788865455.0576668,
+    "ast_hash": "93dccb9c7a27c478dbc88b5111796b98",
     "semantic_hash": ""
   },
   "tools/exec_code.go": {
@@ -936,9 +936,9 @@
     "semantic_hash": "5bbeb07ab547e8a99289c64d0d9d46ce"
   },
   "telegram/daemon.go": {
-    "mtime": 1788729150.800059,
-    "seen": 1788751924.1178,
-    "ast_hash": "590d2c1736e30c007edb06c371874f82",
+    "mtime": 1788865347.22702,
+    "seen": 1788865455.0576236,
+    "ast_hash": "7fd47fc7ce7d07daff62c0550f485320",
     "semantic_hash": ""
   },
   "agent/session_mgr.go": {
@@ -1038,10 +1038,10 @@
     "semantic_hash": ""
   },
   "cli_callbacks.go": {
-    "mtime": 1788682272.1083193,
-    "seen": 1788698813.7146955,
-    "ast_hash": "e0085c2c7e97cf114616b8a52abb362b",
-    "semantic_hash": "e0085c2c7e97cf114616b8a52abb362b"
+    "mtime": 1788865414.1931078,
+    "seen": 1788865455.0573575,
+    "ast_hash": "2b3dc0771d64cfafadc076aa27ba2f15",
+    "semantic_hash": ""
   },
   "cli_format.go": {
     "mtime": 1788539584.0293198,
@@ -1647,6 +1647,12 @@
     "mtime": 1788863021.2758746,
     "seen": 1788863114.1082356,
     "ast_hash": "805d7e23574e393e69d99df8ec20353b",
+    "semantic_hash": ""
+  },
+  "tools/send_file_test.go": {
+    "mtime": 1788865435.1701355,
+    "seen": 1788865455.0577302,
+    "ast_hash": "cd4b52df94ec7f69d5c2317195b90ce7",
     "semantic_hash": ""
   }
 }

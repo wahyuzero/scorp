@@ -79,12 +79,34 @@ type geminiContent struct {
 	Parts []geminiPart `json:"parts"`
 }
 
+type geminiInlineData struct {
+	MimeType string `json:"mimeType"`
+	Data     string `json:"data"`
+}
+
 type geminiPart struct {
 	Text             string                  `json:"text,omitempty"`
+	InlineData       *geminiInlineData       `json:"inlineData,omitempty"`
 	Thought          bool                    `json:"thought,omitempty"`
 	ThoughtSignature string                  `json:"thoughtSignature,omitempty"`
 	FunctionCall     *geminiFunctionCall     `json:"functionCall,omitempty"`
 	FunctionResponse *geminiFunctionResponse `json:"functionResponse,omitempty"`
+}
+
+func parseDataURL(dataURL string) *geminiInlineData {
+	dataURL = strings.TrimSpace(dataURL)
+	if strings.HasPrefix(dataURL, "data:") {
+		idx := strings.Index(dataURL, ";base64,")
+		if idx > 5 {
+			mimeType := dataURL[5:idx]
+			b64Data := dataURL[idx+8:]
+			return &geminiInlineData{
+				MimeType: mimeType,
+				Data:     b64Data,
+			}
+		}
+	}
+	return nil
 }
 
 type geminiFunctionCall struct {
@@ -193,6 +215,44 @@ func geminiMessages(messages []ChatMessage) ([]geminiContent, *geminiContent) {
 			})
 
 		default: // "user" or anything else
+			trimmed := strings.TrimSpace(m.Content)
+			if strings.HasPrefix(trimmed, "[") && (strings.Contains(trimmed, "image_url") || strings.Contains(trimmed, "inlineData") || strings.Contains(trimmed, "image")) {
+				var rawParts []map[string]interface{}
+				if err := json.Unmarshal([]byte(trimmed), &rawParts); err == nil {
+					var userParts []geminiPart
+					for _, rp := range rawParts {
+						pType, _ := rp["type"].(string)
+						switch pType {
+						case "text":
+							if txt, ok := rp["text"].(string); ok && txt != "" {
+								userParts = append(userParts, geminiPart{Text: txt})
+							}
+						case "image_url":
+							var dataURL string
+							if imgURLMap, ok := rp["image_url"].(map[string]interface{}); ok {
+								dataURL, _ = imgURLMap["url"].(string)
+							} else if strURL, ok := rp["image_url"].(string); ok {
+								dataURL = strURL
+							}
+							if dataURL != "" {
+								inline := parseDataURL(dataURL)
+								if inline != nil {
+									userParts = append(userParts, geminiPart{InlineData: inline})
+								}
+							}
+						}
+					}
+					if len(userParts) > 0 {
+						contents = append(contents, geminiContent{
+							Role:  "user",
+							Parts: userParts,
+						})
+						continue
+					}
+				}
+			}
+
+			// Plain text content
 			contents = append(contents, geminiContent{
 				Role:  "user",
 				Parts: []geminiPart{{Text: m.Content}},

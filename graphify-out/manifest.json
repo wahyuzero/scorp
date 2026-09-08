@@ -276,9 +276,9 @@
     "semantic_hash": "ce88ec3cc99fdb5d9e36dcf02f65be18"
   },
   "install.sh": {
-    "mtime": 1788863838.9859965,
-    "seen": 1788863861.2202399,
-    "ast_hash": "1825a4ae8f1def6b805d3f84596a1e01",
+    "mtime": 1788865846.4129603,
+    "seen": 1788866545.8262763,
+    "ast_hash": "676ef39fb2ef2f671c6b43f47c3b9099",
     "semantic_hash": ""
   },
   "internal/helpers/helpers.go": {
@@ -336,9 +336,9 @@
     "semantic_hash": "0f046d5fcc4a115eae4dab8340c6baa6"
   },
   "models/api_gemini.go": {
-    "mtime": 1788860430.2651408,
-    "seen": 1788860651.6864886,
-    "ast_hash": "8f80761e68d69d0a2c7b05b4b37bfd80",
+    "mtime": 1788866423.0181506,
+    "seen": 1788866545.8263483,
+    "ast_hash": "c4c2621d60d5dd728a3a4bf0b50d82ad",
     "semantic_hash": ""
   },
   "models/callback.go": {
@@ -360,9 +360,9 @@
     "semantic_hash": ""
   },
   "models/model_router.go": {
-    "mtime": 1788860387.2271078,
-    "seen": 1788860651.6865184,
-    "ast_hash": "b8560dedecb9cce926b2cb0e29917e34",
+    "mtime": 1788866447.5071952,
+    "seen": 1788866545.826376,
+    "ast_hash": "62eeaf42a8f7e421e0431db2df707569",
     "semantic_hash": ""
   },
   "models/providers.go": {
@@ -696,9 +696,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1788772150.8843896,
-    "seen": 1788772188.095357,
-    "ast_hash": "bd52328db53bb2d99b476af6197d7c39",
+    "mtime": 1788865791.5668256,
+    "seen": 1788866545.826609,
+    "ast_hash": "43d5fd8358f6392d627cb6438855b7b0",
     "semantic_hash": ""
   },
   "agent/repomap.go": {
@@ -930,10 +930,10 @@
     "semantic_hash": "24477ba631b54bbb6e371eb1ff9d9cfb"
   },
   "agent/upload.go": {
-    "mtime": 1788483290.3820221,
-    "seen": 1788649372.8957803,
-    "ast_hash": "5bbeb07ab547e8a99289c64d0d9d46ce",
-    "semantic_hash": "5bbeb07ab547e8a99289c64d0d9d46ce"
+    "mtime": 1788866461.8532212,
+    "seen": 1788866545.826161,
+    "ast_hash": "abc08b9bea8eb512f297f129a0592992",
+    "semantic_hash": ""
   },
   "telegram/daemon.go": {
     "mtime": 1788865347.22702,
@@ -1644,9 +1644,9 @@
     "semantic_hash": ""
   },
   "models/api_gemini_test.go": {
-    "mtime": 1788863021.2758746,
-    "seen": 1788863114.1082356,
-    "ast_hash": "805d7e23574e393e69d99df8ec20353b",
+    "mtime": 1788866511.1793098,
+    "seen": 1788866545.8263505,
+    "ast_hash": "13bd6a2344a48e7117f481318523893b",
     "semantic_hash": ""
   },
   "tools/send_file_test.go": {
