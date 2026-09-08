@@ -7,4 +7,4 @@ var Version = "dev"
 
 // GitHubRepo is the repo used for update checks. Override via
 // GITHUB_REPO env var (format: "owner/repo").
-var GitHubRepo = ""
+var GitHubRepo = "wahyuzero/scorp"

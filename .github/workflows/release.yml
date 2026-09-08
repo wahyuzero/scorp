@@ -102,7 +102,7 @@ jobs:
           fi
 
           go build $TAGS_FLAG \
-            -ldflags="-s -w -buildid= -X scorp-agent/updater.Version=${VERSION}" \
+            -ldflags="-s -w -buildid= -X scorp-agent/updater.Version=${VERSION} -X scorp-agent/updater.GitHubRepo=wahyuzero/scorp" \
             -trimpath \
             -o "${{ matrix.name }}" .
 
