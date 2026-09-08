@@ -1,7 +1,7 @@
 # Graph Report - scorp  (2026-09-08)
 
 ## Corpus Check
-- 273 files · ~191,100 words
+- 273 files · ~191,148 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `45f9b571`
+- Built from commit: `5c3c9a57`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -420,7 +420,7 @@ _Questions this graph is uniquely positioned to answer:_
 - **Why does `RunAgentSessionLoop()` connect `RunAgentSessionLoop` to `chat.go`, `UnregisterTool`, `init`, `TaskPlan`, `HandleTelegramAction`, `getAgentSystemPrompt`, `time.Time`, `StreamChunk`, `compaction_test.go`, `GetAutonomyLevel`, `CreateCheckpoint`, `ConfirmationRequired`, `TestIntegrityStatus`, `ExecuteTool`, `GenerateContextualSessionTitle`, `HandleConfirmation`, `GetStringArg`, `prepareNewTurnHistory`, `startCLI`, `TruncateStr`, `ExecuteTermuxAPI`, `testgate.go`, `IsDangerousCommand`, `IsContinuationDirective`?**
   _High betweenness centrality (0.084) - this node is a cross-community bridge._
 - **Why does `TruncateStr()` connect `TruncateStr` to `chat.go`, `cost_router.go`, `runSubagent`, `HandleModelCallback`, `prompt_test.go`, `ExecuteTool`, `TaskPlan`, `GetStringArg`, `getAgentSystemPrompt`, `api_gemini.go`, `time.Time`, `ResolveAPIKey`, `ScorpPath`, `CallOpenCodeWithTools`, `RunAgentSessionLoop`, `context.Context`, `MCPServer`, `api_commandcode.go`?**
-  _High betweenness centrality (0.063) - this node is a cross-community bridge._
+  _High betweenness centrality (0.064) - this node is a cross-community bridge._
 - **Are the 24 inferred relationships involving `HandleTelegramAction()` (e.g. with `DirKeyboard()` and `FileDetailKeyboard()`) actually correct?**
   _`HandleTelegramAction()` has 24 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `memoryFact`, `containerStats`, `ACPInitializeParams` to the rest of the system?**

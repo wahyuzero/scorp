@@ -24,9 +24,9 @@
     "semantic_hash": "c99a8b9850929bec698aeb7946707843"
   },
   "agent/loop.go": {
-    "mtime": 1788859505.27894,
-    "seen": 1788859548.9307911,
-    "ast_hash": "041c8526e9bb6a6f9cbc447d5f9038bc",
+    "mtime": 1788863779.5049121,
+    "seen": 1788863861.2200675,
+    "ast_hash": "3c4e9b31d21eb7d4d0191ae4de62ebc2",
     "semantic_hash": ""
   },
   "agent/phase6_test.go": {
@@ -276,9 +276,9 @@
     "semantic_hash": "ce88ec3cc99fdb5d9e36dcf02f65be18"
   },
   "install.sh": {
-    "mtime": 1788754595.0896475,
-    "seen": 1788754753.047688,
-    "ast_hash": "f2af18fff35be395de1166c0be7e2b20",
+    "mtime": 1788863838.9859965,
+    "seen": 1788863861.2202399,
+    "ast_hash": "1825a4ae8f1def6b805d3f84596a1e01",
     "semantic_hash": ""
   },
   "internal/helpers/helpers.go": {
@@ -672,10 +672,10 @@
     "semantic_hash": "61c11fe957566e784effe7b6643e22e8"
   },
   "updater/version.go": {
-    "mtime": 1788485109.857402,
-    "seen": 1788649372.8966882,
-    "ast_hash": "6925a52cb7461753e9f1e7ff3cc37e6a",
-    "semantic_hash": "6925a52cb7461753e9f1e7ff3cc37e6a"
+    "mtime": 1788863372.0983474,
+    "seen": 1788863861.2205567,
+    "ast_hash": "7c93ea943c29ad820d15ca8b6edeedc6",
+    "semantic_hash": ""
   },
   "wizard/wizard.go": {
     "mtime": 1788648166.4982224,
@@ -690,9 +690,9 @@
     "semantic_hash": "2458d99fa4a6416a8f5a20646a1c2d76"
   },
   ".github/workflows/release.yml": {
-    "mtime": 1788762115.1493487,
-    "seen": 1788762171.010806,
-    "ast_hash": "f8813a29882ffeaeb3cc6cb7fe7c174c",
+    "mtime": 1788863377.744355,
+    "seen": 1788863861.2205706,
+    "ast_hash": "714cdbdb82c556997b67b7a056e5f126",
     "semantic_hash": ""
   },
   "README.md": {
@@ -846,10 +846,10 @@
     "semantic_hash": "596292fb806d3647310e702553b14ff9"
   },
   "wizard/quickstart.go": {
-    "mtime": 1788461593.9229789,
-    "seen": 1788649372.8967147,
-    "ast_hash": "a79f4764f059029f76c80b12ffa488e4",
-    "semantic_hash": "a79f4764f059029f76c80b12ffa488e4"
+    "mtime": 1788863821.5139718,
+    "seen": 1788863861.2205608,
+    "ast_hash": "7c0a0d417fa0b772cdc26b77132f8652",
+    "semantic_hash": ""
   },
   "scheduler/scheduler_test.go": {
     "mtime": 1788729577.3892164,

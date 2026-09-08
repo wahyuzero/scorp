@@ -190,7 +190,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 
 	// Send initial thinking indicator
 	if msgID == 0 {
-		msgID = tools.SendMessageGetID("🧠 <b>Agent</b>\n\n⏳ <i>memproses...</i>", chatID)
+		msgID = tools.SendMessageGetID("🧠 <b>Agent</b>\n\n⏳ <i>Processing...</i>", chatID)
 	}
 
 	start := time.Now()
