@@ -21,26 +21,31 @@ func RouteModel(taskType string) *ModelConfig {
 		return nil
 	}
 
-	// Check routing rules first
-	var modelName string
-	if name, ok := ModelCfg.RoutingRules[taskType]; ok {
-		modelName = name
-	} else {
-		// Fallback by task type
-		switch taskType {
-		case "agent":
-			modelName = ModelCfg.AgentModel
-		case "complex":
-			modelName = ModelCfg.PremiumModel
-		case "vision":
-			if ModelCfg.VisionModel != "" {
-				modelName = ModelCfg.VisionModel
-			} else {
-				modelName = findFirstVisionModel()
-			}
-		default:
-			modelName = ModelCfg.DefaultModel
+	// 1. Vision is the only specialized role that strictly requires multimodal input
+	if taskType == "vision" {
+		var modelName string
+		if ModelCfg.VisionModel != "" {
+			modelName = ModelCfg.VisionModel
+		} else if name, ok := ModelCfg.RoutingRules["vision"]; ok && name != "" {
+			modelName = name
+		} else {
+			modelName = findFirstVisionModel()
 		}
+		if m, ok := ModelCfg.Models[modelName]; ok {
+			return &m
+		}
+	}
+
+	// 2. Faithful Active Model Routing (Option A):
+	// All tasks (agent, chat, memory, tool, default) use the user's active AgentModel / DefaultModel.
+	// Explicit RoutingRules take effect only if the model actually exists.
+	var modelName string
+	if ModelCfg.AgentModel != "" {
+		modelName = ModelCfg.AgentModel
+	} else if ModelCfg.DefaultModel != "" {
+		modelName = ModelCfg.DefaultModel
+	} else if name, ok := ModelCfg.RoutingRules[taskType]; ok && name != "" {
+		modelName = name
 	}
 
 	if m, ok := ModelCfg.Models[modelName]; ok {

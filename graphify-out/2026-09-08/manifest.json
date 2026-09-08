@@ -12,10 +12,10 @@
     "semantic_hash": "8d53ee107b2e833a47451d35589624ef"
   },
   "agent/compaction.go": {
-    "mtime": 1788681135.3147733,
-    "seen": 1788698813.7145047,
-    "ast_hash": "ebc993fa5331c43dacaaa92c0e10693c",
-    "semantic_hash": "ebc993fa5331c43dacaaa92c0e10693c"
+    "mtime": 1788867779.5573478,
+    "seen": 1788867822.581506,
+    "ast_hash": "e430aad52571a6f64b428eb5191e8dba",
+    "semantic_hash": ""
   },
   "agent/compaction_test.go": {
     "mtime": 1788681071.747638,
@@ -930,9 +930,9 @@
     "semantic_hash": "24477ba631b54bbb6e371eb1ff9d9cfb"
   },
   "agent/upload.go": {
-    "mtime": 1788866461.8532212,
-    "seen": 1788866545.826161,
-    "ast_hash": "abc08b9bea8eb512f297f129a0592992",
+    "mtime": 1788867788.740359,
+    "seen": 1788867822.5815809,
+    "ast_hash": "2f8c3f797879bc84abe07255b34bd8bc",
     "semantic_hash": ""
   },
   "telegram/daemon.go": {
