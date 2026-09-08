@@ -18,34 +18,54 @@ Scorp is engineered around modern production agent principles:
 
 ## 🚀 Quick Start (Under 60 Seconds)
 
-### 1. Build & Setup
+### 1. Installation
+
+#### Option A: One-Line Universal Install (Recommended)
+Automatically detects your OS and architecture, downloads the matching prebuilt static binary, installs to system PATH, and launches setup:
+```bash
+curl -fsSL https://raw.githubusercontent.com/wahyuzero/scorp/master/install.sh | bash
+```
+> Supported out-of-the-box: **Linux** (x86_64, aarch64/ARM64, ARMv7), **macOS** (Apple Silicon M-series & Intel x64), and **Android** (Termux).
+
+#### Option B: Build from Source
 ```bash
 git clone https://github.com/wahyuzero/scorp.git
 cd scorp
 make
 ./scorp setup
 ```
-The interactive onboarding wizard configures your AI provider (Command Code, DeepSeek, Gemini, OpenAI, Claude, Ollama, etc.) and security baseline.
 
-### 2. Choose Your Interface
+### 2. Interactive Setup Wizard (`scorp setup`)
+Run `scorp setup` at any time to configure or reconfigure your agent:
+1. **Operating Mode:** CLI Terminal Mode, 24/7 Telegram Bot Daemon, or Dual Mode.
+2. **AI Provider:**
+   - 🟢 **Verified & Tested:** Google Gemini (3.7 Flash, 3.8 Flash, 3.1 Pro), OpenCode Zen (`big-pickle`, `mimo-v2.5-free`), Command Code (DeepSeek v4 Flash, Laguna, GLM).
+   - 🔵 **Local & Offline:** Ollama Local (no API key required), Claude CLI Bridge.
+   - 🟡 **Cloud & Compatible:** OpenAI (GPT-4o, o3-mini), Anthropic Claude, DeepSeek Official, Mistral, xAI Grok, Perplexity Sonar, or Custom OpenAI-compatible endpoints.
+3. **API Keys & Security:** Auto-detects existing `.env` credentials or securely stores new ones.
+4. **Autonomy Profile:** `supervised` (default), `auto` (smart risk classifier), `readonly` (audit-only), or `yolo` (unattended).
+5. **Systemd Service (Linux/VPS):** Optional one-click installation and enablement of `scorp.service`.
+
+### 3. Choose Your Interface
 
 * **Interactive Terminal REPL:**
   ```bash
-  ./scorp
+  scorp --cli
   ```
 * **One-Shot CLI Execution:**
   ```bash
-  ./scorp "read main.go, fix the timeout bug, and run tests"
+  scorp "inspect disk usage and memory, then report"
+  ```
+* **24/7 Background Telegram Daemon:**
+  ```bash
+  scorp daemon
+  # or manage via systemd if installed:
+  sudo systemctl status scorp
   ```
 * **Embedded Web Gateway & Dashboard (< 2MB RAM):**
   ```bash
-  ./scorp gateway --port 8080
+  scorp gateway --port 8080
   ```
-* **24/7 Telegram Daemon:**
-  ```bash
-  ./scorp
-  ```
-  *(Automatically boots into background Telegram daemon if `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are configured in `.env`).*
 
 ---
 
