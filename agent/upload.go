@@ -97,10 +97,14 @@ func HandleUploadInAgentMode(doc TGDocument) {
 			{Type: "image_url", ImageURL: &imageURL{URL: fmt.Sprintf("data:%s;base64,%s", mimeType, b64)}},
 		}
 
-		// Build message with vision content
+		// Build message with vision content for the immediate LLM call
 		msgs := getSessionHistory(chatIDStr)
 		msgs = append(msgs, AgentMessage{Role: "user", Content: parts})
-		appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: parts})
+
+		// For persistent session history, store lightweight summary without megabytes of base64
+		historyNote := fmt.Sprintf("[Image uploaded: %s (%d bytes, saved to %s)]\n%s",
+			filepath.Base(fileResp.Result.FilePath), len(fileData), savePath, questionText)
+		appendSessionHistory(chatIDStr, AgentMessage{Role: "user", Content: historyNote})
 
 		msgID := tools.SendMessageGetID("👁 Analyzing image with vision model...", doc.ChatID)
 

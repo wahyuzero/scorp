@@ -1,8 +1,10 @@
 package agent
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 )
 
@@ -60,12 +62,26 @@ func estimateHistoryTokens(history []AgentMessage) int {
 		case string:
 			total += estimateTokens(c)
 		default:
-			total += 200 // estimate for non-text content
+			if jsonBytes, err := json.Marshal(c); err == nil {
+				total += estimateTokens(string(jsonBytes))
+			} else {
+				total += 200
+			}
 		}
 		// Overhead per message (role, formatting)
 		total += 4
 	}
 	return total
+}
+
+var base64ImageRegex = regexp.MustCompile(`data:image\/[a-zA-Z0-9+.-]+;base64,[A-Za-z0-9+/=]{100,}`)
+
+func stripBase64Data(content string) (string, bool) {
+	if !strings.Contains(content, "data:image/") || !strings.Contains(content, ";base64,") {
+		return content, false
+	}
+	trimmed := base64ImageRegex.ReplaceAllString(content, "[image-data-trimmed]")
+	return trimmed, trimmed != content
 }
 
 // truncateToolResultsInHistory applies age-aware pruning to tool results.
@@ -79,6 +95,25 @@ func truncateToolResultsInHistory(history []AgentMessage) ([]AgentMessage, int) 
 	n := len(history)
 
 	for i, msg := range history {
+		// 1. Strip massive base64 image data from previous turns to prevent megabyte-sized token bloat
+		switch c := msg.Content.(type) {
+		case string:
+			if stripped, modified := stripBase64Data(c); modified {
+				history[i].Content = stripped
+				truncations++
+				msg = history[i]
+			}
+		default:
+			if jsonBytes, err := json.Marshal(c); err == nil {
+				jsonStr := string(jsonBytes)
+				if stripped, modified := stripBase64Data(jsonStr); modified {
+					history[i].Content = stripped
+					truncations++
+					msg = history[i]
+				}
+			}
+		}
+
 		if msg.Role != "user" {
 			continue
 		}
