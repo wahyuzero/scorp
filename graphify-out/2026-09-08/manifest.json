@@ -312,10 +312,10 @@
     "semantic_hash": "93f99cb801a4bc84c84619545ea230c5"
   },
   "models.example.json": {
-    "mtime": 1788483304.0569139,
-    "seen": 1788649372.896028,
-    "ast_hash": "c478e461270a6aaf8f6554bacd7e17fe",
-    "semantic_hash": "c478e461270a6aaf8f6554bacd7e17fe"
+    "mtime": 1788869591.1729333,
+    "seen": 1788869653.0161219,
+    "ast_hash": "1d4b6030214a5fc157415f7412512638",
+    "semantic_hash": ""
   },
   "models/api_anthropic.go": {
     "mtime": 1788859459.504926,
@@ -978,9 +978,9 @@
     "semantic_hash": ""
   },
   "models/config_io.go": {
-    "mtime": 1788858627.9757638,
-    "seen": 1788858955.7599576,
-    "ast_hash": "d367b8861c6bd22a2b341e738de30521",
+    "mtime": 1788869602.3879502,
+    "seen": 1788869653.0161622,
+    "ast_hash": "eddfbf19421eeefe314fb97bafab2067",
     "semantic_hash": ""
   },
   "models/telemetry.go": {
@@ -1290,9 +1290,9 @@
     "semantic_hash": "fce90173ae4bec1d61010c7709940d84"
   },
   "agent/memory_md.go": {
-    "mtime": 1788869118.0712266,
-    "seen": 1788869187.6035995,
-    "ast_hash": "f5dbde3bc775b8c0e5dec6095ef7f822",
+    "mtime": 1788869348.38657,
+    "seen": 1788869377.1935818,
+    "ast_hash": "c3eb68994c182083f556e4b188bcb0c0",
     "semantic_hash": ""
   },
   "agent/memory_md_test.go": {

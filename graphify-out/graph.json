@@ -8395,7 +8395,7 @@
       "file_type": "code",
       "norm_label": "chatmessage",
       "source_file": "models/model_router.go",
-      "source_location": "L175"
+      "source_location": "L176"
     },
     {
       "id": "models_chatresponse",
@@ -8406,7 +8406,7 @@
       "file_type": "code",
       "norm_label": "chatresponse",
       "source_file": "models/model_router.go",
-      "source_location": "L181"
+      "source_location": "L182"
     },
     {
       "id": "models_cohereprovider",
@@ -8879,7 +8879,7 @@
       "file_type": "code",
       "norm_label": "streamchunk",
       "source_file": "models/model_router.go",
-      "source_location": "L220"
+      "source_location": "L221"
     },
     {
       "id": "models_toolcallresp",
@@ -8890,7 +8890,7 @@
       "file_type": "code",
       "norm_label": "toolcallresp",
       "source_file": "models/model_router.go",
-      "source_location": "L165"
+      "source_location": "L166"
     },
     {
       "id": "models_xaiprovider",
@@ -9946,7 +9946,7 @@
       "file_type": "code",
       "norm_label": "chatrequest",
       "source_file": "models/model_router.go",
-      "source_location": "L154"
+      "source_location": "L155"
     },
     {
       "id": "models_commandcodemsg",
@@ -14676,7 +14676,7 @@
       "file_type": "code",
       "norm_label": "callmodel()",
       "source_file": "models/model_router.go",
-      "source_location": "L206"
+      "source_location": "L207"
     },
     {
       "id": "models_model_router_callmodelstream",
@@ -14687,7 +14687,7 @@
       "file_type": "code",
       "norm_label": "callmodelstream()",
       "source_file": "models/model_router.go",
-      "source_location": "L230"
+      "source_location": "L231"
     },
     {
       "id": "models_model_router_callmodelwithfallback",
@@ -14698,7 +14698,7 @@
       "file_type": "code",
       "norm_label": "callmodelwithfallback()",
       "source_file": "models/model_router.go",
-      "source_location": "L257"
+      "source_location": "L258"
     },
     {
       "id": "models_model_router_findfirstvisionmodel",
@@ -14720,7 +14720,7 @@
       "file_type": "code",
       "norm_label": "getmodelbyname()",
       "source_file": "models/model_router.go",
-      "source_location": "L116"
+      "source_location": "L117"
     },
     {
       "id": "models_model_router_isvisionmodelname",
@@ -14731,7 +14731,7 @@
       "file_type": "code",
       "norm_label": "isvisionmodelname()",
       "source_file": "models/model_router.go",
-      "source_location": "L108"
+      "source_location": "L109"
     },
     {
       "id": "models_model_router_routemodel",
@@ -14753,7 +14753,7 @@
       "file_type": "code",
       "norm_label": "shouldfallbackonerror()",
       "source_file": "models/model_router.go",
-      "source_location": "L397"
+      "source_location": "L398"
     },
     {
       "id": "models_provider_interface_getprovider",
@@ -16293,7 +16293,7 @@
       "file_type": "code",
       "norm_label": "switchactivemodel()",
       "source_file": "models/model_router.go",
-      "source_location": "L129"
+      "source_location": "L130"
     },
     {
       "id": "internal_helpers_helpers_truncatestr",
@@ -36210,7 +36210,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "models/model_router.go",
-      "source_location": "L244",
+      "source_location": "L245",
       "weight": 1.0
     },
     {
@@ -36222,7 +36222,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "models/model_router.go",
-      "source_location": "L279",
+      "source_location": "L280",
       "weight": 1.0
     },
     {
@@ -36234,7 +36234,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "models/model_router.go",
-      "source_location": "L285",
+      "source_location": "L286",
       "weight": 1.0
     },
     {
@@ -36246,7 +36246,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "models/model_router.go",
-      "source_location": "L322",
+      "source_location": "L323",
       "weight": 1.0
     },
     {
@@ -36258,7 +36258,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "models/model_router.go",
-      "source_location": "L374",
+      "source_location": "L375",
       "weight": 1.0
     },
     {
@@ -36270,7 +36270,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "models/model_router.go",
-      "source_location": "L386",
+      "source_location": "L387",
       "weight": 1.0
     },
     {
@@ -46242,7 +46242,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "models/model_router.go",
-      "source_location": "L178",
+      "source_location": "L179",
       "weight": 1.0
     },
     {
@@ -46254,7 +46254,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "models/model_router.go",
-      "source_location": "L156",
+      "source_location": "L157",
       "weight": 1.0
     },
     {
@@ -46266,7 +46266,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "models/model_router.go",
-      "source_location": "L160",
+      "source_location": "L161",
       "weight": 1.0
     },
     {
@@ -46278,7 +46278,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "models/model_router.go",
-      "source_location": "L183",
+      "source_location": "L184",
       "weight": 1.0
     },
     {
@@ -46506,7 +46506,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "models/model_router.go",
-      "source_location": "L223",
+      "source_location": "L224",
       "weight": 1.0
     },
     {
@@ -52914,7 +52914,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/model_router.go",
-      "source_location": "L206",
+      "source_location": "L207",
       "weight": 1.0
     },
     {
@@ -52926,7 +52926,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/model_router.go",
-      "source_location": "L206",
+      "source_location": "L207",
       "weight": 1.0
     },
     {
@@ -52938,7 +52938,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/model_router.go",
-      "source_location": "L206",
+      "source_location": "L207",
       "weight": 1.0
     },
     {
@@ -52950,7 +52950,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/model_router.go",
-      "source_location": "L230",
+      "source_location": "L231",
       "weight": 1.0
     },
     {
@@ -52962,7 +52962,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/model_router.go",
-      "source_location": "L230",
+      "source_location": "L231",
       "weight": 1.0
     },
     {
@@ -52974,7 +52974,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/model_router.go",
-      "source_location": "L230",
+      "source_location": "L231",
       "weight": 1.0
     },
     {
@@ -52986,7 +52986,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/model_router.go",
-      "source_location": "L257",
+      "source_location": "L258",
       "weight": 1.0
     },
     {
@@ -52998,7 +52998,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "models/model_router.go",
-      "source_location": "L257",
+      "source_location": "L258",
       "weight": 1.0
     },
     {
@@ -57390,7 +57390,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "models/model_router.go",
-      "source_location": "L230",
+      "source_location": "L231",
       "weight": 1.0
     },
     {
@@ -57402,7 +57402,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "models/model_router.go",
-      "source_location": "L116",
+      "source_location": "L117",
       "weight": 1.0
     },
     {
@@ -68877,7 +68877,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "models/model_router.go",
-      "source_location": "L108",
+      "source_location": "L109",
       "weight": 1.0
     },
     {
@@ -68888,7 +68888,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "models/model_router.go",
-      "source_location": "L116",
+      "source_location": "L117",
       "weight": 1.0
     },
     {
@@ -68899,7 +68899,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "models/model_router.go",
-      "source_location": "L129",
+      "source_location": "L130",
       "weight": 1.0
     },
     {
@@ -68910,7 +68910,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "models/model_router.go",
-      "source_location": "L154",
+      "source_location": "L155",
       "weight": 1.0
     },
     {
@@ -68932,7 +68932,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "models/model_router.go",
-      "source_location": "L165",
+      "source_location": "L166",
       "weight": 1.0
     },
     {
@@ -68943,7 +68943,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "models/model_router.go",
-      "source_location": "L175",
+      "source_location": "L176",
       "weight": 1.0
     },
     {
@@ -68954,7 +68954,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "models/model_router.go",
-      "source_location": "L181",
+      "source_location": "L182",
       "weight": 1.0
     },
     {
@@ -68965,7 +68965,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "models/model_router.go",
-      "source_location": "L206",
+      "source_location": "L207",
       "weight": 1.0
     },
     {
@@ -68976,7 +68976,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "models/model_router.go",
-      "source_location": "L220",
+      "source_location": "L221",
       "weight": 1.0
     },
     {
@@ -68987,7 +68987,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "models/model_router.go",
-      "source_location": "L230",
+      "source_location": "L231",
       "weight": 1.0
     },
     {
@@ -68998,7 +68998,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "models/model_router.go",
-      "source_location": "L257",
+      "source_location": "L258",
       "weight": 1.0
     },
     {
@@ -69009,7 +69009,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "models/model_router.go",
-      "source_location": "L397",
+      "source_location": "L398",
       "weight": 1.0
     },
     {
@@ -84965,7 +84965,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/model_router.go",
-      "source_location": "L211",
+      "source_location": "L212",
       "weight": 1.0
     },
     {
@@ -84977,7 +84977,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/model_router.go",
-      "source_location": "L211",
+      "source_location": "L212",
       "weight": 1.0
     },
     {
@@ -84989,7 +84989,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/model_router.go",
-      "source_location": "L235",
+      "source_location": "L236",
       "weight": 1.0
     },
     {
@@ -85001,7 +85001,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/model_router.go",
-      "source_location": "L235",
+      "source_location": "L236",
       "weight": 1.0
     },
     {
@@ -85013,7 +85013,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/model_router.go",
-      "source_location": "L271",
+      "source_location": "L272",
       "weight": 1.0
     },
     {
@@ -85025,7 +85025,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "models/model_router.go",
-      "source_location": "L145",
+      "source_location": "L146",
       "weight": 1.0
     },
     {
@@ -90218,5 +90218,5 @@
       "source_file": "docs/BUILD_PLAN_MCP_MARKETPLACE.md"
     }
   ],
-  "built_at_commit": "ebb89c172cba5c361ac888e1d3b915b1e5e17ccb"
+  "built_at_commit": "0f1e235a2811d8eee864c9b10240ae16ef4b1253"
 }

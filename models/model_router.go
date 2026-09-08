@@ -76,8 +76,9 @@ func findFirstVisionModel() string {
 	}
 	// 1. High-priority known vision models
 	candidates := []string{
-		"gemini/gemini-3.7-flash",
+		"gemini/gemini-3.5-flash-lite",
 		"gemini/gemini-3.1-flash-lite-preview",
+		"gemini/gemini-3.7-flash",
 		"gemini/gemini-3.8-flash",
 		"gpt-4o",
 		"gpt-4o-mini",
