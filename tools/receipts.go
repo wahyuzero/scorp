@@ -97,6 +97,14 @@ func RecordToolReceipt(toolName string, args map[string]interface{}, output stri
 			break
 		}
 	}
+	// For write_file or commands with content/input, also capture content preview
+	// so strings created inside files are recognized by operational claim verifiers.
+	if content, ok := args["content"].(string); ok && content != "" {
+		if len(content) > 300 {
+			content = content[:300]
+		}
+		meta["content"] = RedactSecrets(content)
+	}
 	// Structured-tool facts the operational claim gate (P4.16b) verifies
 	// against: which action, on which object. Truncated + redacted like cmd.
 	for _, k := range []string{"action", "id", "task_id", "name", "query", "url"} {
