@@ -336,16 +336,16 @@
     "semantic_hash": "0f046d5fcc4a115eae4dab8340c6baa6"
   },
   "models/api_gemini.go": {
-    "mtime": 1788859900.7778509,
-    "seen": 1788860193.8748803,
-    "ast_hash": "6452cc9c967cbbac7bde3d26e15f2d0f",
+    "mtime": 1788860430.2651408,
+    "seen": 1788860651.6864886,
+    "ast_hash": "8f80761e68d69d0a2c7b05b4b37bfd80",
     "semantic_hash": ""
   },
   "models/callback.go": {
-    "mtime": 1788693155.6021702,
-    "seen": 1788698813.7150202,
-    "ast_hash": "e522532cd08d4e893fe9381ef0472556",
-    "semantic_hash": "e522532cd08d4e893fe9381ef0472556"
+    "mtime": 1788860377.8401008,
+    "seen": 1788860651.6865103,
+    "ast_hash": "20b13bd42dcbc7f3e526fb5de2a2af77",
+    "semantic_hash": ""
   },
   "models/cost_router.go": {
     "mtime": 1788538203.5166159,
@@ -360,9 +360,9 @@
     "semantic_hash": ""
   },
   "models/model_router.go": {
-    "mtime": 1788858819.6990316,
-    "seen": 1788858955.7599638,
-    "ast_hash": "7ab5e1aaa92b7c5a36b38292e7c034bb",
+    "mtime": 1788860387.2271078,
+    "seen": 1788860651.6865184,
+    "ast_hash": "b8560dedecb9cce926b2cb0e29917e34",
     "semantic_hash": ""
   },
   "models/providers.go": {
@@ -1644,9 +1644,9 @@
     "semantic_hash": ""
   },
   "models/api_gemini_test.go": {
-    "mtime": 1788860061.487906,
-    "seen": 1788860193.8748844,
-    "ast_hash": "f15925852466c0824bc944fcf183b9c9",
+    "mtime": 1788860600.1722813,
+    "seen": 1788860651.6864922,
+    "ast_hash": "2c2d0050a24cd2b701c00b81624df1f3",
     "semantic_hash": ""
   }
 }

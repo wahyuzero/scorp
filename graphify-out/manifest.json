@@ -366,9 +366,9 @@
     "semantic_hash": ""
   },
   "models/providers.go": {
-    "mtime": 1788859442.7139025,
-    "seen": 1788859548.931077,
-    "ast_hash": "20e344f4be267a9d02fb96ad78317b16",
+    "mtime": 1788861145.1698012,
+    "seen": 1788861227.0104854,
+    "ast_hash": "18957cab4d203697b3ef491e7f30cda2",
     "semantic_hash": ""
   },
   "models/tools.go": {
@@ -894,9 +894,9 @@
     "semantic_hash": "2ff9537831ef34bc8687ce757d6f9c0a"
   },
   "models/api_openai.go": {
-    "mtime": 1788859438.9148972,
-    "seen": 1788859548.9310496,
-    "ast_hash": "fd9a130fc39f5805cbb6468b4825462b",
+    "mtime": 1788861126.125782,
+    "seen": 1788861227.010457,
+    "ast_hash": "850eccce88b10a04bb3519debd935bc7",
     "semantic_hash": ""
   },
   "models/api_openai_test.go": {

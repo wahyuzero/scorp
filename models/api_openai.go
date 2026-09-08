@@ -139,6 +139,12 @@ func applyOpenAIHeaders(req *http.Request, model *ModelConfig, apiKey string) {
 		req.Header.Set("X-Title", "ScorpAgent")
 	}
 
+	// Auto-guard for OpenCode endpoints: Cloudflare requires User-Agent: opencode/1.0.0 and x-opencode-session
+	if model.Provider == "opencode" || strings.Contains(model.BaseURL, "opencode.ai") {
+		req.Header.Set("User-Agent", "opencode/1.0.0")
+		req.Header.Set("x-opencode-session", resolveOpenCodeSessionID())
+	}
+
 	// Custom headers from ModelConfig
 	for k, v := range model.CustomHeaders {
 		req.Header.Set(k, v)

@@ -302,6 +302,12 @@ func ResolveAPIFormat(cfg *ModelConfig) string {
 	if cfg == nil {
 		return "openai"
 	}
+	// Auto-route OpenCode provider / endpoint to dedicated opencode adapter
+	if cfg.Provider == "opencode" || cfg.Provider == "opencode-zen" || cfg.Provider == "opencode-free" || strings.Contains(cfg.BaseURL, "opencode.ai") {
+		if cfg.API == "" || cfg.API == "openai" || cfg.API == "opencode" {
+			return "opencode"
+		}
+	}
 	if cfg.API != "" {
 		return cfg.API
 	}
