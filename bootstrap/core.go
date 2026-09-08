@@ -21,12 +21,24 @@ func init() {
 	})
 	registry.RegisterTool(registry.ToolDef{
 		Name:        "send_file",
-		Description: "Send a file to the user via Telegram",
-		Category:    "other",
-		Native:      false,
+		Description: "Send any file (photos, images, videos, audio, voice notes, PDFs, ZIP archives, logs, code, text, or any binary document) directly to the user on Telegram. Automatically displays photos and videos inline, and sends other files as downloadable attachments.",
+		Category:    "communication",
+		Native:      true,
 		Execute:     tools.ExecuteSendFile,
 		Arguments: map[string]registry.ArgDef{
-			"path": {Type: "string", Description: "File path", Required: true},
+			"path": {
+				Type:        "string",
+				Description: "Absolute or relative path to the file to send (e.g. /tmp/image.png, ./report.pdf, /var/log/syslog)",
+				Required:    true,
+			},
+			"caption": {
+				Type:        "string",
+				Description: "Optional caption or description text accompanying the file in Telegram",
+			},
+			"as_document": {
+				Type:        "boolean",
+				Description: "Force sending as a document attachment rather than inline photo/video (default false)",
+			},
 		},
 	})
 

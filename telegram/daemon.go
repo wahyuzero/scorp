@@ -79,6 +79,14 @@ func StartDaemon() {
 		SendChatAction(chatID, action)
 	}
 
+	// File / media sending callbacks
+	tools.SendMedia = func(chatID string, filePath string, caption string, asDocument bool) (bool, string) {
+		return SendMediaFile(chatID, filePath, caption, asDocument)
+	}
+	tools.SendDocumentBytes = func(chatID string, data []byte, filename string, caption string) bool {
+		return SendDocumentBytes(chatID, data, filename, caption)
+	}
+
 	// Agent callbacks
 	tools.StorePendingConfirmation = func(chatID, toolName, command string, _ []tools.AgentMessage, promptMsgID ...int64) {
 		agent.StorePendingConfirmation(chatID, toolName, command, nil, promptMsgID...)

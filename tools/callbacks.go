@@ -25,6 +25,7 @@ var (
 
 // File/bridge callbacks
 var (
+	SendMedia         func(chatID string, filePath string, caption string, asDocument bool) (bool, string)
 	SendDocumentBytes func(chatID string, data []byte, filename string, caption string) bool
 )
 

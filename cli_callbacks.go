@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"scorp-agent/agent"
@@ -161,6 +162,20 @@ func wireCLICallbacks() {
 	// SendChatAction → noop in CLI
 	tools.SendChatAction = func(chatID int64, action string) {}
 
+	// File / media sending callbacks (CLI terminal mode)
+	tools.SendMedia = func(chatID string, filePath string, caption string, asDocument bool) (bool, string) {
+		info, err := os.Stat(filePath)
+		if err != nil {
+			return false, err.Error()
+		}
+		fmt.Printf("📤 [File Sent] %s (%s) — %s\n", filepath.Base(filePath), formatFileSize(info.Size()), caption)
+		return true, "cli"
+	}
+	tools.SendDocumentBytes = func(chatID string, data []byte, filename string, caption string) bool {
+		fmt.Printf("📤 [File Sent] %s (%s) — %s\n", filename, formatFileSize(int64(len(data))), caption)
+		return true
+	}
+
 	// TgPost → noop
 	tools.TgPost = func(method string, payload map[string]interface{}) (tools.TgResponse, error) {
 		return tools.TgResponse{OK: true}, nil
@@ -203,4 +218,15 @@ func wireCLICallbacks() {
 			fmt.Printf("\n\033[1;34mℹ️ Session auto-titled:\033[0m \033[1;32m%s\033[0m\n", newID)
 		}
 	}
+}
+
+func formatFileSize(size int64) string {
+	if size < 1024 {
+		return fmt.Sprintf("%dB", size)
+	} else if size < 1024*1024 {
+		return fmt.Sprintf("%.1fKB", float64(size)/1024)
+	} else if size < 1024*1024*1024 {
+		return fmt.Sprintf("%.1fMB", float64(size)/(1024*1024))
+	}
+	return fmt.Sprintf("%.2fGB", float64(size)/(1024*1024*1024))
 }

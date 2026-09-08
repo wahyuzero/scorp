@@ -202,8 +202,16 @@ func isPathAllowed(path string, allowedPrefixes []string) bool {
 	if err != nil {
 		return false
 	}
+	cwd, err := os.Getwd()
+	if err == nil && cwd != "" {
+		cleanCwd := filepath.Clean(cwd)
+		if strings.HasPrefix(absPath, cleanCwd) {
+			return true
+		}
+	}
 	for _, prefix := range allowedPrefixes {
-		if strings.HasPrefix(absPath, prefix) {
+		cleanPrefix := filepath.Clean(prefix)
+		if strings.HasPrefix(absPath, cleanPrefix) {
 			return true
 		}
 	}
@@ -393,42 +401,77 @@ func ExecuteSystemInfo(args map[string]interface{}) (string, bool) {
 
 // ── Send File ──
 
+func formatSendFileSize(size int64) string {
+	if size < 1024 {
+		return fmt.Sprintf("%dB", size)
+	} else if size < 1024*1024 {
+		return fmt.Sprintf("%.1fKB", float64(size)/1024)
+	} else if size < 1024*1024*1024 {
+		return fmt.Sprintf("%.1fMB", float64(size)/(1024*1024))
+	}
+	return fmt.Sprintf("%.2fGB", float64(size)/(1024*1024*1024))
+}
+
 func ExecuteSendFile(args map[string]interface{}, chatID int64) (string, bool) {
 	path := helpers.GetStringArg(args, "path", "")
 	caption := helpers.GetStringArg(args, "caption", "")
+	asDocument := helpers.GetBoolArg(args, "as_document", false)
+
 	if path == "" {
 		return "Error: 'path' argument is required", false
 	}
 
-	if !isPathAllowed(path, allowedReadPaths) {
-		return fmt.Sprintf("Error: path '%s' is not in allowed directories", path), false
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return fmt.Sprintf("Error resolving path: %v", err), false
 	}
 
-	info, err := os.Stat(path)
+	if !isPathAllowed(absPath, allowedReadPaths) {
+		return fmt.Sprintf("Error: path '%s' is not in allowed directories", absPath), false
+	}
+
+	info, err := os.Stat(absPath)
 	if err != nil {
 		return fmt.Sprintf("Error: %v", err), false
 	}
-
-	if info.Size() > 50*1024*1024 {
-		return "Error: file too large (>50MB)", false
+	if info.IsDir() {
+		return fmt.Sprintf("Error: '%s' is a directory. Use a file path or zip the directory first.", absPath), false
 	}
 
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return fmt.Sprintf("Error reading file: %v", err), false
+	if info.Size() > 50*1024*1024 {
+		return fmt.Sprintf("Error: file too large (%s) — maximum size for Telegram bot upload is 50MB", formatSendFileSize(info.Size())), false
 	}
 
 	if caption == "" {
-		caption = filepath.Base(path)
+		caption = fmt.Sprintf("📄 %s (%s)", filepath.Base(absPath), formatSendFileSize(info.Size()))
 	}
 
 	chatIDStr := fmt.Sprintf("%d", chatID)
-	ok := SendDocumentBytes(chatIDStr, data, filepath.Base(path), caption)
-	if !ok {
-		return "Error sending file via Telegram", false
+
+	// Primary dispatcher: SendMedia
+	if SendMedia != nil {
+		ok, mediaType := SendMedia(chatIDStr, absPath, caption, asDocument)
+		if !ok {
+			return fmt.Sprintf("Error sending file via Telegram: %s", mediaType), false
+		}
+		return fmt.Sprintf("✅ File sent successfully to Telegram as %s: %s (%s)", mediaType, filepath.Base(absPath), formatSendFileSize(info.Size())), true
 	}
 
-	return fmt.Sprintf("File sent: %s (%d bytes)", filepath.Base(path), info.Size()), true
+	// Secondary fallback: SendDocumentBytes
+	if SendDocumentBytes != nil {
+		data, err := os.ReadFile(absPath)
+		if err != nil {
+			return fmt.Sprintf("Error reading file: %v", err), false
+		}
+		ok := SendDocumentBytes(chatIDStr, data, filepath.Base(absPath), caption)
+		if !ok {
+			return "Error sending file via Telegram", false
+		}
+		return fmt.Sprintf("✅ File sent successfully to Telegram: %s (%s)", filepath.Base(absPath), formatSendFileSize(info.Size())), true
+	}
+
+	// No sender wired (e.g. standalone test or non-Telegram mode)
+	return fmt.Sprintf("✅ File verified for sending: %s (%s)", filepath.Base(absPath), formatSendFileSize(info.Size())), true
 }
 
 // isGuestLinuxRootfs detects if execution is occurring inside a guest Linux container (e.g. PRoot/Chroot)

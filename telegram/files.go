@@ -3,6 +3,7 @@ package telegram
 import (
 	"archive/zip"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -280,7 +281,8 @@ func SendFile(chatID string, filePath string) bool {
 	}
 	name := filepath.Base(filePath)
 	caption := fmt.Sprintf("📄 %s\n📏 %s", name, HumanSize(info.Size()))
-	return SendDocument(chatID, filePath, caption)
+	ok, _ := SendMediaFile(chatID, filePath, caption, false)
+	return ok
 }
 
 // ──────────────────────────────────────────────
@@ -409,27 +411,156 @@ func SplitFile(filePath string, chunkSize int64, outDir string) []string {
 	return parts
 }
 
-// sendDocumentBytes sends raw bytes as a document
-func SendDocumentBytes(chatID string, data []byte, filename string, caption string) bool {
+// sendTelegramMultipart sends a local file to a specific Telegram Bot API endpoint via multipart/form-data.
+func sendTelegramMultipart(endpoint string, fieldName string, chatID string, filePath string, caption string) (bool, string) {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return false, fmt.Sprintf("failed to open file: %v", err)
+	}
+	defer f.Close()
+
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	writer.WriteField("chat_id", chatID)
+	if err := writer.WriteField("chat_id", chatID); err != nil {
+		return false, err.Error()
+	}
 	if caption != "" {
-		writer.WriteField("caption", caption)
+		_ = writer.WriteField("caption", caption)
 	}
 
-	part, err := writer.CreateFormFile("document", filename)
+	part, err := writer.CreateFormFile(fieldName, filepath.Base(filePath))
 	if err != nil {
-		return false
+		return false, err.Error()
 	}
-	part.Write(data)
+	if _, err := io.Copy(part, f); err != nil {
+		return false, err.Error()
+	}
 	writer.Close()
 
 	client := HttpLong
-	resp, err := client.Post(TgBase+"/sendDocument", writer.FormDataContentType(), body)
+	resp, err := client.Post(TgBase+"/"+endpoint, writer.FormDataContentType(), body)
 	if err != nil {
-		return false
+		return false, fmt.Sprintf("network error: %v", err)
 	}
 	defer resp.Body.Close()
-	return resp.StatusCode == 200
+
+	var tgResp TgResponse
+	if err := json.NewDecoder(resp.Body).Decode(&tgResp); err != nil {
+		return false, fmt.Sprintf("decode error: %v (HTTP %d)", err, resp.StatusCode)
+	}
+	if !tgResp.OK {
+		return false, tgResp.Description
+	}
+	return true, ""
+}
+
+// SendMediaFile sends ANY file to Telegram, choosing the best representation:
+// - Photos (.png, .jpg, .jpeg, .webp, .bmp) -> sendPhoto (with fallback to sendDocument)
+// - Videos (.mp4, .mov, .webm, .mkv, .avi) -> sendVideo (with fallback to sendDocument)
+// - Audio (.mp3, .ogg, .wav, .m4a, .flac) -> sendAudio (with fallback to sendDocument)
+// - Animations (.gif) -> sendAnimation (with fallback to sendDocument)
+// - Documents/code/archives/all other files -> sendDocument
+// If asDocument is true, forces sending as an uncompressed document attachment.
+func SendMediaFile(chatID string, filePath string, caption string, asDocument bool) (bool, string) {
+	info, err := os.Stat(filePath)
+	if err != nil {
+		return false, fmt.Sprintf("file not found: %v", err)
+	}
+	if info.IsDir() {
+		return false, fmt.Sprintf("'%s' is a directory, not a file", filePath)
+	}
+	if info.Size() > maxTGFile {
+		return false, fmt.Sprintf("file too large (%s) — Telegram bot limit is 50MB", HumanSize(info.Size()))
+	}
+
+	ext := strings.ToLower(filepath.Ext(filePath))
+
+	// If forced as document or non-media extension
+	if asDocument {
+		ok, desc := sendTelegramMultipart("sendDocument", "document", chatID, filePath, caption)
+		if !ok {
+			return false, desc
+		}
+		return true, "document"
+	}
+
+	switch ext {
+	case ".png", ".jpg", ".jpeg", ".webp", ".bmp":
+		ok, desc := sendTelegramMultipart("sendPhoto", "photo", chatID, filePath, caption)
+		if ok {
+			return true, "photo"
+		}
+		log.Printf("[telegram] sendPhoto failed (%s) — falling back to sendDocument", desc)
+		okDoc, descDoc := sendTelegramMultipart("sendDocument", "document", chatID, filePath, caption)
+		if okDoc {
+			return true, "document (photo fallback)"
+		}
+		return false, descDoc
+
+	case ".mp4", ".mov", ".webm", ".mkv", ".avi":
+		ok, desc := sendTelegramMultipart("sendVideo", "video", chatID, filePath, caption)
+		if ok {
+			return true, "video"
+		}
+		log.Printf("[telegram] sendVideo failed (%s) — falling back to sendDocument", desc)
+		okDoc, descDoc := sendTelegramMultipart("sendDocument", "document", chatID, filePath, caption)
+		if okDoc {
+			return true, "document (video fallback)"
+		}
+		return false, descDoc
+
+	case ".mp3", ".ogg", ".wav", ".m4a", ".flac", ".aac":
+		ok, desc := sendTelegramMultipart("sendAudio", "audio", chatID, filePath, caption)
+		if ok {
+			return true, "audio"
+		}
+		log.Printf("[telegram] sendAudio failed (%s) — falling back to sendDocument", desc)
+		okDoc, descDoc := sendTelegramMultipart("sendDocument", "document", chatID, filePath, caption)
+		if okDoc {
+			return true, "document (audio fallback)"
+		}
+		return false, descDoc
+
+	case ".gif":
+		ok, desc := sendTelegramMultipart("sendAnimation", "animation", chatID, filePath, caption)
+		if ok {
+			return true, "animation"
+		}
+		log.Printf("[telegram] sendAnimation failed (%s) — falling back to sendDocument", desc)
+		okDoc, descDoc := sendTelegramMultipart("sendDocument", "document", chatID, filePath, caption)
+		if okDoc {
+			return true, "document (animation fallback)"
+		}
+		return false, descDoc
+
+	default:
+		// Any document, archive, code file, PDF, ZIP, etc.
+		ok, desc := sendTelegramMultipart("sendDocument", "document", chatID, filePath, caption)
+		if !ok {
+			return false, desc
+		}
+		return true, "document"
+	}
+}
+
+// SendMediaBytes sends raw in-memory bytes as a media file to Telegram.
+func SendMediaBytes(chatID string, data []byte, filename string, caption string, asDocument bool) (bool, string) {
+	tmpDir, err := os.MkdirTemp("", "scorp_send_")
+	if err != nil {
+		return false, err.Error()
+	}
+	defer os.RemoveAll(tmpDir)
+
+	tmpPath := filepath.Join(tmpDir, filename)
+	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
+		return false, err.Error()
+	}
+
+	return SendMediaFile(chatID, tmpPath, caption, asDocument)
+}
+
+// SendDocumentBytes sends raw bytes as a document
+func SendDocumentBytes(chatID string, data []byte, filename string, caption string) bool {
+	ok, _ := SendMediaBytes(chatID, data, filename, caption, true)
+	return ok
 }
