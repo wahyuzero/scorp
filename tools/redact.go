@@ -7,7 +7,7 @@ import (
 )
 
 // ──────────────────────────────────────────────
-// Outbound Secret Redactor (PicoClaw Parity)
+// Outbound Secret Redactor
 // Sanitizes tool outputs before feeding them to the LLM or chat history
 // to prevent accidental credential leakage.
 // ──────────────────────────────────────────────

@@ -7,7 +7,7 @@ import (
 )
 
 // ──────────────────────────────────────────────
-// Dynamic Tool Discovery with TTL Injection (PicoClaw Parity)
+// Dynamic Tool Discovery with TTL Injection
 // Keeps core tools active while dynamically injecting specialized tools
 // with a Turns-To-Live (TTL) counter when discovered or invoked.
 // ──────────────────────────────────────────────

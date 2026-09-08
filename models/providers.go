@@ -1,31 +1,28 @@
 package models
 
 import (
-	"encoding/json"
 	"log"
 	"os"
-	"os/exec"
 	"strings"
-
-	"scorp-agent/config"
 )
 
 // ──────────────────────────────────────────────
-// Provider Registry — Phase 1 Multi-Provider System
+// Provider Registry — Multi-Provider System
+// Rich pluggable provider ecosystem
 // ──────────────────────────────────────────────
 
 // ProviderPreset defines a built-in provider with known endpoint + env vars.
 type ProviderPreset struct {
 	KeyEnvs      []string // env var names to try in order (first non-empty wins)
 	BaseURL      string   // default API endpoint
-	API          string   // "openai" | "anthropic" | "gemini"
+	API          string   // "openai" | "anthropic" | "gemini" | custom format
 	NoAuth       bool     // true for local providers (ollama)
 	ExtraHeaders bool     // true for openrouter (HTTP-Referer, X-Title)
 	DisplayName  string   // human-readable name
 }
 
-// providerRegistry is the built-in provider registry.
-// Users can reference these by name in models.json without specifying base_url.
+// ProviderRegistry holds provider presets.
+// Can be extended dynamically via RegisterProvider or RegisterProviderPreset.
 var ProviderRegistry = map[string]ProviderPreset{
 	"command-code": {
 		KeyEnvs:     []string{"COMMAND_CODE_API_KEY", "COMMANDCODE_API_KEY"},
@@ -136,6 +133,60 @@ var ProviderRegistry = map[string]ProviderPreset{
 		API:         "openai",
 		DisplayName: "Hugging Face",
 	},
+	"mistral": {
+		KeyEnvs:     []string{"MISTRAL_API_KEY"},
+		BaseURL:     "https://api.mistral.ai/v1",
+		API:         "openai",
+		DisplayName: "Mistral AI",
+	},
+	"siliconflow": {
+		KeyEnvs:     []string{"SILICONFLOW_API_KEY"},
+		BaseURL:     "https://api.siliconflow.cn/v1",
+		API:         "openai",
+		DisplayName: "SiliconFlow",
+	},
+	"cerebras": {
+		KeyEnvs:     []string{"CEREBRAS_API_KEY"},
+		BaseURL:     "https://api.cerebras.ai/v1",
+		API:         "openai",
+		DisplayName: "Cerebras",
+	},
+	"novita": {
+		KeyEnvs:     []string{"NOVITA_API_KEY"},
+		BaseURL:     "https://api.novita.ai/v3/openai",
+		API:         "openai",
+		DisplayName: "Novita AI",
+	},
+	"together": {
+		KeyEnvs:     []string{"TOGETHER_API_KEY"},
+		BaseURL:     "https://api.together.xyz/v1",
+		API:         "openai",
+		DisplayName: "Together AI",
+	},
+	"fireworks": {
+		KeyEnvs:     []string{"FIREWORKS_API_KEY"},
+		BaseURL:     "https://api.fireworks.ai/inference/v1",
+		API:         "openai",
+		DisplayName: "Fireworks AI",
+	},
+	"volcengine": {
+		KeyEnvs:     []string{"VOLCENGINE_API_KEY", "ARK_API_KEY"},
+		BaseURL:     "https://ark.cn-beijing.volces.com/api/v3",
+		API:         "openai",
+		DisplayName: "Volcengine Ark",
+	},
+	"modelscope": {
+		KeyEnvs:     []string{"MODELSCOPE_API_KEY"},
+		BaseURL:     "https://api-inference.modelscope.cn/v1",
+		API:         "openai",
+		DisplayName: "ModelScope",
+	},
+	"qwen": {
+		KeyEnvs:     []string{"DASHSCOPE_API_KEY"},
+		BaseURL:     "https://dashscope.aliyuncs.com/compatible-mode/v1",
+		API:         "openai",
+		DisplayName: "Alibaba Qwen",
+	},
 	"ollama": {
 		KeyEnvs:     []string{},
 		BaseURL:     "http://127.0.0.1:11434/v1",
@@ -152,11 +203,19 @@ var ProviderRegistry = map[string]ProviderPreset{
 	},
 }
 
-// resolveAPIKey resolves the API key using a 4-tier fallback:
+// RegisterProviderPreset adds or updates a provider preset in the registry.
+func RegisterProviderPreset(name string, preset ProviderPreset) {
+	providersMu.Lock()
+	defer providersMu.Unlock()
+	ProviderRegistry[strings.ToLower(strings.TrimSpace(name))] = preset
+}
+
+// ResolveAPIKey resolves the API key using a multi-tier fallback:
 // 1. key_env field (explicit env var name in config)
-// 2. provider preset KeyEnvs (registry lookup)
-// 3. SCORP_{PROVIDER}_API_KEY (generic pattern)
-// 4. inline api_key (deprecated — logs warning)
+// 2. KeyResolver interface on registered provider adapter (disk/cli/oauth)
+// 3. provider preset KeyEnvs (registry lookup)
+// 4. generic SCORP_{PROVIDER}_API_KEY pattern
+// 5. inline api_key (deprecated — logs warning)
 func ResolveAPIKey(cfg *ModelConfig) string {
 	if cfg == nil {
 		return ""
@@ -170,8 +229,29 @@ func ResolveAPIKey(cfg *ModelConfig) string {
 		log.Printf("[models] WARNING: key_env '%s' set but env var is empty for provider %s", cfg.KeyEnv, cfg.Provider)
 	}
 
-	// Tier 2: provider preset registry lookup
-	if preset, ok := ProviderRegistry[cfg.Provider]; ok {
+	// Tier 2: Dynamic KeyResolver on provider adapter
+	format := ResolveAPIFormat(cfg)
+	adapter := GetProvider(format)
+	if resolver, ok := adapter.(KeyResolver); ok {
+		if key := resolver.ResolveKey(cfg); key != "" {
+			return key
+		}
+	}
+	if cfg.Provider != "" && cfg.Provider != format {
+		if directAdapter := GetProvider(cfg.Provider); directAdapter != nil && directAdapter != adapter {
+			if resolver, ok := directAdapter.(KeyResolver); ok {
+				if key := resolver.ResolveKey(cfg); key != "" {
+					return key
+				}
+			}
+		}
+	}
+
+	// Tier 3: provider preset registry lookup
+	providersMu.RLock()
+	preset, hasPreset := ProviderRegistry[cfg.Provider]
+	providersMu.RUnlock()
+	if hasPreset {
 		for _, envName := range preset.KeyEnvs {
 			if v := os.Getenv(envName); v != "" {
 				return v
@@ -179,93 +259,28 @@ func ResolveAPIKey(cfg *ModelConfig) string {
 		}
 	}
 
-	// Tier 3: generic SCORP_{PROVIDER}_API_KEY pattern
-	genericKey := "SCORP_" + strings.ToUpper(cfg.Provider) + "_API_KEY"
+	// Tier 4: generic SCORP_{PROVIDER}_API_KEY pattern
+	cleanProvider := strings.ReplaceAll(cfg.Provider, "-", "_")
+	genericKey := "SCORP_" + strings.ToUpper(cleanProvider) + "_API_KEY"
 	if v := os.Getenv(genericKey); v != "" {
 		return v
 	}
+	if legacyKey := "SCORP_" + strings.ToUpper(cfg.Provider) + "_API_KEY"; legacyKey != genericKey {
+		if v := os.Getenv(legacyKey); v != "" {
+			return v
+		}
+	}
 
-	// Tier 4: inline api_key (deprecated)
+	// Tier 5: inline api_key (deprecated)
 	if cfg.APIKey != "" {
 		log.Printf("[models] WARNING: using plaintext api_key for %s — migrate to key_env", cfg.Provider)
 		return cfg.APIKey
 	}
 
-	// Tier 5: local auth fallback for command-code (~/.commandcode/auth.json or ~/.pi/agent/auth.json)
-	if cfg.Provider == "command-code" || cfg.Provider == "commandcode" {
-		if key := resolveCommandCodeKeyFromDisk(); key != "" {
-			return key
-		}
-	}
-
-	// Tier 6: local auth fallback for opencode (~/.local/share/opencode/opencode.db)
-	if cfg.Provider == "opencode" || cfg.Provider == "opencode-zen" || cfg.Provider == "opencode-free" {
-		if key := resolveOpenCodeKeyFromDisk(); key != "" {
-			return key
-		}
-	}
-
 	return ""
 }
 
-// resolveOpenCodeKeyFromDisk checks local opencode SQLite database for OpenCode Zen key
-func resolveOpenCodeKeyFromDisk() string {
-	home := config.HomeDir()
-	dbPath := home + "/.local/share/opencode/opencode.db"
-	if _, err := os.Stat(dbPath); err != nil {
-		return ""
-	}
-	out, err := exec.Command("sqlite3", dbPath, "SELECT value FROM credential WHERE integration_id = 'opencode' LIMIT 1;").Output()
-	if err == nil && len(out) > 0 {
-		var cred struct {
-			Key string `json:"key"`
-		}
-		if err := json.Unmarshal(out, &cred); err == nil && cred.Key != "" {
-			return cred.Key
-		}
-	}
-	return ""
-}
-
-// resolveCommandCodeKeyFromDisk checks local auth.json files for Command Code key
-func resolveCommandCodeKeyFromDisk() string {
-	home := config.HomeDir()
-	// Check ~/.commandcode/auth.json
-	cmdPath := home + "/.commandcode/auth.json"
-	if data, err := os.ReadFile(cmdPath); err == nil {
-		var auth struct {
-			ApiKey string `json:"apiKey"`
-			Token  string `json:"token"`
-			Key    string `json:"key"`
-		}
-		if err := json.Unmarshal(data, &auth); err == nil {
-			if auth.Key != "" {
-				return auth.Key
-			}
-			if auth.ApiKey != "" {
-				return auth.ApiKey
-			}
-			if auth.Token != "" {
-				return auth.Token
-			}
-		}
-	}
-	// Check ~/.pi/agent/auth.json
-	piPath := home + "/.pi/agent/auth.json"
-	if data, err := os.ReadFile(piPath); err == nil {
-		var piAuth map[string]struct {
-			Key string `json:"key"`
-		}
-		if err := json.Unmarshal(data, &piAuth); err == nil {
-			if cc, ok := piAuth["command-code"]; ok && cc.Key != "" {
-				return cc.Key
-			}
-		}
-	}
-	return ""
-}
-
-// resolveBaseURL fills in base_url from the provider registry if not set in config.
+// ResolveBaseURL fills in base_url from the provider registry if not set in config.
 func ResolveBaseURL(cfg *ModelConfig) string {
 	if cfg == nil {
 		return ""
@@ -273,26 +288,38 @@ func ResolveBaseURL(cfg *ModelConfig) string {
 	if cfg.BaseURL != "" {
 		return cfg.BaseURL
 	}
+	providersMu.RLock()
+	defer providersMu.RUnlock()
 	if preset, ok := ProviderRegistry[cfg.Provider]; ok {
 		return preset.BaseURL
 	}
 	return ""
 }
 
-// resolveAPIFormat fills in the API format ("openai", "anthropic", "gemini").
+// ResolveAPIFormat fills in the API format ("openai", "anthropic", "gemini", or custom).
+// Automatically checks dynamically registered provider adapters first.
 func ResolveAPIFormat(cfg *ModelConfig) string {
 	if cfg == nil {
 		return "openai"
 	}
-	if cfg.Provider == "opencode" || cfg.Provider == "opencode-zen" || cfg.Provider == "opencode-free" {
-		return "opencode"
-	}
 	if cfg.API != "" {
 		return cfg.API
 	}
+
+	providersMu.RLock()
+	defer providersMu.RUnlock()
+
+	// Check if provider name directly matches a registered adapter
+	providerKey := strings.ToLower(strings.TrimSpace(cfg.Provider))
+	if _, ok := providerAdapters[providerKey]; ok {
+		return providerKey
+	}
+
+	// Check provider preset registry
 	if preset, ok := ProviderRegistry[cfg.Provider]; ok && preset.API != "" {
 		return preset.API
 	}
+
 	return "openai"
 }
 
@@ -301,7 +328,7 @@ func hasAPIKey(cfg *ModelConfig) bool {
 	return ResolveAPIKey(cfg) != ""
 }
 
-// keySourceLabel returns a human-readable description of where the key comes from.
+// KeySourceLabel returns a human-readable description of where the key comes from.
 // Used in /model list to show key status without revealing the key itself.
 func KeySourceLabel(cfg *ModelConfig) string {
 	if cfg == nil {
@@ -316,8 +343,29 @@ func KeySourceLabel(cfg *ModelConfig) string {
 		return "⚠️ env:" + cfg.KeyEnv + " (empty)"
 	}
 
+	// Check dynamic KeyResolver
+	format := ResolveAPIFormat(cfg)
+	adapter := GetProvider(format)
+	if resolver, ok := adapter.(KeyResolver); ok {
+		if key := resolver.ResolveKey(cfg); key != "" {
+			return "disk/auth-store"
+		}
+	}
+	if cfg.Provider != "" && cfg.Provider != format {
+		if directAdapter := GetProvider(cfg.Provider); directAdapter != nil && directAdapter != adapter {
+			if resolver, ok := directAdapter.(KeyResolver); ok {
+				if key := resolver.ResolveKey(cfg); key != "" {
+					return "disk/auth-store"
+				}
+			}
+		}
+	}
+
 	// Check provider preset
-	if preset, ok := ProviderRegistry[cfg.Provider]; ok {
+	providersMu.RLock()
+	preset, ok := ProviderRegistry[cfg.Provider]
+	providersMu.RUnlock()
+	if ok {
 		for _, envName := range preset.KeyEnvs {
 			if os.Getenv(envName) != "" {
 				return "env:" + envName
@@ -329,7 +377,8 @@ func KeySourceLabel(cfg *ModelConfig) string {
 	}
 
 	// Check generic pattern
-	genericKey := "SCORP_" + strings.ToUpper(cfg.Provider) + "_API_KEY"
+	cleanProvider := strings.ReplaceAll(cfg.Provider, "-", "_")
+	genericKey := "SCORP_" + strings.ToUpper(cleanProvider) + "_API_KEY"
 	if os.Getenv(genericKey) != "" {
 		return "env:" + genericKey
 	}
@@ -349,7 +398,9 @@ func applyProviderDefaults(cfg *ModelConfig) {
 		return
 	}
 
+	providersMu.RLock()
 	preset, ok := ProviderRegistry[cfg.Provider]
+	providersMu.RUnlock()
 	if !ok {
 		return // custom provider, nothing to fill
 	}
@@ -363,8 +414,6 @@ func applyProviderDefaults(cfg *ModelConfig) {
 }
 
 // migrateModelConfigs auto-migrates plaintext api_key → key_env where possible.
-// Logs warnings for each migration. Does NOT clear api_key if no preset match
-// (keeps working, just logs warning at call time).
 func migrateModelConfigs(cfg *ModelRouterConfig) {
 	if cfg == nil {
 		return
@@ -372,24 +421,24 @@ func migrateModelConfigs(cfg *ModelRouterConfig) {
 
 	migrated := 0
 	for name, m := range cfg.Models {
-		// Fill defaults from registry
 		applyProviderDefaults(&m)
 
-		// If has plaintext key but no key_env, try to set key_env from preset
 		if m.APIKey != "" && m.KeyEnv == "" {
-			if preset, ok := ProviderRegistry[m.Provider]; ok && len(preset.KeyEnvs) > 0 {
+			providersMu.RLock()
+			preset, ok := ProviderRegistry[m.Provider]
+			providersMu.RUnlock()
+			if ok && len(preset.KeyEnvs) > 0 {
 				m.KeyEnv = preset.KeyEnvs[0]
-				m.APIKey = "" // Clear plaintext
+				m.APIKey = ""
 				log.Printf("[models] Migrated '%s': api_key → key_env=%s", name, m.KeyEnv)
 				migrated++
 			}
 		}
 
-		// Update the map entry (Go maps: need to write back)
 		cfg.Models[name] = m
 	}
 
 	if migrated > 0 {
-		log.Printf("[models] Auto-migrated %d model(s) from plaintext to key_env", migrated)
+		log.Printf("[models] Auto-migrated %d plaintext API key(s) to key_env", migrated)
 	}
 }

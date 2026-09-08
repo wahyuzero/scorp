@@ -576,7 +576,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 
 		// ── Execute Action Tools ──
 		for _, tc := range actionToolCalls {
-			// Real-time Steering Queue check (PicoClaw Parity)
+			// Real-time Steering Queue check
 			steerMsg, hasSteer := PopSteeringMessage(chatIDStr)
 			if !hasSteer && rawChatIDStr != chatIDStr && chatID != 0 {
 				steerMsg, hasSteer = PopSteeringMessage(rawChatIDStr)
@@ -700,7 +700,7 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 			lastThinkingUpdate = time.Now()
 		}
 
-		// Tick dynamic tool discovery TTLs (PicoClaw Parity)
+		// Tick dynamic tool discovery TTLs
 		registry.TickToolTTL()
 		skills.TickActiveSkills()
 	}

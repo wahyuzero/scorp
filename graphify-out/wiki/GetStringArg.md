@@ -1,78 +1,55 @@
 # GetStringArg
 
-> 80 nodes · cohesion 0.06
+> 17 nodes
 
 ## Key Concepts
 
-- **GetStringArg()** (40 connections) — `internal/helpers/helpers.go`
-- **init()** (30 connections) — `bootstrap/extended.go`
-- **GetIntArg()** (18 connections) — `internal/helpers/helpers.go`
-- **TruncOutput()** (18 connections) — `internal/helpers/helpers.go`
-- **browser_session.go** (14 connections) — `browser/browser_session.go`
-- **GetOrCreateBrowserSession()** (14 connections) — `browser/browser_session.go`
-- **ExecuteBrowser()** (13 connections) — `browser/browser.go`
-- **GetBoolArg()** (12 connections) — `internal/helpers/helpers.go`
-- **browserSessionNavigate()** (10 connections) — `browser/browser_session.go`
-- **GetAllTools()** (9 connections) — `registry/registry.go`
+- **GetStringArg()** (47 connections) — `internal/helpers/helpers.go`
+- **init()** (9 connections) — `bootstrap/core.go`
 - **exec.go** (9 connections) — `tools/exec.go`
-- **ExecuteShell()** (9 connections) — `tools/exec.go`
-- **init()** (7 connections) — `bootstrap/core.go`
-- **ExecuteCompose()** (7 connections) — `tools/compose.go`
-- **patch.go** (7 connections) — `tools/patch.go`
-- **browserSessionScreenshot()** (6 connections) — `browser/browser_session.go`
-- **ExecuteSQL()** (6 connections) — `tools/db.go`
-- **ExecuteToolList()** (6 connections) — `tools/deferred.go`
-- **ExecuteGit()** (6 connections) — `tools/git.go`
-- **ExecuteHTTP()** (6 connections) — `tools/http.go`
-- **ExecuteLog()** (6 connections) — `tools/log.go`
-- **patchReplace()** (6 connections) — `tools/patch.go`
-- **ExecuteTodo()** (6 connections) — `tools/todo.go`
-- **browserSessionClick()** (5 connections) — `browser/browser_session.go`
-- **browserSessionEvaluate()** (5 connections) — `browser/browser_session.go`
-- *... and 55 more nodes in this community*
+- **ExecuteListDir()** (5 connections) — `tools/exec.go`
+- **ExecuteReadFile()** (5 connections) — `tools/exec.go`
+- **isPathAllowed()** (5 connections) — `tools/exec.go`
+- **ExecuteProcess()** (5 connections) — `tools/process.go`
+- **ExecuteSearchCode()** (5 connections) — `tools/search.go`
+- **ExecuteSendFile()** (4 connections) — `tools/exec.go`
+- **ExecuteSystemInfo()** (4 connections) — `tools/exec.go`
+- **ExecuteWriteFile()** (4 connections) — `tools/exec.go`
+- **SendDocumentBytes()** (2 connections) — `telegram/files.go`
+- **bootstrap/core.go** (1 connections) — `bootstrap/core.go`
+- **needsShellExecution()** (1 connections) — `tools/exec.go`
+- **shellQuote()** (1 connections) — `tools/exec.go`
+- **process.go** (1 connections) — `tools/process.go`
+- **tools/search.go** (1 connections) — `tools/search.go`
 
 ## Relationships
 
-- [config_paths.go](config_paths.go.md) (13 shared connections)
-- [client.go](client.go.md) (10 shared connections)
-- [chat.go](chat.go.md) (10 shared connections)
-- [rag_vector.go](rag_vector.go.md) (9 shared connections)
-- [time.Time](time.Time.md) (9 shared connections)
-- [runSubagent](runSubagent.md) (6 shared connections)
-- [TruncateStr](TruncateStr.md) (6 shared connections)
-- [testing.T](testing.T.md) (4 shared connections)
-- [collector_system_native.go](collector_system_native.go.md) (3 shared connections)
-- [runSelfReview](runSelfReview.md) (2 shared connections)
-- [RunAgentLoop](RunAgentLoop.md) (2 shared connections)
-- [handleAction](handleAction.md) (2 shared connections)
+- [GetIntArg](GetIntArg.md) (9 shared connections)
+- [TruncOutput](TruncOutput.md) (5 shared connections)
+- [patch.go](patch.go.md) (4 shared connections)
+- [RunAgentSessionLoop](RunAgentSessionLoop.md) (4 shared connections)
+- [LoadMCPConfig](LoadMCPConfig.md) (3 shared connections)
+- [registry/registry.go](registry-registry.go.md) (3 shared connections)
+- [GetAutonomyLevel](GetAutonomyLevel.md) (3 shared connections)
+- [PermissionDecision](PermissionDecision.md) (2 shared connections)
+- [startCLI](startCLI.md) (2 shared connections)
+- [RegisterTool](RegisterTool.md) (1 shared connections)
+- [testing.T](testing.T.md) (1 shared connections)
+- [ClearTaskPlan](ClearTaskPlan.md) (1 shared connections)
 
 ## Source Files
 
 - `bootstrap/core.go`
-- `bootstrap/extended.go`
-- `browser/browser.go`
-- `browser/browser_session.go`
 - `internal/helpers/helpers.go`
-- `registry/registry.go`
 - `telegram/files.go`
-- `tools/compose.go`
-- `tools/db.go`
-- `tools/deferred.go`
 - `tools/exec.go`
-- `tools/git.go`
-- `tools/http.go`
-- `tools/log.go`
-- `tools/patch.go`
 - `tools/process.go`
 - `tools/search.go`
-- `tools/todo.go`
-- `tools/vision.go`
-- `tools/web.go`
 
 ## Audit Trail
 
-- EXTRACTED: 242 (93%)
-- INFERRED: 18 (7%)
+- EXTRACTED: 79 (98%)
+- INFERRED: 2 (2%)
 - AMBIGUOUS: 0 (0%)
 
 ---

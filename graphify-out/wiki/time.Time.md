@@ -1,62 +1,67 @@
 # time.Time
 
-> 30 nodes · cohesion 0.15
+> 65 nodes
 
 ## Key Concepts
 
-- **time.Time** (19 connections)
-- **scheduler.go** (17 connections) — `scheduler/scheduler.go`
-- **EscapeHTML()** (13 connections) — `internal/helpers/helpers.go`
-- **helpers.go** (11 connections) — `internal/helpers/helpers.go`
-- **RunTask()** (11 connections) — `scheduler/scheduler.go`
-- **ScheduledTask** (9 connections) — `scheduler/scheduler.go`
-- **AddTaskEx()** (8 connections) — `scheduler/scheduler.go`
-- **ExecuteSchedule()** (8 connections) — `scheduler/scheduler.go`
+- **time.Time** (26 connections)
+- **scheduler.go** (18 connections) — `scheduler/scheduler.go`
+- **EscapeHTML()** (17 connections) — `internal/helpers/helpers.go`
+- **ConfigManager** (15 connections) — `config/config_manager.go`
+- **InitConfigManager()** (12 connections) — `config/config_manager.go`
+- **ScheduledTask** (11 connections) — `scheduler/scheduler.go`
+- **AddTaskEx()** (10 connections) — `scheduler/scheduler.go`
+- **runShellTaskConfig()** (10 connections) — `scheduler/scheduler_ext.go`
+- **RunTask()** (10 connections) — `scheduler/scheduler.go`
+- **ExecuteSchedule()** (9 connections) — `scheduler/scheduler.go`
+- **NextRunTime()** (8 connections) — `scheduler/scheduler.go`
+- **TestCronJobScheduler()** (8 connections) — `scheduler/scheduler_test.go`
+- **markdownToTelegramHTML()** (7 connections) — `agent/chat.go`
+- **dispatchDueTasks()** (7 connections) — `scheduler/scheduler.go`
+- **scheduler_ext.go** (7 connections) — `scheduler/scheduler_ext.go`
 - **runScriptTask()** (7 connections) — `scheduler/scheduler_ext.go`
-- **NextRunTime()** (7 connections) — `scheduler/scheduler.go`
-- **scheduler_ext.go** (6 connections) — `scheduler/scheduler_ext.go`
+- **saveTasks()** (7 connections) — `scheduler/scheduler.go`
+- **convertTableToList()** (6 connections) — `agent/chat.go`
+- **.Path()** (6 connections) — `config/config_manager.go`
 - **notifyTaskResult()** (6 connections) — `scheduler/scheduler_ext.go`
-- **runShellTaskConfig()** (6 connections) — `scheduler/scheduler_ext.go`
+- **FormatTasksList()** (6 connections) — `scheduler/scheduler.go`
 - **runAgentTask()** (6 connections) — `scheduler/scheduler.go`
-- **saveTasks()** (6 connections) — `scheduler/scheduler.go`
-- **ToggleTask()** (5 connections) — `scheduler/scheduler.go`
-- **FormatTasksList()** (4 connections) — `scheduler/scheduler.go`
-- **GetTask()** (4 connections) — `scheduler/scheduler.go`
-- **LoadTasks()** (4 connections) — `scheduler/scheduler.go`
-- **nextCronTime()** (4 connections) — `scheduler/scheduler.go`
-- **RemoveTask()** (4 connections) — `scheduler/scheduler.go`
-- **SplitMessage()** (3 connections) — `internal/helpers/helpers.go`
-- **AddTask()** (3 connections) — `scheduler/scheduler.go`
-- **Loop()** (3 connections) — `scheduler/scheduler.go`
-- **ShellTask()** (3 connections) — `scheduler/scheduler.go`
-- *... and 5 more nodes in this community*
+- **tools/callbacks.go** (6 connections) — `tools/callbacks.go`
+- **config_manager.go** (5 connections) — `config/config_manager.go`
+- **gateScheduledShell()** (5 connections) — `scheduler/scheduler_ext.go`
+- *... and 40 more nodes in this community*
 
 ## Relationships
 
-- [handleAction](handleAction.md) (13 shared connections)
-- [chat.go](chat.go.md) (9 shared connections)
-- [GetStringArg](GetStringArg.md) (9 shared connections)
-- [TruncateStr](TruncateStr.md) (9 shared connections)
-- [collector_system_native.go](collector_system_native.go.md) (3 shared connections)
-- [testing.T](testing.T.md) (3 shared connections)
-- [ConfigMgr](ConfigMgr.md) (3 shared connections)
-- [rag_vector.go](rag_vector.go.md) (2 shared connections)
-- [RunAgentLoop](RunAgentLoop.md) (1 shared connections)
-- [config_paths.go](config_paths.go.md) (1 shared connections)
-- [wizard.go](wizard.go.md) (1 shared connections)
-- [runSubagent](runSubagent.md) (1 shared connections)
+- [chat.go](chat.go.md) (12 shared connections)
+- [ConfigMgr](ConfigMgr.md) (7 shared connections)
+- [TruncateStr](TruncateStr.md) (7 shared connections)
+- [startCLI](startCLI.md) (6 shared connections)
+- [RunAgentSessionLoop](RunAgentSessionLoop.md) (5 shared connections)
+- [StartDaemon](StartDaemon.md) (5 shared connections)
+- [HandleTelegramAction](HandleTelegramAction.md) (5 shared connections)
+- [testing.T](testing.T.md) (4 shared connections)
+- [GetIntArg](GetIntArg.md) (4 shared connections)
+- [metasearch_engines.go](metasearch_engines.go.md) (3 shared connections)
+- [init](init.md) (3 shared connections)
+- [TaskPlan](TaskPlan.md) (2 shared connections)
 
 ## Source Files
 
+- `agent/chat.go`
+- `agent/chat_html_test.go`
+- `agent/planmode.go`
+- `config/config_manager.go`
 - `internal/helpers/helpers.go`
-- `models/model_router.go`
 - `scheduler/scheduler.go`
 - `scheduler/scheduler_ext.go`
+- `scheduler/scheduler_test.go`
+- `tools/callbacks.go`
 
 ## Audit Trail
 
-- EXTRACTED: 116 (96%)
-- INFERRED: 5 (4%)
+- EXTRACTED: 203 (93%)
+- INFERRED: 15 (7%)
 - AMBIGUOUS: 0 (0%)
 
 ---

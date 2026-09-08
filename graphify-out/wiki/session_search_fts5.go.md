@@ -1,6 +1,6 @@
 # session_search_fts5.go
 
-> 29 nodes · cohesion 0.10
+> 29 nodes
 
 ## Key Concepts
 

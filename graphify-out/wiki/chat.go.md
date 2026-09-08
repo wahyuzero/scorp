@@ -1,65 +1,68 @@
 # chat.go
 
-> 78 nodes · cohesion 0.06
+> 81 nodes
 
 ## Key Concepts
 
-- **chat.go** (41 connections) — `agent/chat.go`
-- **RunAgentLoop()** (35 connections) — `agent/loop.go`
-- **loop.go** (25 connections) — `agent/loop.go`
-- **resumeAgentLoop()** (23 connections) — `agent/loop.go`
-- **setSession()** (12 connections) — `agent/chat.go`
-- **getSession()** (11 connections) — `agent/chat.go`
-- **HandleUploadInAgentMode()** (11 connections) — `agent/loop.go`
+- **chat.go** (46 connections) — `agent/chat.go`
+- **maybeCompactHistory()** (16 connections) — `agent/compaction.go`
+- **getSession()** (15 connections) — `agent/chat.go`
+- **setSession()** (14 connections) — `agent/chat.go`
+- **estimateHistoryTokens()** (13 connections) — `agent/compaction.go`
+- **CompactSessionHistory()** (12 connections) — `agent/compact_manual.go`
+- **RenameSession()** (12 connections) — `agent/session_mgr.go`
+- **HandleUploadInAgentMode()** (11 connections) — `agent/upload.go`
 - **appendSessionHistory()** (10 connections) — `agent/chat.go`
-- **HandleConfirmation()** (10 connections) — `agent/loop.go`
-- **StorePendingConfirmation()** (10 connections) — `agent/loop.go`
-- **getOrCreateSession()** (9 connections) — `agent/chat.go`
-- **getSessionHistory()** (9 connections) — `agent/chat.go`
-- **maybeCompactHistory()** (9 connections) — `agent/compaction.go`
-- **chatSession** (8 connections) — `agent/chat.go`
-- **IsDangerousCommand()** (8 connections) — `agent/prompt.go`
-- **ClearChatSession()** (7 connections) — `agent/chat.go`
-- **ExitAgentMode()** (7 connections) — `agent/chat.go`
-- **getSessionMap()** (7 connections) — `agent/chat.go`
-- **ExecuteTool()** (7 connections) — `agent/prompt.go`
-- **AgentMessage** (6 connections) — `agent/loop.go`
-- **convertTableToList()** (6 connections) — `agent/chat.go`
-- **EnterAgentMode()** (6 connections) — `agent/chat.go`
-- **SendMessageSmart()** (6 connections) — `agent/chat.go`
-- **sendScorpReply()** (6 connections) — `agent/chat.go`
-- **summarizeHistory()** (6 connections) — `agent/chat.go`
-- *... and 53 more nodes in this community*
+- **ClearChatSession()** (10 connections) — `agent/chat.go`
+- **getOrCreateSession()** (10 connections) — `agent/chat.go`
+- **getSessionHistory()** (10 connections) — `agent/chat.go`
+- **compaction.go** (10 connections) — `agent/compaction.go`
+- **setLoopActive()** (9 connections) — `agent/chat.go`
+- **summarizeHistory()** (9 connections) — `agent/chat.go`
+- **AgentMessage** (9 connections)
+- **preservationNote()** (9 connections) — `agent/compaction.go`
+- **TestSessionManager()** (9 connections) — `agent/session_mgr_test.go`
+- **session_ui.go** (9 connections) — `telegram/session_ui.go`
+- **HandleSessionCallback()** (9 connections) — `telegram/session_ui.go`
+- **getSessionMap()** (8 connections) — `agent/chat.go`
+- **historyFilePath()** (8 connections) — `agent/chat.go`
+- **DeleteSession()** (8 connections) — `agent/session_mgr.go`
+- **ListSessions()** (8 connections) — `agent/session_mgr.go`
+- **saveHistoryToDisk()** (7 connections) — `agent/chat.go`
+- *... and 56 more nodes in this community*
 
 ## Relationships
 
-- [TruncateStr](TruncateStr.md) (17 shared connections)
-- [handleAction](handleAction.md) (13 shared connections)
-- [startCLI](startCLI.md) (13 shared connections)
-- [GetStringArg](GetStringArg.md) (10 shared connections)
-- [time.Time](time.Time.md) (9 shared connections)
-- [testing.T](testing.T.md) (9 shared connections)
-- [runSelfReview](runSelfReview.md) (6 shared connections)
-- [ConfigMgr](ConfigMgr.md) (3 shared connections)
-- [RunAgentLoop](RunAgentLoop.md) (2 shared connections)
-- [config_paths.go](config_paths.go.md) (2 shared connections)
-- [client.go](client.go.md) (2 shared connections)
-- [collector_system.go](collector_system.go.md) (1 shared connections)
+- [compaction_test.go](compaction_test.go.md) (16 shared connections)
+- [RunAgentSessionLoop](RunAgentSessionLoop.md) (13 shared connections)
+- [time.Time](time.Time.md) (12 shared connections)
+- [HandleTelegramAction](HandleTelegramAction.md) (12 shared connections)
+- [startCLI](startCLI.md) (11 shared connections)
+- [runSelfReview](runSelfReview.md) (3 shared connections)
+- [StartDaemon](StartDaemon.md) (3 shared connections)
+- [TruncateStr](TruncateStr.md) (3 shared connections)
+- [context.Context](context.Context.md) (3 shared connections)
+- [testing.T](testing.T.md) (3 shared connections)
+- [ScorpPath](ScorpPath.md) (3 shared connections)
+- [runPlanningTurns](runPlanningTurns.md) (2 shared connections)
 
 ## Source Files
 
 - `agent/chat.go`
+- `agent/compact_manual.go`
 - `agent/compaction.go`
-- `agent/loop.go`
-- `agent/prompt.go`
-- `agent/self_improve.go`
+- `agent/prompt_test.go`
+- `agent/session_mgr.go`
+- `agent/session_mgr_test.go`
 - `agent/sessions.go`
-- `tools/memory.go`
+- `agent/upload.go`
+- `config/config_paths.go`
+- `telegram/session_ui.go`
 
 ## Audit Trail
 
-- EXTRACTED: 239 (85%)
-- INFERRED: 43 (15%)
+- EXTRACTED: 223 (76%)
+- INFERRED: 71 (24%)
 - AMBIGUOUS: 0 (0%)
 
 ---

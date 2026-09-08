@@ -1,36 +1,36 @@
 # ModelConfig
 
-> God node · 28 connections · `models/model_router.go`
+> God node · 36 connections · `models/config_io.go`
 
 **Community:** [TruncateStr](TruncateStr.md)
 
 ## Connections by Relation
 
 ### contains
-- model_router.go `EXTRACTED`
+- config_io.go `EXTRACTED`
 
 ### references
-- CallCommandCodeWithTools() `EXTRACTED`
 - CallModel() `EXTRACTED`
-- KeySourceLabel() `EXTRACTED`
+- CallCommandCodeWithTools() `EXTRACTED`
 - ResolveAPIKey() `EXTRACTED`
+- RouteModel() `EXTRACTED`
+- KeySourceLabel() `EXTRACTED`
+- CallOpenAIWithTools() `EXTRACTED`
 - CallModelStream() `EXTRACTED`
 - CallAnthropicWithTools() `EXTRACTED`
 - CallCommandCodeStream() `EXTRACTED`
-- CallModelWithTools() `EXTRACTED`
+- CallOpenAI() `EXTRACTED`
 - callAnthropic() `EXTRACTED`
 - geminiDoRequest() `EXTRACTED`
-- CallOpenAI() `EXTRACTED`
-- CallOpenAIWithTools() `EXTRACTED`
+- buildCommandCodePayload() `EXTRACTED`
 - CallGeminiWithTools() `EXTRACTED`
 - RouteModelCostAware() `EXTRACTED`
-- RouteModel() `EXTRACTED`
-- buildCommandCodePayload() `EXTRACTED`
 - callGemini() `EXTRACTED`
+- CallModelWithTools() `EXTRACTED`
 - geminiBuildRequest() `EXTRACTED`
 - GetModelByName() `EXTRACTED`
 - CheckModelHealth() `EXTRACTED`
-- *…and 7 more `references` connection(s) not listed (lowest-degree first to go)*
+- *…and 15 more `references` connection(s) not listed (lowest-degree first to go)*
 
 ---
 

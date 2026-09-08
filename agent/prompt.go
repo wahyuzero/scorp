@@ -220,7 +220,7 @@ func ExecuteTool(tc ToolCall, chatID int64) (string, bool) {
 	// 4. Execute Tool
 	out, ok := registry.ExecuteToolByName(tc.Name, tc.Args, chatID)
 
-	// 5. Outbound Secret Redaction (PicoClaw Parity: prevent API key leakage)
+	// 5. Outbound Secret Redaction (prevent API key leakage)
 	out = tools.RedactSecrets(out)
 
 	// 6. Record Cryptographic Receipt (ZeroClaw Parity) — before hook context

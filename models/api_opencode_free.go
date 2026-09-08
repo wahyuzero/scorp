@@ -9,9 +9,12 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
+	"os/exec"
 	"strings"
 	"time"
 
+	"scorp-agent/config"
 	"scorp-agent/internal/helpers"
 	"scorp-agent/registry"
 )
@@ -43,9 +46,14 @@ type OpenCodeProvider struct{}
 
 func init() {
 	p := &OpenCodeProvider{}
-	RegisterProviderAdapter("opencode", p)
-	RegisterProviderAdapter("opencode-zen", p)
-	RegisterProviderAdapter("opencode-free", p)
+	RegisterProvider(ProviderSpec{
+		Name:             "opencode",
+		Aliases:          []string{"opencode-zen", "opencode-free"},
+		DisplayName:      "OpenCode Zen (Free AI Gateway)",
+		DefaultBaseURL:   OpenCodeZenBaseURL,
+		DefaultAPIFormat: "opencode",
+		KeyEnvs:          []string{"OPENCODE_API_KEY", "OPENCODE_ZEN_API_KEY"},
+	}, p)
 }
 
 func (p *OpenCodeProvider) Format() string {
@@ -58,6 +66,33 @@ func (p *OpenCodeProvider) Call(ctx context.Context, model *ModelConfig, message
 
 func (p *OpenCodeProvider) CallWithTools(ctx context.Context, model *ModelConfig, messages []ChatMessage) (string, []ToolCall, error) {
 	return CallOpenCodeWithTools(ctx, model, messages)
+}
+
+func (p *OpenCodeProvider) CallStream(ctx context.Context, model *ModelConfig, messages []ChatMessage) (<-chan StreamChunk, error) {
+	return CallOpenCodeStream(ctx, model, messages)
+}
+
+func (p *OpenCodeProvider) ResolveKey(cfg *ModelConfig) string {
+	return resolveOpenCodeKeyFromDisk()
+}
+
+// resolveOpenCodeKeyFromDisk checks local opencode SQLite database for OpenCode Zen key
+func resolveOpenCodeKeyFromDisk() string {
+	home := config.HomeDir()
+	dbPath := home + "/.local/share/opencode/opencode.db"
+	if _, err := os.Stat(dbPath); err != nil {
+		return ""
+	}
+	out, err := exec.Command("sqlite3", dbPath, "SELECT value FROM credential WHERE integration_id = 'opencode' LIMIT 1;").Output()
+	if err == nil && len(out) > 0 {
+		var cred struct {
+			Key string `json:"key"`
+		}
+		if err := json.Unmarshal(out, &cred); err == nil && cred.Key != "" {
+			return cred.Key
+		}
+	}
+	return ""
 }
 
 // resolveOpenCodeSessionID generates a unique session trace for OpenCode Zen gateway routing

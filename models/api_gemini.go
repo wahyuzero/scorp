@@ -1,6 +1,7 @@
 package models
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -8,16 +9,46 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
+
 	"scorp-agent/internal/helpers"
 	"scorp-agent/registry"
-	"strings"
 )
 
 // ──────────────────────────────────────────────
 // Gemini API (Google) — :generateContent format
+// Complete Google AI Studio & Gemini 2.5 / 3.x Features:
+// - Direct API key authentication
+// - Native function calling with sanitized tool schemas
+// - Multi-turn tool execution loop (functionResponse matching)
+// - Thinking & reasoning separation (thought parts filtering)
+// - ThinkingConfig support (thinkingLevel: low/medium/high, thinkingBudget)
+// - ExtraBody injection (safetySettings, searchGrounding)
+// - SSE token streaming via :streamGenerateContent?alt=sse
 // ──────────────────────────────────────────────
 
 type GeminiProvider struct{}
+
+func init() {
+	p := &GeminiProvider{}
+	RegisterProvider(ProviderSpec{
+		Name:             "gemini",
+		Aliases:          []string{"google"},
+		DisplayName:      "Google Gemini",
+		DefaultBaseURL:   "https://generativelanguage.googleapis.com/v1beta",
+		DefaultAPIFormat: "gemini",
+		KeyEnvs:          []string{"GOOGLE_API_KEY", "GEMINI_API_KEY"},
+	}, p)
+
+	RegisterCatalog("gemini", []CatalogEntry{
+		{"gemini-3.8-flash", 65536, false, "gemini-3.8-flash"},
+		{"gemini-3.7-flash", 65536, false, "gemini-3.7-flash"},
+		{"gemini-3.1-pro-preview", 65536, true, "gemini-3.1-pro"},
+		{"gemini-3.1-flash-lite", 65536, false, "gemini-3.1-flash-lite"},
+		{"gemini-flash-latest", 65536, false, "gemini-flash-latest"},
+		{"gemini-pro-latest", 65536, true, "gemini-pro-latest"},
+	})
+}
 
 func (p *GeminiProvider) Format() string {
 	return "gemini"
@@ -29,6 +60,10 @@ func (p *GeminiProvider) Call(ctx context.Context, model *ModelConfig, messages 
 
 func (p *GeminiProvider) CallWithTools(ctx context.Context, model *ModelConfig, messages []ChatMessage) (string, []ToolCall, error) {
 	return CallGeminiWithTools(ctx, model, messages)
+}
+
+func (p *GeminiProvider) CallStream(ctx context.Context, model *ModelConfig, messages []ChatMessage) (<-chan StreamChunk, error) {
+	return callGeminiStream(ctx, model, messages)
 }
 
 // geminiRequest is the request body for the Gemini generateContent API.
@@ -45,13 +80,21 @@ type geminiContent struct {
 }
 
 type geminiPart struct {
-	Text         string              `json:"text,omitempty"`
-	FunctionCall *geminiFunctionCall `json:"functionCall,omitempty"`
+	Text             string                  `json:"text,omitempty"`
+	Thought          bool                    `json:"thought,omitempty"`
+	ThoughtSignature string                  `json:"thoughtSignature,omitempty"`
+	FunctionCall     *geminiFunctionCall     `json:"functionCall,omitempty"`
+	FunctionResponse *geminiFunctionResponse `json:"functionResponse,omitempty"`
 }
 
 type geminiFunctionCall struct {
 	Name string                 `json:"name"`
 	Args map[string]interface{} `json:"args"`
+}
+
+type geminiFunctionResponse struct {
+	Name     string                 `json:"name"`
+	Response map[string]interface{} `json:"response"`
 }
 
 type geminiToolSet struct {
@@ -65,8 +108,14 @@ type geminiFuncDecl struct {
 }
 
 type geminiGenConfig struct {
-	MaxOutputTokens int     `json:"maxOutputTokens,omitempty"`
-	Temperature     float64 `json:"temperature,omitempty"`
+	MaxOutputTokens int                   `json:"maxOutputTokens,omitempty"`
+	Temperature     float64               `json:"temperature,omitempty"`
+	ThinkingConfig  *geminiThinkingConfig `json:"thinkingConfig,omitempty"`
+}
+
+type geminiThinkingConfig struct {
+	ThinkingLevel  string `json:"thinkingLevel,omitempty"`  // "low" | "medium" | "high"
+	ThinkingBudget int    `json:"thinkingBudget,omitempty"` // 0 disables thinking
 }
 
 type geminiResponse struct {
@@ -90,20 +139,59 @@ type geminiResponse struct {
 }
 
 // geminiMessages converts chatMessage slice to Gemini's content format.
-// Gemini uses "model" as the assistant role name.
+// Handles system instruction extraction, assistant functionCalls, and tool responses.
 func geminiMessages(messages []ChatMessage) ([]geminiContent, *geminiContent) {
 	var contents []geminiContent
 	var systemParts []geminiPart
+	lastToolName := "tool"
 
 	for _, m := range messages {
 		switch m.Role {
 		case "system":
 			systemParts = append(systemParts, geminiPart{Text: m.Content})
+
 		case "assistant":
+			var parts []geminiPart
+			if m.Content != "" {
+				parts = append(parts, geminiPart{Text: m.Content})
+			}
+			for _, tc := range m.ToolCalls {
+				var parsedArgs map[string]interface{}
+				if err := json.Unmarshal([]byte(tc.Function.Arguments), &parsedArgs); err != nil {
+					parsedArgs = make(map[string]interface{})
+				}
+				parts = append(parts, geminiPart{
+					FunctionCall: &geminiFunctionCall{
+						Name: tc.Function.Name,
+						Args: parsedArgs,
+					},
+					ThoughtSignature: tc.ThoughtSignature,
+				})
+				lastToolName = tc.Function.Name
+			}
+			if len(parts) > 0 {
+				contents = append(contents, geminiContent{
+					Role:  "model",
+					Parts: parts,
+				})
+			}
+
+		case "tool":
+			// Tool output returned as functionResponse
 			contents = append(contents, geminiContent{
-				Role:  "model",
-				Parts: []geminiPart{{Text: m.Content}},
+				Role: "user",
+				Parts: []geminiPart{
+					{
+						FunctionResponse: &geminiFunctionResponse{
+							Name: lastToolName,
+							Response: map[string]interface{}{
+								"result": m.Content,
+							},
+						},
+					},
+				},
 			})
+
 		default: // "user" or anything else
 			contents = append(contents, geminiContent{
 				Role:  "user",
@@ -120,7 +208,7 @@ func geminiMessages(messages []ChatMessage) ([]geminiContent, *geminiContent) {
 	return contents, sys
 }
 
-// geminiBuildRequest constructs the geminiRequest with defaults.
+// geminiBuildRequest constructs the geminiRequest with defaults and thinking config.
 func geminiBuildRequest(model *ModelConfig, messages []ChatMessage, withTools bool) geminiRequest {
 	maxTokens := model.MaxTokens
 	if maxTokens == 0 {
@@ -129,12 +217,21 @@ func geminiBuildRequest(model *ModelConfig, messages []ChatMessage, withTools bo
 
 	contents, sys := geminiMessages(messages)
 
+	genConfig := &geminiGenConfig{
+		MaxOutputTokens: maxTokens,
+		Temperature:     0.7,
+	}
+
+	// Thinking configuration (Gemini 2.5 / 3.x)
+	if model.ExtraBody != nil {
+		if tl, ok := model.ExtraBody["thinking_level"].(string); ok && tl != "" {
+			genConfig.ThinkingConfig = &geminiThinkingConfig{ThinkingLevel: tl}
+		}
+	}
+
 	req := geminiRequest{
-		Contents: contents,
-		GenerationConfig: &geminiGenConfig{
-			MaxOutputTokens: maxTokens,
-			Temperature:     0.7,
-		},
+		Contents:         contents,
+		GenerationConfig: genConfig,
 	}
 
 	if sys != nil {
@@ -147,13 +244,23 @@ func geminiBuildRequest(model *ModelConfig, messages []ChatMessage, withTools bo
 			funcDecls = append(funcDecls, geminiFuncDecl{
 				Name:        td.Function.Name,
 				Description: td.Function.Description,
-				Parameters:  td.Function.Parameters,
+				Parameters:  SanitizeToolSchema(td.Function.Parameters, "simple"),
 			})
 		}
 		req.Tools = []geminiToolSet{{FunctionDeclarations: funcDecls}}
 	}
 
 	return req
+}
+
+func resolveGeminiBaseURL(model *ModelConfig) string {
+	base := ResolveBaseURL(model)
+	if base == "" {
+		base = "https://generativelanguage.googleapis.com"
+	}
+	base = strings.TrimRight(base, "/")
+	base = strings.TrimSuffix(base, "/v1beta")
+	return base
 }
 
 // geminiDoRequest sends the request and returns the parsed response.
@@ -164,13 +271,24 @@ func geminiDoRequest(ctx context.Context, model *ModelConfig, reqBody geminiRequ
 			model.Provider, KeySourceLabel(model))
 	}
 
-	jsonData, err := json.Marshal(reqBody)
+	// Marshal and merge ExtraBody if configured
+	reqMap := make(map[string]interface{})
+	reqData, _ := json.Marshal(reqBody)
+	_ = json.Unmarshal(reqData, &reqMap)
+
+	for k, v := range model.ExtraBody {
+		if k != "thinking_level" { // handled in GenerationConfig
+			reqMap[k] = v
+		}
+	}
+
+	jsonData, err := json.Marshal(reqMap)
 	if err != nil {
 		return nil, fmt.Errorf("marshal error: %w", err)
 	}
 
-	// Gemini endpoint: {base}/v1beta/models/{model}:generateContent
-	endpoint := strings.TrimRight(model.BaseURL, "/") + "/v1beta/models/" + model.Model + ":generateContent"
+	base := resolveGeminiBaseURL(model)
+	endpoint := base + "/v1beta/models/" + model.Model + ":generateContent"
 
 	req, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewReader(jsonData))
 	if err != nil {
@@ -180,7 +298,12 @@ func geminiDoRequest(ctx context.Context, model *ModelConfig, reqBody geminiRequ
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("x-goog-api-key", apiKey)
 
-	resp, err := GetAIClient(model.BaseURL).Do(req)
+	for k, v := range model.CustomHeaders {
+		req.Header.Set(k, v)
+	}
+
+	client := GetAIClient(base)
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("API call failed: %w", err)
 	}
@@ -219,9 +342,12 @@ func callGemini(ctx context.Context, model *ModelConfig, messages []ChatMessage)
 		return "", fmt.Errorf("no response candidates")
 	}
 
-	// Concatenate text parts
+	// Concatenate text parts (skipping internal thought tokens)
 	var sb strings.Builder
 	for _, part := range apiResp.Candidates[0].Content.Parts {
+		if part.Thought {
+			continue
+		}
 		if part.Text != "" {
 			sb.WriteString(part.Text)
 		}
@@ -233,7 +359,7 @@ func callGemini(ctx context.Context, model *ModelConfig, messages []ChatMessage)
 	return sb.String(), nil
 }
 
-// callGeminiWithTools sends a request with native tool definitions.
+// CallGeminiWithTools sends a request with native tool definitions.
 func CallGeminiWithTools(ctx context.Context, model *ModelConfig, messages []ChatMessage) (string, []ToolCall, error) {
 	reqBody := geminiBuildRequest(model, messages, true)
 	apiResp, err := geminiDoRequest(ctx, model, reqBody)
@@ -249,6 +375,9 @@ func CallGeminiWithTools(ctx context.Context, model *ModelConfig, messages []Cha
 	var toolCalls []ToolCall
 
 	for _, part := range apiResp.Candidates[0].Content.Parts {
+		if part.Thought {
+			continue
+		}
 		if part.Text != "" {
 			sb.WriteString(part.Text)
 		}
@@ -258,8 +387,9 @@ func CallGeminiWithTools(ctx context.Context, model *ModelConfig, messages []Cha
 				args = make(map[string]interface{})
 			}
 			toolCalls = append(toolCalls, ToolCall{
-				Name: part.FunctionCall.Name,
-				Args: args,
+				Name:             part.FunctionCall.Name,
+				Args:             args,
+				ThoughtSignature: part.ThoughtSignature,
 			})
 			log.Printf("[agent] Gemini functionCall: %s(%v)", part.FunctionCall.Name, args)
 		}
@@ -269,4 +399,99 @@ func CallGeminiWithTools(ctx context.Context, model *ModelConfig, messages []Cha
 	RecordCost(model.Model, apiResp.UsageMetadata.PromptTokenCount, apiResp.UsageMetadata.CandidatesTokenCount)
 
 	return sb.String(), toolCalls, nil
+}
+
+// callGeminiStream streams tokens from Gemini SSE endpoint
+func callGeminiStream(ctx context.Context, model *ModelConfig, messages []ChatMessage) (<-chan StreamChunk, error) {
+	apiKey := ResolveAPIKey(model)
+	if apiKey == "" {
+		return nil, fmt.Errorf("no API key for provider '%s' — set %s",
+			model.Provider, KeySourceLabel(model))
+	}
+
+	reqBody := geminiBuildRequest(model, messages, false)
+
+	reqMap := make(map[string]interface{})
+	reqData, _ := json.Marshal(reqBody)
+	_ = json.Unmarshal(reqData, &reqMap)
+
+	for k, v := range model.ExtraBody {
+		if k != "thinking_level" {
+			reqMap[k] = v
+		}
+	}
+
+	jsonData, err := json.Marshal(reqMap)
+	if err != nil {
+		return nil, fmt.Errorf("marshal error: %w", err)
+	}
+
+	base := resolveGeminiBaseURL(model)
+	endpoint := base + "/v1beta/models/" + model.Model + ":streamGenerateContent?alt=sse"
+
+	req, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewReader(jsonData))
+	if err != nil {
+		return nil, fmt.Errorf("request error: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-goog-api-key", apiKey)
+	req.Header.Set("Accept", "text/event-stream")
+
+	for k, v := range model.CustomHeaders {
+		req.Header.Set(k, v)
+	}
+
+	client := GetAIClient(base)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("API call failed: %w", err)
+	}
+
+	if resp.StatusCode != 200 {
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		return nil, fmt.Errorf("Gemini API error (HTTP %d): %s", resp.StatusCode, helpers.TruncateStr(string(body), 300))
+	}
+
+	ch := make(chan StreamChunk, 16)
+	go func() {
+		defer resp.Body.Close()
+		defer close(ch)
+
+		scanner := bufio.NewScanner(resp.Body)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if line == "" || !strings.HasPrefix(line, "data: ") {
+				continue
+			}
+
+			data := strings.TrimPrefix(line, "data: ")
+			var streamResp geminiResponse
+			if err := json.Unmarshal([]byte(data), &streamResp); err != nil {
+				continue
+			}
+
+			if streamResp.Error != nil {
+				ch <- StreamChunk{Error: fmt.Errorf("stream error: %s", streamResp.Error.Message)}
+				return
+			}
+
+			for _, candidate := range streamResp.Candidates {
+				for _, part := range candidate.Content.Parts {
+					if part.Thought {
+						continue // skip internal thought tokens from user text stream
+					}
+					if part.Text != "" {
+						ch <- StreamChunk{Content: part.Text}
+					}
+				}
+				if candidate.FinishReason != "" {
+					ch <- StreamChunk{Finish: true}
+				}
+			}
+		}
+	}()
+
+	return ch, nil
 }

@@ -1,33 +1,33 @@
 # TruncateStr()
 
-> God node · 36 connections · `internal/helpers/helpers.go`
+> God node · 39 connections · `internal/helpers/helpers.go`
 
 **Community:** [TruncateStr](TruncateStr.md)
 
 ## Connections by Relation
 
 ### calls
-- [RunAgentLoop()](RunAgentLoop_2.md) `EXTRACTED`
+- [RunAgentSessionLoop()](RunAgentSessionLoop_2.md) `EXTRACTED`
 - [resumeAgentLoop()](resumeAgentLoop.md) `EXTRACTED`
+- PermissionDecision() `EXTRACTED`
 - CallCommandCodeWithTools() `EXTRACTED`
+- CallOpenAIWithTools() `EXTRACTED`
 - CallModelStream() `EXTRACTED`
+- runPlanningTurns() `EXTRACTED`
 - CallAnthropicWithTools() `EXTRACTED`
 - CallCommandCodeStream() `EXTRACTED`
+- CallOpenAI() `EXTRACTED`
 - executeAutonomousAction() `EXTRACTED`
 - RunAutonomousCycle() `EXTRACTED`
 - callAnthropic() `EXTRACTED`
 - geminiDoRequest() `EXTRACTED`
-- CallOpenAI() `EXTRACTED`
-- CallOpenAIWithTools() `EXTRACTED`
-- RunTask() `EXTRACTED`
-- HandleConfirmation() `EXTRACTED`
+- extractTaskMemory() `EXTRACTED`
 - ExecuteDelegate() `EXTRACTED`
 - ExecuteDelegateBatch() `EXTRACTED`
+- runShellTaskConfig() `EXTRACTED`
+- RunTask() `EXTRACTED`
 - runSelfReview() `EXTRACTED`
-- ExecuteSchedule() `EXTRACTED`
-- providerTest() `EXTRACTED`
-- makeDecision() `EXTRACTED`
-- *…and 15 more `calls` connection(s) not listed (lowest-degree first to go)*
+- *…and 18 more `calls` connection(s) not listed (lowest-degree first to go)*
 
 ### contains
 - helpers.go `EXTRACTED`

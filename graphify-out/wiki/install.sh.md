@@ -1,6 +1,6 @@
 # install.sh
 
-> 6 nodes · cohesion 0.60
+> 6 nodes
 
 ## Key Concepts
 

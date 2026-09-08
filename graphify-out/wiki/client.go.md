@@ -1,67 +1,58 @@
 # client.go
 
-> 75 nodes · cohesion 0.05
+> 23 nodes
 
 ## Key Concepts
 
-- **client.go** (33 connections) — `mcp/client.go`
-- **MCPServer** (15 connections) — `mcp/client.go`
-- **registry.go** (13 connections) — `registry/registry.go`
-- **RegisterTool()** (12 connections) — `registry/registry.go`
-- **encoding/json.RawMessage** (9 connections)
+- **client.go** (35 connections) — `mcp/client.go`
+- **encoding/json.RawMessage** (10 connections)
 - **handleMCPRequest()** (8 connections) — `mcp/client.go`
-- **LoadMCPConfig()** (8 connections) — `mcp/client.go`
-- **registerMCPToolsAsNative()** (8 connections) — `mcp/client.go`
-- **StartMCPServers()** (8 connections) — `mcp/client.go`
-- **ReloadMCPServers()** (7 connections) — `mcp/client.go`
-- **ExecuteMCPManage()** (7 connections) — `mcp/manage.go`
-- **mcpManageAdd()** (7 connections) — `mcp/manage.go`
-- **startMCPServer()** (6 connections) — `mcp/client.go`
-- **.sendRequest()** (6 connections) — `mcp/client.go`
-- **MCPTool** (6 connections) — `mcp/client.go`
-- **ToolDef** (6 connections) — `registry/registry.go`
-- **sanitizeMCPName()** (5 connections) — `mcp/client.go`
-- **mcp/manage.go** (5 connections) — `mcp/manage.go`
-- **mcpManageRemove()** (5 connections) — `mcp/manage.go`
-- **serviceBridgeRequests()** (5 connections) — `tools/exec_code.go`
-- **RegisterAutonomous()** (4 connections) — `bootstrap/autonomous.go`
+- **jsonRPCResponse** (6 connections) — `mcp/client.go`
+- **StartMCPServerMode()** (5 connections) — `mcp/client.go`
+- **ExecuteToolByName()** (5 connections) — `registry/registry.go`
 - **getExposedTools()** (4 connections) — `mcp/client.go`
 - **GetMCPTools()** (4 connections) — `mcp/client.go`
 - **sendMCPError()** (4 connections) — `mcp/client.go`
-- **StartMCPServerMode()** (4 connections) — `mcp/client.go`
-- *... and 50 more nodes in this community*
+- **startMCPServerMode()** (4 connections) — `mcp/client.go`
+- **MCPConfig** (4 connections) — `mcp/client.go`
+- **executeMCPServerTool()** (3 connections) — `mcp/client.go`
+- **sendMCPResult()** (3 connections) — `mcp/client.go`
+- **mcpRequest** (3 connections) — `mcp/client.go`
+- **mcpResponse** (3 connections) — `mcp/client.go`
+- **MCPServerModeConfig** (3 connections) — `mcp/client.go`
+- **ACPRequest** (2 connections) — `delegate/acp.go`
+- **MCPToolsForPrompt()** (2 connections) — `mcp/client.go`
+- **StopMCPServerMode()** (2 connections) — `mcp/client.go`
+- **jsonRPCError** (2 connections) — `mcp/client.go`
+- **mcpError** (2 connections) — `mcp/client.go`
+- **MCPToolsSummary()** (1 connections) — `mcp/client.go`
+- **jsonRPCRequest** (1 connections) — `mcp/client.go`
 
 ## Relationships
 
-- [GetStringArg](GetStringArg.md) (10 shared connections)
-- [handleAction](handleAction.md) (7 shared connections)
-- [TruncateStr](TruncateStr.md) (7 shared connections)
-- [runSubagent](runSubagent.md) (3 shared connections)
-- [ConfigMgr](ConfigMgr.md) (2 shared connections)
-- [chat.go](chat.go.md) (2 shared connections)
-- [RunAgentLoop](RunAgentLoop.md) (2 shared connections)
-- [startCLI](startCLI.md) (1 shared connections)
+- [MCPServer](MCPServer.md) (11 shared connections)
+- [LoadMCPConfig](LoadMCPConfig.md) (8 shared connections)
+- [registry/registry.go](registry-registry.go.md) (4 shared connections)
+- [registerMCPToolsAsNative](registerMCPToolsAsNative.md) (3 shared connections)
+- [runSubagent](runSubagent.md) (2 shared connections)
+- [StartDaemon](StartDaemon.md) (2 shared connections)
+- [ChatMessage](ChatMessage.md) (1 shared connections)
 - [collector_coolify.go](collector_coolify.go.md) (1 shared connections)
-- [time.Time](time.Time.md) (1 shared connections)
-- [testing.T](testing.T.md) (1 shared connections)
+- [StopMCPServers](StopMCPServers.md) (1 shared connections)
+- [runPlanningTurns](runPlanningTurns.md) (1 shared connections)
+- [startCLI](startCLI.md) (1 shared connections)
+- [.listenSSEStream](listenSSEStream.md) (1 shared connections)
 
 ## Source Files
 
-- `bootstrap/autonomous.go`
-- `bootstrap/browser.go`
-- `bootstrap/monitor.go`
-- `bootstrap/provider.go`
-- `bootstrap/script.go`
-- `internal/helpers/helpers.go`
+- `delegate/acp.go`
 - `mcp/client.go`
-- `mcp/manage.go`
 - `registry/registry.go`
-- `tools/exec_code.go`
 
 ## Audit Trail
 
-- EXTRACTED: 173 (95%)
-- INFERRED: 10 (5%)
+- EXTRACTED: 76 (99%)
+- INFERRED: 1 (1%)
 - AMBIGUOUS: 0 (0%)
 
 ---

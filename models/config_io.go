@@ -13,13 +13,17 @@ import (
 // ──────────────────────────────────────────────
 
 type ModelConfig struct {
-	Provider  string `json:"provider"`          // provider name (openai, deepseek, 9router, etc)
-	Model     string `json:"model"`             // model ID
-	APIKey    string `json:"api_key,omitempty"` // DEPRECATED — use key_env instead
-	KeyEnv    string `json:"key_env,omitempty"` // env var name for API key
-	BaseURL   string `json:"base_url"`          // OpenAI-compatible endpoint
-	MaxTokens int    `json:"max_tokens"`        // max output tokens
-	API       string `json:"api,omitempty"`     // "openai" | "anthropic" | "gemini"
+	Provider            string            `json:"provider"`                        // provider name (openai, deepseek, 9router, etc)
+	Model               string            `json:"model"`                           // model ID
+	APIKey              string            `json:"api_key,omitempty"`               // DEPRECATED — use key_env instead
+	KeyEnv              string            `json:"key_env,omitempty"`               // env var name for API key
+	BaseURL             string            `json:"base_url"`                        // OpenAI-compatible endpoint
+	MaxTokens           int               `json:"max_tokens"`                      // max output tokens
+	API                 string            `json:"api,omitempty"`                   // "openai" | "anthropic" | "gemini"
+	MaxTokensField      string            `json:"max_tokens_field,omitempty"`      // field name for max tokens (e.g. "max_completion_tokens")
+	ExtraBody           map[string]any    `json:"extra_body,omitempty"`            // additional fields to inject into request body
+	CustomHeaders       map[string]string `json:"custom_headers,omitempty"`        // custom HTTP headers
+	ToolSchemaTransform string            `json:"tool_schema_transform,omitempty"` // "simple", "basic", "off"
 }
 
 type ModelRouterConfig struct {

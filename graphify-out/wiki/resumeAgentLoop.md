@@ -1,33 +1,33 @@
 # resumeAgentLoop()
 
-> God node · 23 connections · `agent/loop.go`
+> God node · 40 connections · `agent/loop.go`
 
-**Community:** [chat.go](chat.go.md)
+**Community:** [RunAgentSessionLoop](RunAgentSessionLoop.md)
 
 ## Connections by Relation
 
 ### calls
 - [GetStringArg()](GetStringArg_2.md) `EXTRACTED`
 - [TruncateStr()](TruncateStr_2.md) `EXTRACTED`
-- CallModelWithToolsAndFallback() `EXTRACTED`
-- EscapeHTML() `EXTRACTED`
-- HandleConfirmation() `EXTRACTED`
-- StorePendingConfirmation() `EXTRACTED`
-- appendSessionHistory() `INFERRED`
-- IsDangerousCommand() `INFERRED`
-- ParseAllToolCalls() `EXTRACTED`
+- GetAutonomyLevel() `EXTRACTED`
 - ExecuteTool() `INFERRED`
-- toolDescription() `EXTRACTED`
-- sendScorpReply() `INFERRED`
-- buildThinkingMessage() `EXTRACTED`
+- ClearTaskPlan() `INFERRED`
+- GetTaskPlan() `INFERRED`
+- PermissionDecision() `INFERRED`
+- EscapeHTML() `EXTRACTED`
+- CallModelWithToolsAndFallback() `EXTRACTED`
+- TestIntegrityStatus() `EXTRACTED`
+- maybeCompactHistory() `INFERRED`
+- CreateCheckpoint() `EXTRACTED`
+- HandleConfirmation() `INFERRED`
+- IsDangerousCommand() `INFERRED`
+- StorePendingConfirmation() `INFERRED`
+- appendSessionHistory() `INFERRED`
+- extractTaskMemory() `INFERRED`
+- UnverifiedOperationalClaims() `EXTRACTED`
+- ConfirmationRequired() `EXTRACTED`
 - setLoopActive() `INFERRED`
-- maybeRunSelfReview() `INFERRED`
-- maxIterations() `EXTRACTED`
-- toolCallSignature() `EXTRACTED`
-- shouldUpdateThinking() `EXTRACTED`
-- extractAndSaveMemory() `INFERRED`
-- looksLikeContinuation() `EXTRACTED`
-- *…and 1 more `calls` connection(s) not listed (lowest-degree first to go)*
+- *…and 18 more `calls` connection(s) not listed (lowest-degree first to go)*
 
 ### contains
 - loop.go `EXTRACTED`

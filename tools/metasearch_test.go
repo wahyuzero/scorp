@@ -45,8 +45,8 @@ func TestNormalizeSearchURL(t *testing.T) {
 			expected: "example.com/path",
 		},
 		{
-			input:    "http://github.com/sipeed/picoclaw/",
-			expected: "github.com/sipeed/picoclaw",
+			input:    "http://github.com/scorp-agent/scorp/",
+			expected: "github.com/scorp-agent/scorp",
 		},
 		{
 			input:    "https://en.wikipedia.org/wiki/Go_(programming_language)?fbclid=12345",

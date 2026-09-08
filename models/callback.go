@@ -2,12 +2,13 @@ package models
 
 // ToolCall represents a parsed tool call from LLM response
 type ToolCall struct {
-	Name string                 `json:"name"`
-	Args map[string]interface{} `json:"args"`
+	Name             string                 `json:"name"`
+	Args             map[string]interface{} `json:"args"`
 	// AutoDecision (P3.13): preset by the agent loop's auto-mode gate so
 	// ExecuteTool trusts the classification instead of re-grading. Never
 	// marshaled into transcripts.
-	AutoDecision string `json:"-"`
+	AutoDecision     string                 `json:"-"`
+	ThoughtSignature string                 `json:"thought_signature,omitempty"`
 }
 
 var UpdateEnvFile func(key, value string)

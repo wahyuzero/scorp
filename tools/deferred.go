@@ -123,7 +123,7 @@ func ExecuteToolSearch(args map[string]interface{}, chatID int64) (string, bool)
 	}
 
 	// Dynamically activate the top discovered tools into the native schema
-	// with TTL=3 (PicoClaw Parity). Runs in ALL modes (P2.9): deferred MCP
+	// with TTL=3 (Dynamic Tool Discovery). Runs in ALL modes (P2.9): deferred MCP
 	// tools must surface after discovery even without SCORP_DYNAMIC_TOOLS.
 	// Only activate tools not already active — avoids needless schema-cache
 	// resets on every search.

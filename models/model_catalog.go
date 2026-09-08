@@ -332,3 +332,8 @@ func RemoveProviderModels(provider string) int {
 	SaveModelConfig()
 	return count
 }
+
+// RegisterCatalog registers a list of catalog models for a provider dynamically.
+func RegisterCatalog(provider string, entries []CatalogEntry) {
+	providerCatalog[strings.ToLower(strings.TrimSpace(provider))] = entries
+}

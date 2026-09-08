@@ -1,17 +1,11 @@
 package models
 
 import (
-	"bufio"
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"strings"
 
-	"scorp-agent/internal/helpers"
 	"scorp-agent/registry"
 )
 
@@ -151,12 +145,13 @@ type ChatRequest struct {
 
 // toolCallResp represents a native tool call from the API response
 type ToolCallResp struct {
-	ID       string `json:"id"`
-	Type     string `json:"type"`
-	Function struct {
+	ID               string `json:"id"`
+	Type             string `json:"type"`
+	Function         struct {
 		Name      string `json:"name"`
 		Arguments string `json:"arguments"` // JSON string
 	} `json:"function"`
+	ThoughtSignature string `json:"thought_signature,omitempty"`
 }
 
 type ChatMessage struct {
@@ -211,174 +206,31 @@ type StreamChunk struct {
 	Error     error
 }
 
-// callModelStream streams chat completion from an OpenAI-compatible API.
-// Returns a channel that yields StreamChunk for each token.
-// Caller must drain the channel completely.
-// Note: Does not support native tool calls in streaming mode yet.
+// CallModelStream streams chat completion tokens, dispatching dynamically to the provider.
+// If the provider implements StreamingProvider, its native stream is used.
+// Otherwise, it simulates streaming by falling back to CallModel.
 func CallModelStream(ctx context.Context, model *ModelConfig, messages []ChatMessage) (<-chan StreamChunk, error) {
 	if model == nil {
 		return nil, fmt.Errorf("no model configured")
 	}
 
-	// For non-OpenAI formats, dispatch or fall back
-	apiFormat := ResolveAPIFormat(model)
-	if apiFormat == "command-code" || apiFormat == "commandcode" {
-		return CallCommandCodeStream(ctx, model, messages)
-	}
-	if apiFormat == "opencode" || apiFormat == "opencode-zen" || apiFormat == "opencode-free" {
-		return CallOpenCodeStream(ctx, model, messages)
-	}
-	if apiFormat != "openai" {
-		ch := make(chan StreamChunk, 2)
-		go func() {
-			defer close(ch)
-			content, err := CallModel(ctx, model, messages)
-			if err != nil {
-				ch <- StreamChunk{Error: err}
-				return
-			}
-			ch <- StreamChunk{Content: content}
-			ch <- StreamChunk{Finish: true}
-		}()
-		return ch, nil
+	provider := GetProvider(ResolveAPIFormat(model))
+	if sp, ok := provider.(StreamingProvider); ok {
+		return sp.CallStream(ctx, model, messages)
 	}
 
-	// Resolve API key
-	apiKey := ResolveAPIKey(model)
-	if apiKey == "" {
-		return nil, fmt.Errorf("no API key for provider '%s' — set %s",
-			model.Provider, KeySourceLabel(model))
-	}
-
-	maxTokens := model.MaxTokens
-	if maxTokens == 0 {
-		maxTokens = 4096
-	}
-
-	reqBody := ChatRequest{
-		Model:       model.Model,
-		Messages:    messages,
-		MaxTokens:   maxTokens,
-		Temperature: 0.7,
-		Stream:      true, // Enable streaming
-	}
-
-	jsonData, err := json.Marshal(reqBody)
-	if err != nil {
-		return nil, fmt.Errorf("marshal error: %w", err)
-	}
-
-	endpoint := strings.TrimRight(model.BaseURL, "/") + "/chat/completions"
-
-	req, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewReader(jsonData))
-	if err != nil {
-		return nil, fmt.Errorf("request error: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+apiKey)
-	req.Header.Set("Accept", "text/event-stream")
-
-	// Provider-specific headers
-	if model.Provider == "openrouter" {
-		req.Header.Set("HTTP-Referer", "https://scorp-agent.local")
-		req.Header.Set("X-Title", "ScorpAgent")
-	}
-
-	client := GetAIClient(model.BaseURL)
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("API call failed: %w", err)
-	}
-
-	if resp.StatusCode != 200 {
-		body, _ := io.ReadAll(resp.Body)
-		resp.Body.Close()
-		return nil, fmt.Errorf("API error (HTTP %d): %s", resp.StatusCode, helpers.TruncateStr(string(body), 300))
-	}
-
-	// Channel for streaming chunks
-	ch := make(chan StreamChunk, 16)
-
+	// Fallback to non-streaming CallModel simulated stream
+	ch := make(chan StreamChunk, 2)
 	go func() {
-		defer resp.Body.Close()
 		defer close(ch)
-
-		scanner := bufio.NewScanner(resp.Body)
-		buf := make([]byte, 0, 64*1024)
-		scanner.Buffer(buf, 1024*1024)
-
-		for scanner.Scan() {
-			line := scanner.Text()
-			if line == "" {
-				continue
-			}
-
-			// SSE format: "data: {...}"
-			if !strings.HasPrefix(line, "data: ") {
-				continue
-			}
-
-			data := strings.TrimPrefix(line, "data: ")
-			if data == "[DONE]" {
-				ch <- StreamChunk{Finish: true}
-				return
-			}
-
-			var streamResp struct {
-				ID      string `json:"id"`
-				Choices []struct {
-					Delta struct {
-						Content   string         `json:"content"`
-						ToolCalls []ToolCallResp `json:"tool_calls"`
-					} `json:"delta"`
-					FinishReason string `json:"finish_reason"`
-				} `json:"choices"`
-				Usage struct {
-					PromptTokens     int `json:"prompt_tokens"`
-					CompletionTokens int `json:"completion_tokens"`
-					TotalTokens      int `json:"total_tokens"`
-				} `json:"usage"`
-				Error *struct {
-					Message string `json:"message"`
-					Type    string `json:"type"`
-				} `json:"error,omitempty"`
-			}
-
-			if err := json.Unmarshal([]byte(data), &streamResp); err != nil {
-				continue // Skip malformed chunks
-			}
-
-			if streamResp.Error != nil {
-				ch <- StreamChunk{Error: fmt.Errorf("API error: %s", streamResp.Error.Message)}
-				return
-			}
-
-			if len(streamResp.Choices) > 0 {
-				delta := streamResp.Choices[0].Delta
-				if delta.Content != "" {
-					ch <- StreamChunk{Content: delta.Content}
-				}
-				if len(delta.ToolCalls) > 0 {
-					ch <- StreamChunk{ToolCalls: delta.ToolCalls}
-				}
-				if streamResp.Choices[0].FinishReason != "" {
-					// Track usage from final chunk
-					if streamResp.Usage.TotalTokens > 0 {
-						TrackModelUsage(model.Model, streamResp.Usage.PromptTokens, streamResp.Usage.CompletionTokens)
-						RecordCost(model.Model, streamResp.Usage.PromptTokens, streamResp.Usage.CompletionTokens)
-					}
-					ch <- StreamChunk{Finish: true}
-					return
-				}
-			}
+		content, err := CallModel(ctx, model, messages)
+		if err != nil {
+			ch <- StreamChunk{Error: err}
+			return
 		}
-
-		if err := scanner.Err(); err != nil {
-			ch <- StreamChunk{Error: fmt.Errorf("stream read error: %w", err)}
-		}
+		ch <- StreamChunk{Content: content}
+		ch <- StreamChunk{Finish: true}
 	}()
-
 	return ch, nil
 }
 

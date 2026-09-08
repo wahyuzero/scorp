@@ -1,33 +1,33 @@
 # startCLI()
 
-> God node · 28 connections · `cli.go`
+> God node · 51 connections · `cli.go`
 
 **Community:** [startCLI](startCLI.md)
 
 ## Connections by Relation
 
 ### calls
-- [main()](main.md) `INFERRED`
+- GetAutonomyLevel() `EXTRACTED`
+- SetAutonomyLevel() `EXTRACTED`
+- main() `INFERRED`
 - executeOneShot() `EXTRACTED`
-- LoadModelConfig() `EXTRACTED`
 - HandleConfirmation() `EXTRACTED`
-- ClearChatSession() `EXTRACTED`
-- ExitAgentMode() `EXTRACTED`
-- printStatus() `EXTRACTED`
-- wireCLICallbacks() `EXTRACTED`
-- printCurrentModel() `EXTRACTED`
-- printCostUsage() `EXTRACTED`
+- LoadModelConfig() `EXTRACTED`
+- CompactSessionHistory() `EXTRACTED`
 - InitConfigManager() `EXTRACTED`
-- SwitchActiveModel() `EXTRACTED`
-- executeTurn() `EXTRACTED`
-- setupCLILogging() `EXTRACTED`
-- LoadCostConfig() `EXTRACTED`
-- LoadCostTracker() `EXTRACTED`
-- LoadAutonomousConfig() `EXTRACTED`
-- printModelList() `EXTRACTED`
-- printToolList() `EXTRACTED`
-- InitModelUsage() `EXTRACTED`
-- *…and 7 more `calls` connection(s) not listed (lowest-degree first to go)*
+- wireCLICallbacks() `INFERRED`
+- ClearChatSession() `EXTRACTED`
+- handleMCPCommand() `INFERRED`
+- RestoreCheckpoint() `EXTRACTED`
+- RunPlanningLoop() `EXTRACTED`
+- ListCheckpoints() `EXTRACTED`
+- printStatus() `EXTRACTED`
+- InitDefaultSOPs() `EXTRACTED`
+- readInteractiveInput() `INFERRED`
+- DeleteCheckpoint() `EXTRACTED`
+- handleCLISession() `EXTRACTED`
+- formatTerminalText() `INFERRED`
+- *…and 30 more `calls` connection(s) not listed (lowest-degree first to go)*
 
 ### contains
 - cli.go `EXTRACTED`

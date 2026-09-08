@@ -27,6 +27,18 @@ import (
 
 type CommandCodeProvider struct{}
 
+func init() {
+	p := &CommandCodeProvider{}
+	RegisterProvider(ProviderSpec{
+		Name:             "command-code",
+		Aliases:          []string{"commandcode"},
+		DisplayName:      "Command Code (CLI Gateway)",
+		DefaultBaseURL:   "https://api.commandcode.ai",
+		DefaultAPIFormat: "command-code",
+		KeyEnvs:          []string{"COMMAND_CODE_API_KEY", "COMMANDCODE_API_KEY"},
+	}, p)
+}
+
 func (p *CommandCodeProvider) Format() string {
 	return "command-code"
 }
@@ -37,6 +49,52 @@ func (p *CommandCodeProvider) Call(ctx context.Context, model *ModelConfig, mess
 
 func (p *CommandCodeProvider) CallWithTools(ctx context.Context, model *ModelConfig, messages []ChatMessage) (string, []ToolCall, error) {
 	return CallCommandCodeWithTools(ctx, model, messages)
+}
+
+func (p *CommandCodeProvider) CallStream(ctx context.Context, model *ModelConfig, messages []ChatMessage) (<-chan StreamChunk, error) {
+	return CallCommandCodeStream(ctx, model, messages)
+}
+
+func (p *CommandCodeProvider) ResolveKey(cfg *ModelConfig) string {
+	return resolveCommandCodeKeyFromDisk()
+}
+
+// resolveCommandCodeKeyFromDisk checks local auth.json files for Command Code key
+func resolveCommandCodeKeyFromDisk() string {
+	home := config.HomeDir()
+	// Check ~/.commandcode/auth.json
+	cmdPath := home + "/.commandcode/auth.json"
+	if data, err := os.ReadFile(cmdPath); err == nil {
+		var auth struct {
+			ApiKey string `json:"apiKey"`
+			Token  string `json:"token"`
+			Key    string `json:"key"`
+		}
+		if err := json.Unmarshal(data, &auth); err == nil {
+			if auth.Key != "" {
+				return auth.Key
+			}
+			if auth.ApiKey != "" {
+				return auth.ApiKey
+			}
+			if auth.Token != "" {
+				return auth.Token
+			}
+		}
+	}
+	// Check ~/.pi/agent/auth.json
+	piPath := home + "/.pi/agent/auth.json"
+	if data, err := os.ReadFile(piPath); err == nil {
+		var piAuth map[string]struct {
+			Key string `json:"key"`
+		}
+		if err := json.Unmarshal(data, &piAuth); err == nil {
+			if cc, ok := piAuth["command-code"]; ok && cc.Key != "" {
+				return cc.Key
+			}
+		}
+	}
+	return ""
 }
 
 const (

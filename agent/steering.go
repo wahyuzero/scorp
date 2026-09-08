@@ -5,7 +5,7 @@ import (
 )
 
 // ──────────────────────────────────────────────
-// Real-Time Steering Queue (PicoClaw Parity)
+// Real-Time Steering Queue
 // Enables users to intercept and redirect the agent mid-run
 // without killing the session or waiting for stale tool calls.
 // ──────────────────────────────────────────────

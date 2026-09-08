@@ -1,11 +1,11 @@
 # collector_coolify.go
 
-> 12 nodes · cohesion 0.32
+> 12 nodes
 
 ## Key Concepts
 
 - **collector_coolify.go** (11 connections) — `collectors/collector_coolify.go`
-- **CollectCoolify()** (9 connections) — `collectors/collector_coolify.go`
+- **CollectCoolify()** (8 connections) — `collectors/collector_coolify.go`
 - **CoolifyData** (8 connections) — `collectors/collector_coolify.go`
 - **coolifyGet()** (3 connections) — `collectors/collector_coolify.go`
 - **cleanAppName()** (2 connections) — `collectors/collector_coolify.go`
@@ -19,8 +19,8 @@
 
 ## Relationships
 
-- [handleAction](handleAction.md) (2 shared connections)
-- [collector_system.go](collector_system.go.md) (2 shared connections)
+- [FormatHourlyReport](FormatHourlyReport.md) (2 shared connections)
+- [HandleTelegramAction](HandleTelegramAction.md) (1 shared connections)
 - [client.go](client.go.md) (1 shared connections)
 
 ## Source Files
@@ -29,7 +29,7 @@
 
 ## Audit Trail
 
-- EXTRACTED: 26 (100%)
+- EXTRACTED: 25 (100%)
 - INFERRED: 0 (0%)
 - AMBIGUOUS: 0 (0%)
 

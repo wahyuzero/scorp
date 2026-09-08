@@ -1,6 +1,6 @@
 # skills.go
 
-> 18 nodes · cohesion 0.22
+> 18 nodes
 
 ## Key Concepts
 
@@ -17,18 +17,17 @@
 - **executeSkillManageList()** (3 connections) — `skills/manage.go`
 - **ExecuteSkillManageView()** (3 connections) — `skills/manage.go`
 - **GetAll()** (3 connections) — `skills/skills.go`
-- **GetPromptForMessage()** (3 connections) — `skills/skills.go`
 - **Load()** (3 connections) — `skills/skills.go`
 - **Delete()** (2 connections) — `skills/skills.go`
+- **GetPromptForMessage()** (1 connections) — `skills/skills.go`
 - **HandleCommand()** (1 connections) — `skills/skills.go`
 - **List()** (1 connections) — `skills/skills.go`
 
 ## Relationships
 
-- [handleAction](handleAction.md) (2 shared connections)
-- [GetStringArg](GetStringArg.md) (1 shared connections)
-- [chat.go](chat.go.md) (1 shared connections)
+- [init](init.md) (1 shared connections)
 - [startCLI](startCLI.md) (1 shared connections)
+- [StartDaemon](StartDaemon.md) (1 shared connections)
 
 ## Source Files
 
@@ -37,8 +36,8 @@
 
 ## Audit Trail
 
-- EXTRACTED: 29 (74%)
-- INFERRED: 10 (26%)
+- EXTRACTED: 27 (73%)
+- INFERRED: 10 (27%)
 - AMBIGUOUS: 0 (0%)
 
 ---

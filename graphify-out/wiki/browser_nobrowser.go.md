@@ -1,6 +1,6 @@
 # browser_nobrowser.go
 
-> 6 nodes · cohesion 0.33
+> 6 nodes
 
 ## Key Concepts
 
