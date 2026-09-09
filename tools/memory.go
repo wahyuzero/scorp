@@ -1,8 +1,10 @@
 package tools
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"scorp-agent/config"
 	"scorp-agent/internal/helpers"
 	"strings"
@@ -110,12 +112,26 @@ func GetMemorySummary() string {
 	return sb.String()
 }
 
-// persistMemory writes the full memory map to disk (serialized to prevent race)
+// persistMemory writes the full memory map to disk atomically under lock
 func persistMemory(mem map[string]string) {
 	persistMu.Lock()
 	defer persistMu.Unlock()
 	path := memoryFilePathResolved
-	if err := config.SaveJSON(path, mem); err != nil {
+	lockPath := path + ".lock"
+	if lockFile, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0644); err == nil {
+		_ = FileLockExclusive(lockFile)
+		defer func() {
+			_ = FileUnlock(lockFile)
+			lockFile.Close()
+		}()
+	}
+
+	data, err := json.MarshalIndent(mem, "", "  ")
+	if err != nil {
+		log.Printf("[memory] Marshal error: %v", err)
+		return
+	}
+	if err := WriteFileAtomic(path, data, 0644); err != nil {
 		log.Printf("[memory] Save error: %v", err)
 	}
 }

@@ -486,9 +486,9 @@
     "semantic_hash": ""
   },
   "telegram/files.go": {
-    "mtime": 1788865340.5940113,
-    "seen": 1788865455.0576255,
-    "ast_hash": "698bc7b5265445b6bd5e62629914526e",
+    "mtime": 1788953169.7643754,
+    "seen": 1788953627.2006986,
+    "ast_hash": "7dc737b4857fc594dfcacb1940a45c96",
     "semantic_hash": ""
   },
   "telegram/telegram.go": {
@@ -552,9 +552,9 @@
     "semantic_hash": ""
   },
   "tools/exec.go": {
-    "mtime": 1788951266.9020224,
-    "seen": 1788952365.386732,
-    "ast_hash": "237a9112c0f2c7c0a7ce12f51d36e5ad",
+    "mtime": 1788953146.2133138,
+    "seen": 1788953627.200745,
+    "ast_hash": "830b41190d1d57fd0b3293db4841a131",
     "semantic_hash": ""
   },
   "tools/exec_code.go": {
@@ -594,9 +594,9 @@
     "semantic_hash": "bf5a0fc8a05ec8ef2b81d6171b378157"
   },
   "tools/memory.go": {
-    "mtime": 1788932262.088185,
-    "seen": 1788941870.5821018,
-    "ast_hash": "d28901defff13b6413646de9554150fa",
+    "mtime": 1788953160.03535,
+    "seen": 1788953627.2007818,
+    "ast_hash": "afca52a3f3b7f941e2be56f158636f53",
     "semantic_hash": ""
   },
   "tools/monitor.go": {
@@ -630,10 +630,10 @@
     "semantic_hash": "ba94217c792a3fa153d29f7845bec6b0"
   },
   "tools/search.go": {
-    "mtime": 1788485109.8581533,
-    "seen": 1788649372.8965368,
-    "ast_hash": "bf2426cb1fe363cb8d212b639fcd100f",
-    "semantic_hash": "bf2426cb1fe363cb8d212b639fcd100f"
+    "mtime": 1788953138.6802938,
+    "seen": 1788953627.200825,
+    "ast_hash": "4b8435c1e0bcb8cd72ec93b4fa060dfc",
+    "semantic_hash": ""
   },
   "tools/todo.go": {
     "mtime": 1788539456.0490737,
@@ -858,9 +858,9 @@
     "semantic_hash": ""
   },
   "agent/steering.go": {
-    "mtime": 1788859488.533954,
-    "seen": 1788859548.9308333,
-    "ast_hash": "89773f91ca8b4686e99cfa4198f6d307",
+    "mtime": 1788953164.6703622,
+    "seen": 1788953627.2003644,
+    "ast_hash": "f41d0a71cb9f76e646bc7efbb5d7e42f",
     "semantic_hash": ""
   },
   "agent/steering_test.go": {
@@ -912,10 +912,10 @@
     "semantic_hash": ""
   },
   "agent/confirmation.go": {
-    "mtime": 1788694740.5912263,
-    "seen": 1788698813.7145088,
-    "ast_hash": "c67076d46ab394e4990d6860992e7371",
-    "semantic_hash": "c67076d46ab394e4990d6860992e7371"
+    "mtime": 1788953190.9214296,
+    "seen": 1788953627.200305,
+    "ast_hash": "7ed6081cecf5f776fbb8fb2c25088040",
+    "semantic_hash": ""
   },
   "agent/continuation.go": {
     "mtime": 1788908437.6445317,
@@ -1719,6 +1719,12 @@
     "mtime": 1788950855.6953127,
     "seen": 1788952365.3868995,
     "ast_hash": "16de4f5f6579a80414a1ecde0deda749",
+    "semantic_hash": ""
+  },
+  "docs/ARCHITECTURAL_FLAWS_AND_REMEDIATION_PHASE_20.md": {
+    "mtime": 1788953619.3603845,
+    "seen": 1788953627.200888,
+    "ast_hash": "798955c877c70b3d7bdec323be5e875a",
     "semantic_hash": ""
   }
 }

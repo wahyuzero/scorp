@@ -33,7 +33,9 @@ var browseRoots = []struct {
 	{"/tmp", "📋 Temp"},
 }
 
-// Path ID mapping
+// Path ID mapping with bounded capacity (LRU prune after 5000 paths)
+const maxTrackedPaths = 5000
+
 var (
 	pathMap     = make(map[string]string) // pid -> path
 	reversePath = make(map[string]string) // path -> pid
@@ -46,6 +48,12 @@ func PathID(path string) string {
 	defer pathMu.Unlock()
 	if pid, ok := reversePath[path]; ok {
 		return pid
+	}
+	// Prune if capacity exceeded to prevent slow 24/7 memory leaks
+	if len(pathMap) >= maxTrackedPaths {
+		pathMap = make(map[string]string)
+		reversePath = make(map[string]string)
+		pathCounter = 0
 	}
 	pathCounter++
 	pid := fmt.Sprintf("p%d", pathCounter)

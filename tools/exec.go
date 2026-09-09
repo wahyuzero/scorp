@@ -384,6 +384,12 @@ func isPathAllowed(path string, allowedPrefixes []string) bool {
 	if err != nil {
 		return false
 	}
+
+	// Inode / symlink resolution: evaluate real physical path to prevent symlink traversal escapes
+	if realTarget, err := filepath.EvalSymlinks(absPath); err == nil {
+		absPath = realTarget
+	}
+
 	cwd, err := os.Getwd()
 	if err == nil && cwd != "" {
 		cleanCwd := filepath.Clean(cwd)

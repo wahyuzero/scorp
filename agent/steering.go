@@ -15,13 +15,19 @@ var (
 	steeringQueuesMu sync.Mutex
 )
 
-// QueueSteeringMessage enqueues an interruption/redirection instruction for an active session
+const maxSteeringQueueSize = 50
+
+// QueueSteeringMessage enqueues an interruption/redirection instruction for an active session with bounded cap
 func QueueSteeringMessage(chatIDStr, message string) {
 	if message == "" {
 		return
 	}
 	steeringQueuesMu.Lock()
 	defer steeringQueuesMu.Unlock()
+	if len(steeringQueues[chatIDStr]) >= maxSteeringQueueSize {
+		// Drop oldest to prevent memory exhaustion under flood
+		steeringQueues[chatIDStr] = steeringQueues[chatIDStr][1:]
+	}
 	steeringQueues[chatIDStr] = append(steeringQueues[chatIDStr], message)
 }
 

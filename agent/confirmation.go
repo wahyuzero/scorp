@@ -1,10 +1,14 @@
 package agent
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
+	"scorp-agent/config"
 	"scorp-agent/internal/helpers"
 	"scorp-agent/tools"
 )
@@ -28,6 +32,38 @@ var (
 	pendingConfirmsMu sync.Mutex
 )
 
+func pendingConfirmFilePath(chatID string) string {
+	dir := config.ScorpPath("pending_confirms")
+	_ = os.MkdirAll(dir, 0755)
+	return filepath.Join(dir, fmt.Sprintf("confirm_%s.json", chatID))
+}
+
+func savePendingConfirmationToDisk(chatID string, pc *pendingConfirmation) {
+	p := pendingConfirmFilePath(chatID)
+	data, err := json.Marshal(pc)
+	if err == nil {
+		_ = tools.WriteFileAtomic(p, data, 0644)
+	}
+}
+
+func loadPendingConfirmationFromDisk(chatID string) *pendingConfirmation {
+	p := pendingConfirmFilePath(chatID)
+	data, err := os.ReadFile(p)
+	if err != nil {
+		return nil
+	}
+	var pc pendingConfirmation
+	if err := json.Unmarshal(data, &pc); err == nil {
+		return &pc
+	}
+	return nil
+}
+
+func clearPendingConfirmationFromDisk(chatID string) {
+	p := pendingConfirmFilePath(chatID)
+	_ = os.Remove(p)
+}
+
 // StorePendingConfirmation records a pending command confirmation
 func StorePendingConfirmation(chatID, toolName, command string, messages []AgentMessage, promptMsgID ...int64) {
 	StorePendingConfirmationArgs(chatID, toolName, command, nil, messages, promptMsgID...)
@@ -42,7 +78,7 @@ func StorePendingConfirmationArgs(chatID, toolName, command string, args map[str
 	if len(promptMsgID) > 0 {
 		pMsgID = promptMsgID[0]
 	}
-	pendingConfirms[chatID] = &pendingConfirmation{
+	pc := &pendingConfirmation{
 		toolName:    toolName,
 		command:     command,
 		args:        args,
@@ -50,6 +86,8 @@ func StorePendingConfirmationArgs(chatID, toolName, command string, args map[str
 		created:     time.Now(),
 		promptMsgID: pMsgID,
 	}
+	pendingConfirms[chatID] = pc
+	savePendingConfirmationToDisk(chatID, pc)
 }
 
 func getPendingConfirmation(chatID string) *pendingConfirmation {
@@ -57,11 +95,18 @@ func getPendingConfirmation(chatID string) *pendingConfirmation {
 	defer pendingConfirmsMu.Unlock()
 	pc, ok := pendingConfirms[chatID]
 	if !ok {
+		pc = loadPendingConfirmationFromDisk(chatID)
+		if pc != nil {
+			pendingConfirms[chatID] = pc
+		}
+	}
+	if pc == nil {
 		return nil
 	}
-	// Expire after 5 minutes
-	if time.Since(pc.created) > 5*time.Minute {
+	// Expire after 15 minutes
+	if time.Since(pc.created) > 15*time.Minute {
 		delete(pendingConfirms, chatID)
+		clearPendingConfirmationFromDisk(chatID)
 		return nil
 	}
 	return pc
@@ -71,6 +116,7 @@ func clearPendingConfirmation(chatID string) {
 	pendingConfirmsMu.Lock()
 	defer pendingConfirmsMu.Unlock()
 	delete(pendingConfirms, chatID)
+	clearPendingConfirmationFromDisk(chatID)
 }
 
 // HasPendingConfirmation checks if there is an active pending confirmation for a chat

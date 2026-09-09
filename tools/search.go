@@ -56,10 +56,11 @@ func ExecuteSearchCode(args map[string]interface{}) (string, bool) {
 			rgArgs = append(rgArgs, "--glob", fileGlob)
 		}
 
-		rgArgs = append(rgArgs, pattern, path)
+		// Use -e to strictly delineate search pattern, preventing argument injection (e.g. pattern="--fix")
+		rgArgs = append(rgArgs, "-e", pattern, "--", path)
 		cmd = exec.CommandContext(ctx, "rg", rgArgs...)
 	} else {
-		// Fallback to standard grep
+		// Fallback to standard grep with safe -e flag and -- path delimiter
 		grepArgs := []string{"-rn"}
 		if contextLines > 0 {
 			grepArgs = append(grepArgs, fmt.Sprintf("-C%d", contextLines))
@@ -67,7 +68,7 @@ func ExecuteSearchCode(args map[string]interface{}) (string, bool) {
 		if fileGlob != "" {
 			grepArgs = append(grepArgs, fmt.Sprintf("--include=%s", fileGlob))
 		}
-		grepArgs = append(grepArgs, "-E", pattern, path)
+		grepArgs = append(grepArgs, "-E", "-e", pattern, "--", path)
 		cmd = exec.CommandContext(ctx, "grep", grepArgs...)
 	}
 
