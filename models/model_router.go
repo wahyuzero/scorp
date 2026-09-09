@@ -390,7 +390,26 @@ func CallModelWithFallback(ctx context.Context, taskType string, messages []Chat
 		}
 	}
 
-	// All models failed
+	// All configured models failed.
+	// Last-ditch emergency tier: try opencode/mimo-v2.5-free if not already attempted
+	if em := GetModelByName("opencode/mimo-v2.5-free"); em != nil {
+		alreadyTried := false
+		for _, m := range models {
+			if m.Model == em.Model {
+				alreadyTried = true
+				break
+			}
+		}
+		if !alreadyTried {
+			log.Printf("[models] All configured models failed — engaging emergency free tier fallback: %s", em.Model)
+			res, err := CallModel(ctx, em, messages)
+			if err == nil {
+				return res, em.Model + " (emergency-free)", nil
+			}
+			lastErr = err
+		}
+	}
+
 	return "", "", fmt.Errorf("all models failed (primary: %s): %w", primaryLabel, lastErr)
 }
 

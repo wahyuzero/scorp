@@ -227,7 +227,17 @@ func historyFilePath(chatID string) string {
 }
 
 func loadHistoryFromDisk(chatID string) []AgentMessage {
-	data, err := os.ReadFile(historyFilePath(chatID))
+	p := historyFilePath(chatID)
+	lockPath := p + ".lock"
+	if lockFile, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0644); err == nil {
+		_ = tools.FileLockExclusive(lockFile)
+		defer func() {
+			_ = tools.FileUnlock(lockFile)
+			lockFile.Close()
+		}()
+	}
+
+	data, err := os.ReadFile(p)
 	if err != nil {
 		return nil
 	}
@@ -242,12 +252,22 @@ func loadHistoryFromDisk(chatID string) []AgentMessage {
 
 func saveHistoryToDisk(chatID string, msgs []AgentMessage) {
 	os.MkdirAll(config.HistoryDirPath(), 0755)
+	p := historyFilePath(chatID)
+	lockPath := p + ".lock"
+	if lockFile, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0644); err == nil {
+		_ = tools.FileLockExclusive(lockFile)
+		defer func() {
+			_ = tools.FileUnlock(lockFile)
+			lockFile.Close()
+		}()
+	}
+
 	data, err := json.Marshal(msgs)
 	if err != nil {
 		log.Printf("[memory] Failed to save history for %s: %v", chatID, err)
 		return
 	}
-	_ = tools.WriteFileAtomic(historyFilePath(chatID), data, 0644)
+	_ = tools.WriteFileAtomic(p, data, 0644)
 }
 
 // GetHistoryTokenEstimate returns estimated token count for a chat session

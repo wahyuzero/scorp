@@ -159,8 +159,8 @@ func TestGemini_LiveToolCalling(t *testing.T) {
 		{Role: "user", Content: "What time is it right now? Use the get_time or similar tool."},
 	})
 	if err != nil {
-		if strings.Contains(err.Error(), "429") || strings.Contains(err.Error(), "quota") {
-			t.Logf("Gemini tool test hit 429 free tier rate limit: %v", err)
+		if strings.Contains(err.Error(), "429") || strings.Contains(err.Error(), "quota") || strings.Contains(err.Error(), "503") || strings.Contains(err.Error(), "UNAVAILABLE") {
+			t.Logf("Gemini tool test hit transient upstream availability issue: %v", err)
 			return
 		}
 		if strings.Contains(err.Error(), "context deadline exceeded") {

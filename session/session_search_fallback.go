@@ -39,8 +39,11 @@ func InitSessionDB() {
 		return
 	}
 
-	// Optimize for low-contention
-	sessionDB.SetMaxOpenConns(5)
+	// Optimize connection pooling for stability & concurrency
+	sessionDB.SetMaxOpenConns(10)
+	sessionDB.SetMaxIdleConns(5)
+	sessionDB.SetConnMaxLifetime(10 * time.Minute)
+	sessionDB.SetConnMaxIdleTime(5 * time.Minute)
 
 	// Create tables (no FTS5 virtual table)
 	schema := `

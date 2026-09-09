@@ -6,9 +6,9 @@
     "semantic_hash": "1aaa28b0bc77a2e73a6daf5f847bc1a0"
   },
   "agent/chat.go": {
-    "mtime": 1788951296.0140676,
-    "seen": 1788952365.3862321,
-    "ast_hash": "4a5db3435bed93964b44d37d576a7fb8",
+    "mtime": 1788952529.3147676,
+    "seen": 1788952848.0046587,
+    "ast_hash": "8c5d192248c37f6e17fbc7ff9cebd123",
     "semantic_hash": ""
   },
   "agent/compaction.go": {
@@ -360,9 +360,9 @@
     "semantic_hash": ""
   },
   "models/model_router.go": {
-    "mtime": 1788931303.6177657,
-    "seen": 1788941870.5819638,
-    "ast_hash": "9521cefe83c77fd80150816a3cda02d9",
+    "mtime": 1788952566.4268157,
+    "seen": 1788952848.0052593,
+    "ast_hash": "d92698deaa98edc0518050e6c8684516",
     "semantic_hash": ""
   },
   "models/providers.go": {
@@ -414,9 +414,9 @@
     "semantic_hash": "e8706cc53a14cd7636eefa68887c26b9"
   },
   "registry/registry.go": {
-    "mtime": 1788729333.5283473,
-    "seen": 1788751924.1177635,
-    "ast_hash": "92d18bf50bc2b95e5ebd26295764ee3a",
+    "mtime": 1788952522.3677585,
+    "seen": 1788952848.005349,
+    "ast_hash": "8ab4d2aad62e81195633391bc3efc1e4",
     "semantic_hash": ""
   },
   "scheduler/callbacks.go": {
@@ -462,16 +462,16 @@
     "semantic_hash": "ad9dd79d92fb981b28827c46b8fcc240"
   },
   "session/session_search_fallback.go": {
-    "mtime": 1788485109.8490546,
-    "seen": 1788649372.8962357,
-    "ast_hash": "913791d7a394b1ea2c30237c96ce8242",
-    "semantic_hash": "913791d7a394b1ea2c30237c96ce8242"
+    "mtime": 1788952560.0408075,
+    "seen": 1788952848.005399,
+    "ast_hash": "e45a94d963667a4dcdecbd5e6f15e521",
+    "semantic_hash": ""
   },
   "session/session_search_fts5.go": {
-    "mtime": 1788485109.8501534,
-    "seen": 1788649372.8962402,
-    "ast_hash": "ef8a2860916df4868966d64f53d2c419",
-    "semantic_hash": "ef8a2860916df4868966d64f53d2c419"
+    "mtime": 1788952554.9588008,
+    "seen": 1788952848.0054033,
+    "ast_hash": "474cfd454303a5a77c6f826d3b36d227",
+    "semantic_hash": ""
   },
   "skills/manage.go": {
     "mtime": 1788454397.7333822,
@@ -1644,9 +1644,9 @@
     "semantic_hash": ""
   },
   "models/api_gemini_test.go": {
-    "mtime": 1788866511.1793098,
-    "seen": 1788866545.8263505,
-    "ast_hash": "13bd6a2344a48e7117f481318523893b",
+    "mtime": 1788952611.2958739,
+    "seen": 1788952848.0051923,
+    "ast_hash": "9e51f8edddfc07b6a4e211218f79f2e9",
     "semantic_hash": ""
   },
   "tools/send_file_test.go": {
@@ -1686,15 +1686,15 @@
     "semantic_hash": ""
   },
   "tools/flock_unix.go": {
-    "mtime": 1788934453.075232,
-    "seen": 1788941870.5820825,
-    "ast_hash": "885e08b29573f02016051a642ad05e18",
+    "mtime": 1788952535.069775,
+    "seen": 1788952848.005592,
+    "ast_hash": "bdde64adcdfb80242db0f3d8f46d1fa5",
     "semantic_hash": ""
   },
   "tools/flock_windows.go": {
-    "mtime": 1788934456.718226,
-    "seen": 1788941870.5820844,
-    "ast_hash": "b9d87d0f56aae961b2128492ba846069",
+    "mtime": 1788952537.489778,
+    "seen": 1788952848.0055966,
+    "ast_hash": "bbf9b5e490bc372616a70b3b20a912c8",
     "semantic_hash": ""
   },
   "docs/TEST_RESULTS_BRUTAL_SCORP_PHASE_1_15.md": {
