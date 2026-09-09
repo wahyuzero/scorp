@@ -257,7 +257,7 @@ func RunQuickstart() {
 
 	// ── Step 4: Autonomy & Safety Level ──
 	fmt.Println()
-	fmt.Println("\033[1m┌─ [Step 4/4] Autonomy & Safety Level:\033[0m")
+	fmt.Println("\033[1m┌─ [Step 4/5] Autonomy & Safety Level:\033[0m")
 	fmt.Println("│  1) \033[1;32mSupervised\033[0m [Default] (Read-only tools auto-run, destructive commands ask confirmation)")
 	fmt.Println("│  2) \033[1;34mAuto\033[0m       (Smart automated risk classification with allowlist rules)")
 	fmt.Println("│  3) \033[1;36mReadOnly\033[0m   (Audit mode — file writes and command executions blocked)")
@@ -278,7 +278,21 @@ func RunQuickstart() {
 		autonomyLevel = "supervised"
 	}
 
-	// ── Step 5: Systemd Service (Linux only) ──
+	// ── Step 5: Shell Sandbox Isolation ──
+	fmt.Println()
+	fmt.Println("\033[1m┌─ [Step 5/5] Shell Execution Sandbox (Bubblewrap Isolation):\033[0m")
+	fmt.Println("│  1) \033[1;32mEnabled (Safe Sandbox)\033[0m [Default] (Protects host root filesystem; system trees read-only)")
+	fmt.Println("│  2) \033[1;33mDisabled (Host Ops)\033[0m     (Direct host execution — needed for kernel netns, ASan, raw sockets)")
+	fmt.Print("└─ Select [1-2] (default 1): ")
+
+	scanner.Scan()
+	sandboxChoice := strings.TrimSpace(scanner.Text())
+	sandboxMode := "on"
+	if sandboxChoice == "2" {
+		sandboxMode = "off"
+	}
+
+	// ── Systemd Service (Linux only) ──
 	var setupService bool
 	if runtime.GOOS == "linux" && needsTelegram {
 		if _, err := exec.LookPath("systemctl"); err == nil {
@@ -293,7 +307,7 @@ func RunQuickstart() {
 	}
 
 	// Save all configurations
-	saveConfig(envKeyName, apiKey, tgToken, tgAllowedUsers, autonomyLevel, providerName, defaultModelKey, defaultModelID, apiFormat, baseURL, maxTokens)
+	saveConfig(envKeyName, apiKey, tgToken, tgAllowedUsers, autonomyLevel, sandboxMode, providerName, defaultModelKey, defaultModelID, apiFormat, baseURL, maxTokens)
 
 	if setupService {
 		installSystemdService()
@@ -326,7 +340,7 @@ func maskString(s string) string {
 	return s[:4] + "..." + s[len(s)-4:]
 }
 
-func saveConfig(envKeyName, apiKey, tgToken, tgUsers, autonomy, provider, modelKey, modelID, apiFormat, baseURL string, maxTokens int) {
+func saveConfig(envKeyName, apiKey, tgToken, tgUsers, autonomy, sandboxMode, provider, modelKey, modelID, apiFormat, baseURL string, maxTokens int) {
 	// 1. Save to .env (both current directory and ~/.scorp/.env)
 	envTargets := []string{".env", filepath.Join(config.ScorpDir(), ".env")}
 	for _, envPath := range envTargets {
@@ -342,7 +356,7 @@ func saveConfig(envKeyName, apiKey, tgToken, tgUsers, autonomy, provider, modelK
 				parts := strings.SplitN(trimmed, "=", 2)
 				if len(parts) == 2 {
 					k := parts[0]
-					if k == envKeyName || k == "SCORP_AUTONOMY" ||
+					if k == envKeyName || k == "SCORP_AUTONOMY" || k == "SCORP_SANDBOX" ||
 						(tgToken != "" && k == "TELEGRAM_BOT_TOKEN") ||
 						(tgUsers != "" && k == "TELEGRAM_ALLOWED_USERS") {
 						continue // skip to overwrite below
@@ -366,6 +380,8 @@ func saveConfig(envKeyName, apiKey, tgToken, tgUsers, autonomy, provider, modelK
 		}
 		lines = append(lines, fmt.Sprintf("SCORP_AUTONOMY=%s", autonomy))
 		_ = os.Setenv("SCORP_AUTONOMY", autonomy)
+		lines = append(lines, fmt.Sprintf("SCORP_SANDBOX=%s", sandboxMode))
+		_ = os.Setenv("SCORP_SANDBOX", sandboxMode)
 
 		_ = os.WriteFile(envPath, []byte(strings.Join(lines, "\n")+"\n"), 0600)
 	}

@@ -171,8 +171,8 @@ echo ""
 # 5. Dependency & Security Check
 if [ "$TARGET_OS" = "linux" ]; then
     if ! command -v bwrap >/dev/null 2>&1; then
-        echo -e "${YELLOW}💡 Recommendation: Install bubblewrap for process sandbox isolation:${RESET}"
-        echo -e "   ${BOLD}sudo apt install -y bubblewrap${RESET} (or dnf/pacman/apk equivalent)"
+        echo -e "${YELLOW}💡 Note: bubblewrap is not installed.${RESET}"
+        echo -e "   For root-filesystem isolation, you can install it anytime: ${BOLD}sudo apt install -y bubblewrap${RESET}"
         echo ""
     fi
 fi
