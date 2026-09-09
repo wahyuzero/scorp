@@ -42,7 +42,7 @@ func savePendingConfirmationToDisk(chatID string, pc *pendingConfirmation) {
 	p := pendingConfirmFilePath(chatID)
 	data, err := json.Marshal(pc)
 	if err == nil {
-		_ = tools.WriteFileAtomic(p, data, 0644)
+		_ = helpers.WriteFileAtomic(p, data, 0644)
 	}
 }
 

@@ -46,6 +46,9 @@ var (
 	scheduledTasks   []ScheduledTask
 	scheduledTasksMu sync.Mutex
 	taskIDCounter    int
+
+	// Worker pool limiter: cap concurrent background jobs to 3 to prevent CPU/memory exhaustion
+	taskSem = make(chan struct{}, 3)
 )
 
 // ──────────────────────────────────────────────
@@ -240,8 +243,11 @@ func dispatchDueTasks(now time.Time) []ScheduledTask {
 	return dueTasks
 }
 
-// RunTask executes a scheduled task with retry logic
+// RunTask executes a scheduled task with retry logic within bounded worker pool
 func RunTask(task ScheduledTask) {
+	taskSem <- struct{}{}
+	defer func() { <-taskSem }()
+
 	log.Printf("[scheduler] Running task %s: %s", task.ID, task.Name)
 
 	var result string
@@ -264,7 +270,7 @@ func RunTask(task ScheduledTask) {
 				prompt = fmt.Sprintf("Previous run result:\n%s\n\nTask:\n%s",
 					helpers.TruncateStr(task.PrevResult, 2000), task.Prompt)
 			}
-			result, status = runAgentTask(prompt)
+			result, status = runAgentTask(prompt, task.ChatTarget)
 		default:
 			result = fmt.Sprintf("Unknown task type: %s", task.Type)
 			status = "error"
@@ -348,10 +354,16 @@ func ShellTask(command string) (string, string) {
 	return output, "ok"
 }
 
-func runAgentTask(prompt string) (string, string) {
-	chatID, err := strconv.ParseInt(config.Cfg.TelegramChatID, 10, 64)
-	if err != nil {
-		return "Invalid chat ID config", "error"
+func runAgentTask(prompt string, chatTarget ...int64) (string, string) {
+	var chatID int64
+	var err error
+	if len(chatTarget) > 0 && chatTarget[0] != 0 {
+		chatID = chatTarget[0]
+	} else {
+		chatID, err = strconv.ParseInt(config.Cfg.TelegramChatID, 10, 64)
+		if err != nil {
+			return "Invalid chat ID config", "error"
+		}
 	}
 
 	msgID := int64(0)

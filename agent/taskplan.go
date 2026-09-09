@@ -64,7 +64,7 @@ func planFilePath(sessionID string) string {
 	return filepath.Join(config.ScorpPath("plans"), sanitizeSessionID(sessionID)+".plan.json")
 }
 
-// savePlanToDisk atomically persists the ledger (tmp write + rename).
+// savePlanToDisk atomically persists the ledger using helpers.WriteFileAtomic.
 func savePlanToDisk(sessionID string, p *TaskPlan) {
 	p.mu.RLock()
 	data, err := json.Marshal(p)
@@ -73,14 +73,7 @@ func savePlanToDisk(sessionID string, p *TaskPlan) {
 		return
 	}
 	path := planFilePath(sessionID)
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-		return
-	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, data, 0644); err != nil {
-		return
-	}
-	_ = os.Rename(tmp, path)
+	_ = helpers.WriteFileAtomic(path, data, 0644)
 }
 
 // loadPlanFromDisk reads a persisted ledger; expired or corrupt files are

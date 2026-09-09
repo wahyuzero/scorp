@@ -8,6 +8,7 @@ import (
 	"math/bits"
 	"os"
 	"path/filepath"
+	"scorp-agent/internal/helpers"
 	"sort"
 	"strings"
 	"sync"
@@ -41,15 +42,29 @@ type VectorIndex struct {
 	dirty  bool
 }
 
-var VecIndex *VectorIndex
+var (
+	VecIndex     *VectorIndex
+	vecInitOnce  sync.Once
+)
+
+// EnsureVectorRAG ensures VecIndex is safely initialized before any tool or search accesses it
+func EnsureVectorRAG() {
+	vecInitOnce.Do(func() {
+		if VecIndex == nil {
+			VecIndex = &VectorIndex{
+				Chunks: make(map[string]*VecChunk),
+				DBPath: ragVectorDBPath(),
+			}
+			VecIndex.load()
+			if os.Getenv("SCORP_DEBUG") != "" {
+				log.Printf("[ragvec] Loaded %d simhash chunks from disk", len(VecIndex.Chunks))
+			}
+		}
+	})
+}
 
 func InitVectorRAG() {
-	VecIndex = &VectorIndex{
-		Chunks: make(map[string]*VecChunk),
-		DBPath: ragVectorDBPath(),
-	}
-	VecIndex.load()
-	log.Printf("[ragvec] Loaded %d simhash chunks from disk", len(VecIndex.Chunks))
+	EnsureVectorRAG()
 }
 
 // ──────────────────────────────────────────────
@@ -164,7 +179,11 @@ func (idx *VectorIndex) vecSearch(queryFP uint64, queryText string, topK int) []
 
 	results := make([]searchResult, 0, len(idx.Chunks))
 	for _, chunk := range idx.Chunks {
-		score := simhashSimilarity(queryFP, chunk.Simhash)
+		// Guard against zero-variance simhash match on empty/whitespace content
+		var score float64
+		if queryFP != 0 && chunk.Simhash != 0 {
+			score = simhashSimilarity(queryFP, chunk.Simhash)
+		}
 		contentLower := strings.ToLower(chunk.Content)
 
 		// Keyword match boost
@@ -353,7 +372,7 @@ func (idx *VectorIndex) Persist() error {
 	}
 	dir := filepath.Dir(idx.DBPath)
 	os.MkdirAll(dir, 0755)
-	return os.WriteFile(idx.DBPath, data, 0644)
+	return helpers.WriteFileAtomic(idx.DBPath, data, 0644)
 }
 
 func (idx *VectorIndex) load() error {
@@ -471,6 +490,7 @@ func splitSentences(text string) []string {
 // ──────────────────────────────────────────────
 
 func RagVecIngest(args map[string]interface{}) (string, bool) {
+	EnsureVectorRAG()
 	path := getStringArg(args, "path", "")
 	if path == "" {
 		return "Error: 'path' is required", false
@@ -504,7 +524,14 @@ func RagVecIngest(args map[string]interface{}) (string, bool) {
 	if info.IsDir() {
 		files := []string{}
 		filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
-			if err != nil || info.IsDir() {
+			if err != nil {
+				return nil
+			}
+			if info.IsDir() {
+				name := info.Name()
+				if name == ".git" || name == "node_modules" || name == "vendor" || name == "dist" || name == ".venv" || name == "venv" {
+					return filepath.SkipDir
+				}
 				return nil
 			}
 			ext := stringsToLower(filepath.Ext(p))
@@ -565,6 +592,7 @@ func RagVecIngest(args map[string]interface{}) (string, bool) {
 }
 
 func RagVecSearch(args map[string]interface{}) (string, bool) {
+	EnsureVectorRAG()
 	query := getStringArg(args, "query", "")
 	topK := getIntArg(args, "top_k", 5)
 	hybridMode := getBoolArg(args, "hybrid", true)
@@ -615,6 +643,7 @@ func RagVecSearch(args map[string]interface{}) (string, bool) {
 }
 
 func RagVecList(args map[string]interface{}) (string, bool) {
+	EnsureVectorRAG()
 	sources := VecIndex.vecListSources()
 	total := len(VecIndex.Chunks)
 	if total == 0 {
@@ -631,6 +660,7 @@ func RagVecList(args map[string]interface{}) (string, bool) {
 }
 
 func RagVecRemove(args map[string]interface{}) (string, bool) {
+	EnsureVectorRAG()
 	source := getStringArg(args, "source", "")
 	if source == "" {
 		return "Error: 'source' is required", false

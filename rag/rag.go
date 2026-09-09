@@ -7,6 +7,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"scorp-agent/internal/helpers"
 	"sort"
 	"strings"
 	"sync"
@@ -297,7 +298,7 @@ func (idx *RAGIndex) persist() error {
 	}
 	dir := filepath.Dir(idx.IndexPath)
 	os.MkdirAll(dir, 0755)
-	return os.WriteFile(idx.IndexPath, data, 0644)
+	return helpers.WriteFileAtomic(idx.IndexPath, data, 0644)
 }
 
 // load reads the index from disk.
