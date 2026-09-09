@@ -91,6 +91,8 @@ For empirical head-to-head testing on live VPS infrastructure, see:
 * [🥊 Benchmark Komparasi 20 Tugas Ringan: Scorp vs PicoClaw vs ZeroClaw](./BENCHMARK_LIGHT_20_SCORP_PICOCLAW_ZEROCLAW.md) — Live benchmark covering factual QA, arithmetic, logic riddles, code generation, formatting, and DevOps tasks on Google Gemini 3.5 Flash-Lite.
 * [🏗️ Benchmark Komparasi 15 Tugas Agentic Berat: Scorp vs PicoClaw vs ZeroClaw](./BENCHMARK_HEAVY_AGENTIC_15_SCORP_PICOCLAW_ZEROCLAW.md) — Live autonomous benchmark testing tool calling, multi-step directory structures, code execution, bug diagnosis & self-repair, unit testing (TDD), CSV-to-JSON transformations, cryptographic hashing, and system telemetry on real VPS.
 * [🏛️ Benchmark Komparasi 15 Tugas Agentic Brutal & Kompleks: Scorp vs PicoClaw vs ZeroClaw](./BENCHMARK_BRUTAL_15_SCORP_PICOCLAW_ZEROCLAW.md) — Deep engineering benchmark testing multi-file Go compilation, SQLite transactions, background REST API processes, signal traps, HMAC authentication, Git multi-branch trees, and system cgroup audits.
+* [🌌 Benchmark Komparasi 15 Tugas Rekayasa Ekstrem & Arsitektur Sistem: Scorp vs PicoClaw vs ZeroClaw](./BENCHMARK_EXTREME_15_SCORP_PICOCLAW_ZEROCLAW.md) — Extreme engineering benchmark testing native C shared libraries compilation via gcc + ctypes, async SQLite multi-worker task queues, self-signed TLS certificates & HTTPS server daemon, recursive JSON schema diff engines, Linux memory limits & OOM handling, non-blocking TCP socket suites, and live Prometheus metric exporters.
+
 
 
 
