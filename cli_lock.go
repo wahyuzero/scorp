@@ -18,6 +18,12 @@ type sessionLockFile struct {
 // for a session ID. If already locked by another running process, it returns an error
 // with the other process's PID.
 func acquireSessionLock(sessionID string) (*sessionLockFile, error) {
+	// Recursive self-call allowance: if this process is spawned by another Scorp instance,
+	// inherit lock ownership instead of deadlocking on itself.
+	if os.Getenv("SCORP_PARENT_PID") != "" && sessionID == os.Getenv("SCORP_PARENT_SESSION") {
+		return &sessionLockFile{file: nil, path: ""}, nil
+	}
+
 	safeID := strings.Map(func(r rune) rune {
 		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_' {
 			return r

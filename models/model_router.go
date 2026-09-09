@@ -426,7 +426,9 @@ func ShouldFallbackOnError(err error, triggers []string) bool {
 		case "auth_error", "auth-error":
 			if strings.Contains(msg, "unauthorized") || strings.Contains(msg, "http 401") ||
 				strings.Contains(msg, "http 403") || strings.Contains(msg, "invalid api key") ||
-				strings.Contains(msg, "authentication") {
+				strings.Contains(msg, "authentication") || strings.Contains(msg, "unauthenticated") ||
+				strings.Contains(msg, "service account") || strings.Contains(msg, "disabled") ||
+				strings.Contains(msg, "deleted") {
 				return true
 			}
 		case "network_error", "network-error":

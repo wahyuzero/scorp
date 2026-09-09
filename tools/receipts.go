@@ -41,6 +41,17 @@ func loadReceiptsLocked() {
 	}
 	receiptsLoaded = true
 	p := config.ScorpPath("receipts.json")
+	
+	// Cross-process file lock for safe concurrent reading
+	lockPath := p + ".lock"
+	if lockFile, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0644); err == nil {
+		_ = fileLockExclusive(lockFile)
+		defer func() {
+			_ = fileUnlock(lockFile)
+			lockFile.Close()
+		}()
+	}
+
 	data, err := os.ReadFile(p)
 	if err != nil {
 		return
@@ -60,7 +71,27 @@ func loadReceiptsLocked() {
 
 func saveReceiptsLocked() {
 	p := config.ScorpPath("receipts.json")
-	if data, err := json.Marshal(recentReceipts); err == nil {
+	data, err := json.Marshal(recentReceipts)
+	if err != nil {
+		return
+	}
+
+	// Cross-process file lock prevents concurrent corruption between daemon & CLI runs
+	lockPath := p + ".lock"
+	lockFile, lErr := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0644)
+	if lErr == nil {
+		_ = fileLockExclusive(lockFile)
+		defer func() {
+			_ = fileUnlock(lockFile)
+			lockFile.Close()
+		}()
+	}
+
+	// Atomic write using temp file and rename
+	tmpPath := fmt.Sprintf("%s.tmp.%d", p, time.Now().UnixNano())
+	if wErr := os.WriteFile(tmpPath, data, 0644); wErr == nil {
+		_ = os.Rename(tmpPath, p)
+	} else {
 		_ = os.WriteFile(p, data, 0644)
 	}
 }

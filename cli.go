@@ -59,6 +59,7 @@ func startCLI(initialPrompts ...string) {
 	wireCLICallbacks()
 
 	// ── Init agent state ──
+	tools.InitMemoryCache()
 	agent.LoadAutonomousConfig()
 	agent.LoadAutoLog()
 

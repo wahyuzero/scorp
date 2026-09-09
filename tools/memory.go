@@ -134,6 +134,17 @@ func ExecuteMemory(args map[string]interface{}) (string, bool) {
 		if v, ok := getMemory(key); ok {
 			return fmt.Sprintf("Memory[%s] = %s", key, v), true
 		}
+		// If not found in key-value store, search durable memory (MEMORY.md)
+		if ReadDurableMemory != nil {
+			mdContent := ReadDurableMemory()
+			keyLower := strings.ToLower(key)
+			for _, line := range strings.Split(mdContent, "\n") {
+				lineTrimmed := strings.TrimSpace(line)
+				if strings.Contains(strings.ToLower(lineTrimmed), keyLower) {
+					return fmt.Sprintf("Memory[%s] found in MEMORY.md: %s", key, lineTrimmed), true
+				}
+			}
+		}
 		return fmt.Sprintf("Memory[%s] not found", key), true
 	case "set":
 		if key == "" || value == "" {
@@ -163,6 +174,21 @@ func ExecuteMemory(args map[string]interface{}) (string, bool) {
 		// survives across sessions (injected at session start).
 		if value == "" {
 			return "Error: 'value' is required for remember — a self-contained one-line fact", false
+		}
+		// Also store in key-value store if value contains key=val or key:val pattern for instant bi-directional recall
+		if strings.Contains(value, "=") || strings.Contains(value, ":") {
+			var sep string
+			if strings.Contains(value, "=") {
+				sep = "="
+			} else {
+				sep = ":"
+			}
+			parts := strings.SplitN(value, sep, 2)
+			k := strings.TrimSpace(parts[0])
+			v := strings.TrimSpace(parts[1])
+			if k != "" && v != "" {
+				SetMemory(k, v)
+			}
 		}
 		if AppendDurableMemory == nil {
 			return "Error: durable memory not wired in this runtime", false

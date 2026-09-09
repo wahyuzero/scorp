@@ -53,7 +53,13 @@ func readMemoryMDLocked() string {
 	}
 	out := string(data)
 	if len(out) > memoryMDMaxInject {
-		out = out[:memoryMDMaxInject] + "\n... (truncated)"
+		// Clean truncation at the last complete newline boundary to prevent half-sentence cuts
+		cutIdx := strings.LastIndex(out[:memoryMDMaxInject], "\n")
+		if cutIdx > 0 {
+			out = out[:cutIdx] + "\n... (truncated at line boundary)"
+		} else {
+			out = out[:memoryMDMaxInject] + "\n... (truncated)"
+		}
 	}
 	return strings.TrimSpace(out)
 }

@@ -168,6 +168,14 @@ func tryMatchStrategies(content, oldStr, newStr string, replaceAll bool) (string
 		return result, count, 2
 	}
 
+	// Strategy 3: Substring line block search (ignoring leading/trailing blank lines in oldStr)
+	trimmedOldStr := strings.TrimSpace(oldStr)
+	if trimmedOldStr != "" && trimmedOldStr != oldStr {
+		if result, count, ok := lineWindowMatch(content, trimmedOldStr, newStr, replaceAll, true); ok {
+			return result, count, 3
+		}
+	}
+
 	return content, 0, 0
 }
 

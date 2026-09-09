@@ -103,7 +103,15 @@ func ExecuteSQL(args map[string]interface{}, chatID int64) (string, bool) {
 
 	switch strings.ToLower(dbType) {
 	case "sqlite":
-		db, err = sql.Open("sqlite3", dsn)
+		sqliteDSN := dsn
+		if !strings.Contains(sqliteDSN, "_busy_timeout") {
+			sep := "?"
+			if strings.Contains(sqliteDSN, "?") {
+				sep = "&"
+			}
+			sqliteDSN += sep + "_busy_timeout=5000&_journal_mode=WAL"
+		}
+		db, err = sql.Open("sqlite3", sqliteDSN)
 	case "postgres":
 		db, err = sql.Open("postgres", dsn)
 	case "mysql":

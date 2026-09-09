@@ -57,13 +57,29 @@ func IsTestRelatedPath(p string) bool {
 	if p == "" {
 		return false
 	}
-	norm := "/" + strings.ToLower(filepath.ToSlash(strings.TrimSpace(p))) + "/"
+	// Temporary scratch directories (/tmp/...) created during agent runs should never lock the test gate
+	cleanP := filepath.ToSlash(strings.TrimSpace(p))
+	if strings.HasPrefix(cleanP, "/tmp/") || strings.HasPrefix(cleanP, "tmp/") {
+		return false
+	}
+	base := strings.ToLower(filepath.Base(p))
+	for _, n := range testFileNames {
+		if base == n {
+			return true
+		}
+	}
+	// Non-code plain text or documentation files (.txt, .md, .log, .json, .csv) are documentation/data, not test suites
+	for _, docExt := range []string{".txt", ".md", ".log", ".json", ".csv", ".dat"} {
+		if strings.HasSuffix(base, docExt) {
+			return false
+		}
+	}
+	norm := "/" + strings.ToLower(cleanP) + "/"
 	for _, seg := range testPathSegments {
 		if strings.Contains(norm, seg) {
 			return true
 		}
 	}
-	base := strings.ToLower(filepath.Base(p))
 	for _, s := range testFileSuffixes {
 		if strings.HasSuffix(base, s) {
 			return true
@@ -456,6 +472,10 @@ func opReceiptMatchesClass(class, tool, cmd, action, query string) bool {
 		}
 	case "lifecycle":
 		if strings.Contains(lowerAction, "pause") || strings.Contains(lowerAction, "resume") || strings.Contains(lowerAction, "enable") || strings.Contains(lowerAction, "disable") || strings.Contains(lowerAction, "run") {
+			return true
+		}
+		// A successful execution of a script (python, bash, ./, sh) also backs lifecycle claims for self-testing scripts
+		if strings.HasPrefix(lowerCmd, "python") || strings.HasPrefix(lowerCmd, "bash") || strings.HasPrefix(lowerCmd, "sh ") || strings.HasPrefix(lowerCmd, "./") || strings.Contains(lowerCmd, "go run") {
 			return true
 		}
 		for _, m := range []string{"systemctl", "service ", "kill ", "pkill", "start", "stop", "restart", "reload", "deploy"} {

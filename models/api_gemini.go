@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"scorp-agent/internal/helpers"
@@ -216,6 +217,30 @@ func geminiMessages(messages []ChatMessage) ([]geminiContent, *geminiContent) {
 
 		default: // "user" or anything else
 			trimmed := strings.TrimSpace(m.Content)
+
+			// Native Gemini functionResponse detection from tool result strings
+			if strings.HasPrefix(trimmed, "[Tool Result: ") {
+				toolName := "tool"
+				if endIdx := strings.Index(trimmed, "]"); endIdx > 14 {
+					toolName = strings.TrimSpace(trimmed[14:endIdx])
+				}
+				resBody := strings.TrimSpace(trimmed[strings.Index(trimmed, "\n")+1:])
+				contents = append(contents, geminiContent{
+					Role: "user",
+					Parts: []geminiPart{
+						{
+							FunctionResponse: &geminiFunctionResponse{
+								Name: toolName,
+								Response: map[string]interface{}{
+									"result": resBody,
+								},
+							},
+						},
+					},
+				})
+				continue
+			}
+
 			if strings.HasPrefix(trimmed, "[") && (strings.Contains(trimmed, "image_url") || strings.Contains(trimmed, "inlineData") || strings.Contains(trimmed, "image")) {
 				var rawParts []map[string]interface{}
 				if err := json.Unmarshal([]byte(trimmed), &rawParts); err == nil {
@@ -260,6 +285,14 @@ func geminiMessages(messages []ChatMessage) ([]geminiContent, *geminiContent) {
 		}
 	}
 
+	// Gemini API requires alternating turns and strictly forbids ending with a model turn
+	if len(contents) > 0 && contents[len(contents)-1].Role == "model" {
+		contents = append(contents, geminiContent{
+			Role:  "user",
+			Parts: []geminiPart{{Text: "Continue."}},
+		})
+	}
+
 	var sys *geminiContent
 	if len(systemParts) > 0 {
 		sys = &geminiContent{Parts: systemParts}
@@ -287,6 +320,9 @@ func geminiBuildRequest(model *ModelConfig, messages []ChatMessage, withTools bo
 		if tl, ok := model.ExtraBody["thinking_level"].(string); ok && tl != "" {
 			genConfig.ThinkingConfig = &geminiThinkingConfig{ThinkingLevel: tl}
 		}
+	} else if strings.Contains(strings.ToLower(model.Model), "flash-lite") {
+		// Only flash-lite models support "minimal" thinking level
+		genConfig.ThinkingConfig = &geminiThinkingConfig{ThinkingLevel: "minimal"}
 	}
 
 	req := geminiRequest{
@@ -422,6 +458,10 @@ func callGemini(ctx context.Context, model *ModelConfig, messages []ChatMessage)
 // CallGeminiWithTools sends a request with native tool definitions.
 func CallGeminiWithTools(ctx context.Context, model *ModelConfig, messages []ChatMessage) (string, []ToolCall, error) {
 	reqBody := geminiBuildRequest(model, messages, true)
+	if os.Getenv("SCORP_DEBUG") != "" {
+		dbgJSON, _ := json.Marshal(reqBody)
+		log.Printf("[gemini/debug] Request payload: %s", string(dbgJSON))
+	}
 	apiResp, err := geminiDoRequest(ctx, model, reqBody)
 	if err != nil {
 		return "", nil, err

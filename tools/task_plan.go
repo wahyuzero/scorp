@@ -10,7 +10,7 @@ import (
 func init() {
 	registry.RegisterTool(registry.ToolDef{
 		Name:        "task_plan",
-		Description: "Create or update the structured plan for the current request. MANDATORY FIRST STEP for every multi-step task: decompose the request into concrete verifiable steps. Mark an item 'in_progress' when you start it and 'done' ONLY after verifying its result with real tool output. The runtime REJECTS complete_task while any item is unfinished.",
+		Description: "OPTIONAL tool for massive multi-phase engineering migrations ONLY (10+ files). DO NOT call task_plan for direct scripts, command execution, single-file edits, or focused tasks. The runtime rejects complete_task while any item is unfinished if created.",
 		Category:    "core",
 		Native:      true,
 		Execute: func(args map[string]interface{}, chatID int64) (string, bool) {

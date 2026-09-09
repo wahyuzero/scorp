@@ -108,8 +108,8 @@ func CallModelWithToolsAndFallback(ctx context.Context, taskType string, message
 		}
 
 		// Rate-limit retry loop for this model
-		maxRateLimitRetries := 3
-		backoffSteps := []time.Duration{15 * time.Second, 30 * time.Second, 60 * time.Second}
+		maxRateLimitRetries := 2
+		backoffSteps := []time.Duration{2 * time.Second, 4 * time.Second}
 		var modelLastErr error
 
 		for attempt := 0; attempt <= maxRateLimitRetries; attempt++ {
@@ -218,7 +218,9 @@ func ParseCodeBlockFallback(text string) ([]ToolCall, string) {
 	return calls, strings.TrimSpace(cleanText)
 }
 
-// ParseAllToolCalls tries native tool calls, then XML tags, then code blocks
+// ParseAllToolCalls tries native tool calls, then structured XML tags.
+// Note: Code-block guessing is deliberately excluded to prevent regular explanatory
+// markdown code snippets from being falsely executed without valid thought signatures.
 func ParseAllToolCalls(text string, nativeCalls []ToolCall) ([]ToolCall, string) {
 	// 1. Native function calling (already parsed by CallModelWithTools)
 	if len(nativeCalls) > 0 {
@@ -229,12 +231,6 @@ func ParseAllToolCalls(text string, nativeCalls []ToolCall) ([]ToolCall, string)
 	xmlCalls, cleanText := ParseToolCalls(text)
 	if len(xmlCalls) > 0 {
 		return xmlCalls, cleanText
-	}
-
-	// 3. Code-block fallback: parse shell commands from code blocks
-	codeCalls, cleanText := ParseCodeBlockFallback(text)
-	if len(codeCalls) > 0 {
-		return codeCalls, cleanText
 	}
 
 	return nil, text

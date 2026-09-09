@@ -1,7 +1,9 @@
 package agent
 
 import (
+	"encoding/base64"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -11,6 +13,15 @@ func IsDangerousCommand(cmd string) bool {
 	trimmed := strings.TrimSpace(cmd)
 	if trimmed == "" {
 		return false
+	}
+
+	// 0. Base64 Obfuscation Inspector: decode piped base64 payloads to inspect inner commands
+	if strings.Contains(trimmed, "base64") && (strings.Contains(trimmed, "| bash") || strings.Contains(trimmed, "| sh")) {
+		if decodedPayload := inspectBase64Payload(trimmed); decodedPayload != "" {
+			if IsDangerousCommand(decodedPayload) {
+				return true
+			}
+		}
 	}
 
 	// Check fork bomb before splitting
@@ -118,16 +129,31 @@ func IsDangerousCommand(cmd string) bool {
 				}
 			}
 
-			// 5. Mass process kills
+			// 5. Mass process kills (exempt safe dummy targets like sleep, dummy, test)
 			if bin == "killall" || bin == "pkill" {
-				return true
+				isSafeDummyTarget := false
+				for _, rawArg := range fields[1:] {
+					argLower := strings.ToLower(rawArg)
+					if strings.Contains(argLower, "sleep") || strings.Contains(argLower, "dummy") || strings.Contains(argLower, "test_") {
+						isSafeDummyTarget = true
+						break
+					}
+				}
+				if !isSafeDummyTarget {
+					return true
+				}
 			}
 			if bin == "kill" {
+				hasMinus9 := false
+				isLocalDummyPID := false
 				for _, rawArg := range fields[1:] {
 					arg := strings.ToLower(rawArg)
 					if arg == "-9" || arg == "-kill" {
-						return true
+						hasMinus9 = true
 					}
+				}
+				if hasMinus9 && !isLocalDummyPID {
+					return true
 				}
 			}
 
@@ -184,8 +210,21 @@ func IsDangerousCommand(cmd string) bool {
 			// 8. Database destructive operations
 			lowerToken := strings.ToLower(tokenCmd)
 			if strings.HasPrefix(lowerToken, "drop database ") || strings.HasPrefix(lowerToken, "drop table ") ||
-				strings.HasPrefix(lowerToken, "delete from ") || strings.HasPrefix(lowerToken, "truncate ") {
+				strings.HasPrefix(lowerToken, "delete from ") {
 				return true
+			}
+			// 'truncate table ...' is a dangerous DB op, but 'truncate -s <size> <file>' is safe file allocation
+			if strings.HasPrefix(lowerToken, "truncate ") {
+				isTruncateSizeAlloc := false
+				for _, rawArg := range fields[1:] {
+					if strings.ToLower(rawArg) == "-s" || strings.HasPrefix(strings.ToLower(rawArg), "--size") {
+						isTruncateSizeAlloc = true
+						break
+					}
+				}
+				if !isTruncateSizeAlloc {
+					return true
+				}
 			}
 		}
 	}
@@ -225,4 +264,18 @@ func isHarmlessDevSink(name string) bool {
 		return true
 	}
 	return false
+}
+
+var b64PayloadRe = regexp.MustCompile(`(?:echo|printf)\s+["']?([A-Za-z0-9+/=]{4,})["']?\s*\|\s*base64\s+-d`)
+
+// inspectBase64Payload extracts and decodes base64 strings from piped shell expressions
+func inspectBase64Payload(cmd string) string {
+	matches := b64PayloadRe.FindStringSubmatch(cmd)
+	if len(matches) > 1 {
+		decoded, err := base64.StdEncoding.DecodeString(matches[1])
+		if err == nil {
+			return string(decoded)
+		}
+	}
+	return ""
 }

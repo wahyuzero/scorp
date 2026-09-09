@@ -4,13 +4,16 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"scorp-agent/config"
 	"scorp-agent/internal/helpers"
 	"strings"
+	"sync"
 	"time"
+	"unicode/utf16"
 )
 
 // shellQuote safely quotes a string for use in shell commands
@@ -147,49 +150,185 @@ func ExecuteShell(args map[string]interface{}, chatID int64) (string, bool) {
 		}
 	}
 
-	var buf bytes.Buffer
-	cmd.Stdout = &buf
-	cmd.Stderr = &buf
+	// Set parent tracking env vars so self-spawned Scorp sub-processes know they are children
+	cleanEnv := cmd.Env
+	if len(cleanEnv) == 0 {
+		cleanEnv = os.Environ()
+	}
+	cleanEnv = append(cleanEnv, fmt.Sprintf("SCORP_PARENT_PID=%d", os.Getpid()))
+	cleanEnv = append(cleanEnv, fmt.Sprintf("SCORP_PARENT_SESSION=%d", chatID))
+
+	// Inject persistent session environment variables
+	if sessEnvs := GetSessionEnv(chatID); len(sessEnvs) > 0 {
+		for k, v := range sessEnvs {
+			cleanEnv = append(cleanEnv, fmt.Sprintf("%s=%s", k, v))
+		}
+	}
+	cmd.Env = cleanEnv
+
+	// Auto-capture any explicit static export KEY=VAL from command to persist for next turns
+	captureSessionExports(chatID, command)
+
+	// Non-interactive stdin guard: prevent child processes from blocking indefinitely
+	// waiting for interactive keyboard input (e.g. read -p, sudo password, python input()).
+	cmd.Stdin = strings.NewReader("")
+
+	stdoutPipe, err := cmd.StdoutPipe()
+	if err != nil {
+		return fmt.Sprintf("Failed to create stdout pipe: %v", err), false
+	}
+	stderrPipe, err := cmd.StderrPipe()
+	if err != nil {
+		return fmt.Sprintf("Failed to create stderr pipe: %v", err), false
+	}
 
 	if err := cmd.Start(); err != nil {
 		return fmt.Sprintf("Command failed to start: %v", err), false
 	}
 
-	done := make(chan error, 1)
-	go func() { done <- cmd.Wait() }()
+	var buf bytes.Buffer
+	var bufMu sync.Mutex
 
-	var err error
+	// Read stdout and stderr concurrently with a buffer limit
+	readDone := make(chan struct{}, 2)
+	streamReader := func(r io.Reader) {
+		defer func() { readDone <- struct{}{} }()
+		temp := make([]byte, 4096)
+		for {
+			n, rErr := r.Read(temp)
+			if n > 0 {
+				bufMu.Lock()
+				if buf.Len() < helpers.MaxToolOutput*3 {
+					buf.Write(temp[:n])
+				}
+				bufMu.Unlock()
+			}
+			if rErr != nil {
+				break
+			}
+		}
+	}
+
+	go streamReader(stdoutPipe)
+	go streamReader(stderrPipe)
+
+	waitDone := make(chan error, 1)
+	go func() {
+		waitDone <- cmd.Wait()
+	}()
+
+	var waitErr error
 	timedOut := false
+
 	select {
 	case <-ctx.Done():
 		timedOut = true
 		if cmd.Process != nil {
-			// Negative PID kills the whole group (bash + backgrounded children).
 			KillProcessGroup(cmd)
 		}
-		<-done // copiers finish once every group member released the pipe
-		err = fmt.Errorf("timeout")
-	case err = <-done:
+		waitErr = fmt.Errorf("timeout")
+	case waitErr = <-waitDone:
+		// Process exited. If background children still hold the pipe, give them a short grace period
+		// then close the pipes so cmd doesn't hang the loop forever.
+		select {
+		case <-readDone:
+		case <-time.After(500 * time.Millisecond):
+			stdoutPipe.Close()
+			stderrPipe.Close()
+		}
 	}
 
+	bufMu.Lock()
 	result := buf.String()
+	bufMu.Unlock()
 
 	if timedOut {
+		// Clean up any lingering POSIX shared memory files created in /dev/shm during aborted runs
+		cleanAbortedShm()
 		return fmt.Sprintf("Command timed out after %ds (background processes holding the pipe are killed — for daemons use: nohup CMD >/tmp/log 2>&1 & disown):\n%s",
 			timeout, helpers.TruncOutput(result, helpers.MaxToolOutput)), false
 	}
 
-	if err != nil {
-		return fmt.Sprintf("Command failed: %v\nOutput:\n%s", err, helpers.TruncOutput(result, helpers.MaxToolOutput)), false
+	if waitErr != nil {
+		return fmt.Sprintf("Command failed: %v\nOutput:\n%s", waitErr, helpers.TruncOutput(result, helpers.MaxToolOutput)), false
+	}
+
+	trimmedOut := strings.TrimSpace(result)
+	if trimmedOut == "" {
+		return "(Command executed successfully with exit code 0 and empty output)", true
 	}
 
 	return helpers.TruncOutput(result, helpers.MaxToolOutput), true
+}
+
+// ── Session Scoped Environment Storage ──
+
+var (
+	sessionEnvMap = make(map[int64]map[string]string)
+	sessionEnvMu  sync.RWMutex
+)
+
+// SetSessionEnv sets a persistent environment variable scoped to a session
+func SetSessionEnv(chatID int64, key, val string) {
+	sessionEnvMu.Lock()
+	defer sessionEnvMu.Unlock()
+	if sessionEnvMap[chatID] == nil {
+		sessionEnvMap[chatID] = make(map[string]string)
+	}
+	sessionEnvMap[chatID][key] = val
+}
+
+// GetSessionEnv returns the map of persistent environment variables for a session
+func GetSessionEnv(chatID int64) map[string]string {
+	sessionEnvMu.RLock()
+	defer sessionEnvMu.RUnlock()
+	m := sessionEnvMap[chatID]
+	if m == nil {
+		return nil
+	}
+	cp := make(map[string]string, len(m))
+	for k, v := range m {
+		cp[k] = v
+	}
+	return cp
+}
+
+// captureSessionExports extracts top-level 'export KEY=VALUE' assignments from commands
+func captureSessionExports(chatID int64, command string) {
+	lines := strings.Split(command, "\n")
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		parts := strings.Split(trimmed, ";")
+		for _, part := range parts {
+			subParts := strings.Split(part, "&&")
+			for _, sp := range subParts {
+				spTrim := strings.TrimSpace(sp)
+				if strings.HasPrefix(spTrim, "export ") {
+					assign := strings.TrimPrefix(spTrim, "export ")
+					eqIdx := strings.Index(assign, "=")
+					if eqIdx > 0 {
+						k := strings.TrimSpace(assign[:eqIdx])
+						v := strings.TrimSpace(assign[eqIdx+1:])
+						if (strings.HasPrefix(v, "\"") && strings.HasSuffix(v, "\"")) ||
+							(strings.HasPrefix(v, "'") && strings.HasSuffix(v, "'")) {
+							v = v[1 : len(v)-1]
+						}
+						if !strings.Contains(v, "$(") && !strings.Contains(v, "`") {
+							SetSessionEnv(chatID, k, v)
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 // ── File Reader ──
 
 var allowedReadPaths = []string{
 	config.HomeDir() + "/",
+	"/root/",
+	"/home/",
 	"/tmp/",
 	"/etc/",
 	"/var/log/",
@@ -198,6 +337,11 @@ var allowedReadPaths = []string{
 }
 
 func isPathAllowed(path string, allowedPrefixes []string) bool {
+	// If Sandbox is disabled, host operations have unrestricted filesystem access
+	if !SandboxModeEnabled() {
+		return true
+	}
+
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return false
@@ -229,12 +373,28 @@ func ExecuteReadFile(args map[string]interface{}) (string, bool) {
 		return fmt.Sprintf("Error: path '%s' is not in allowed directories", path), false
 	}
 
-	data, err := os.ReadFile(path)
+	// Guard against unbounded memory allocation on large or binary files (e.g. 50MB+ dumps).
+	// Read up to 2MB max directly through a bounded limit reader.
+	f, err := os.Open(path)
+	if err != nil {
+		return fmt.Sprintf("Error opening file: %v", err), false
+	}
+	defer f.Close()
+
+	const maxReadSize = 2 * 1024 * 1024 // 2MB
+	limitedReader := io.LimitReader(f, maxReadSize+1)
+	data, err := io.ReadAll(limitedReader)
 	if err != nil {
 		return fmt.Sprintf("Error reading file: %v", err), false
 	}
+	truncatedNotice := ""
+	if len(data) > maxReadSize {
+		data = data[:maxReadSize]
+		truncatedNotice = "\n\n... [File content truncated: exceeded 2MB max read window] ..."
+	}
 
-	content := string(data)
+	// Auto-detect and decode UTF-16LE / UTF-16BE with Byte Order Mark (BOM)
+	content := decodeUTFString(data)
 	lines := strings.Split(content, "\n")
 	totalLines := len(lines)
 
@@ -279,10 +439,10 @@ func ExecuteReadFile(args map[string]interface{}) (string, bool) {
 		if totalLines > limit {
 			sb.WriteString(fmt.Sprintf("... (%d more lines, total %d. Use offset and limit to read more)\n", totalLines-limit, totalLines))
 		}
-		return sb.String(), true
+		return sb.String() + truncatedNotice, true
 	}
 
-	return content, true
+	return content + truncatedNotice, true
 }
 
 // ── File Writer ──
@@ -335,9 +495,18 @@ func ExecuteListDir(args map[string]interface{}) (string, bool) {
 	sb.WriteString(fmt.Sprintf("Directory: %s\n\n", path))
 
 	if recursive {
+		visitedInodes := make(map[string]bool)
 		filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
 			if err != nil {
 				return nil
+			}
+			// Inode cycle detection to prevent ELOOP & infinite recursion on cross-symlinks
+			realPath, rErr := filepath.EvalSymlinks(p)
+			if rErr == nil {
+				if visitedInodes[realPath] && info.IsDir() {
+					return filepath.SkipDir
+				}
+				visitedInodes[realPath] = true
 			}
 			rel, _ := filepath.Rel(path, p)
 			if info.IsDir() {
@@ -484,4 +653,49 @@ func isGuestLinuxRootfs() bool {
 		return true
 	}
 	return false
+}
+
+// decodeUTFString decodes raw file bytes into a clean UTF-8 string,
+// automatically handling UTF-16LE / UTF-16BE Byte Order Marks (BOM).
+func decodeUTFString(b []byte) string {
+	if len(b) >= 2 {
+		// UTF-16LE BOM: FF FE
+		if b[0] == 0xFF && b[1] == 0xFE {
+			return decodeUTF16(b[2:], false)
+		}
+		// UTF-16BE BOM: FE FF
+		if b[0] == 0xFE && b[1] == 0xFF {
+			return decodeUTF16(b[2:], true)
+		}
+	}
+	return string(b)
+}
+
+func decodeUTF16(b []byte, bigEndian bool) string {
+	if len(b)%2 != 0 {
+		b = b[:len(b)-1]
+	}
+	u16s := make([]uint16, len(b)/2)
+	for i := 0; i < len(u16s); i++ {
+		if bigEndian {
+			u16s[i] = uint16(b[2*i])<<8 | uint16(b[2*i+1])
+		} else {
+			u16s[i] = uint16(b[2*i+1])<<8 | uint16(b[2*i])
+		}
+	}
+	return string(utf16.Decode(u16s))
+}
+
+// cleanAbortedShm scans /dev/shm for abandoned scratch artifacts created during tests
+func cleanAbortedShm() {
+	entries, err := os.ReadDir("/dev/shm")
+	if err != nil {
+		return
+	}
+	for _, e := range entries {
+		name := e.Name()
+		if strings.HasPrefix(name, "scorp_") || strings.HasPrefix(name, "test_") {
+			_ = os.Remove(filepath.Join("/dev/shm", name))
+		}
+	}
 }

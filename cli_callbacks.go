@@ -189,6 +189,7 @@ func wireCLICallbacks() {
 		return agent.IsDangerousCommand(cmd)
 	}
 	tools.AppendDurableMemory = agent.AppendMemoryMD
+	tools.ReadDurableMemory = agent.ReadMemoryMD
 
 	// Autonomous callbacks
 	tools.AutoConfig = &agent.AutoConfig

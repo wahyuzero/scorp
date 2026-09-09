@@ -40,25 +40,22 @@ func RedactSecrets(input string) string {
 
 	result := input
 
-	// 1. Redact known active environment secrets from process environment
-	knownEnvKeys := []string{
-		"COMMAND_CODE_API_KEY",
-		"OPENAI_API_KEY",
-		"ANTHROPIC_API_KEY",
-		"GEMINI_API_KEY",
-		"GOOGLE_API_KEY",
-		"DEEPSEEK_API_KEY",
-		"GROQ_API_KEY",
-		"OPENROUTER_API_KEY",
-		"TELEGRAM_BOT_TOKEN",
-		"COOLIFY_API_TOKEN",
-		"FIRECRAWL_API_KEY",
-		"TAVILY_API_KEY",
-		"GITHUB_TOKEN",
-	}
-
-	for _, key := range knownEnvKeys {
-		if val := os.Getenv(key); len(val) >= 8 {
+	// 1. Redact ANY environment variable whose name implies a secret, key, token, or password
+	for _, envEntry := range os.Environ() {
+		parts := strings.SplitN(envEntry, "=", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		k := strings.ToUpper(parts[0])
+		val := strings.TrimSpace(parts[1])
+		if len(val) < 6 {
+			continue
+		}
+		// Match generic secret suffixes/prefixes (e.g. AGENTON_API_KEY, DB_PASSWORD, MY_AUTH_TOKEN)
+		if strings.Contains(k, "_KEY") || strings.Contains(k, "_TOKEN") ||
+			strings.Contains(k, "_SECRET") || strings.Contains(k, "_PASSWORD") ||
+			strings.Contains(k, "APIKEY") || strings.Contains(k, "TOKEN") ||
+			strings.Contains(k, "SECRET") || strings.Contains(k, "PASSWORD") {
 			result = strings.ReplaceAll(result, val, "[REDACTED_SECRET]")
 		}
 	}

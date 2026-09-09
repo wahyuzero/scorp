@@ -36,6 +36,7 @@ var (
 	// AppendDurableMemory appends entries to MEMORY.md (P1.7) — wired to
 	// agent.AppendMemoryMD by daemon/CLI to avoid an import cycle.
 	AppendDurableMemory func(entries []string) int
+	ReadDurableMemory   func() string
 )
 
 // Agent session/history callbacks

@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -42,8 +43,10 @@ func maxTurnTimeout() time.Duration {
 }
 
 type AgentMessage struct {
-	Role    string      `json:"role"`
-	Content interface{} `json:"content"`
+	Role             string                 `json:"role"`
+	Content          interface{}            `json:"content"`
+	ToolCalls        []models.ToolCallResp  `json:"tool_calls,omitempty"`
+	ThoughtSignature string                 `json:"thought_signature,omitempty"`
 }
 
 // ──────────────────────────────────────────────
@@ -269,11 +272,15 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 		// Convert history to ChatMessage format
 		chatMsgs := make([]models.ChatMessage, len(history))
 		for i, m := range history {
+			var tcResps []models.ToolCallResp
+			if len(m.ToolCalls) > 0 {
+				tcResps = m.ToolCalls
+			}
 			switch c := m.Content.(type) {
 			case string:
-				chatMsgs[i] = models.ChatMessage{Role: m.Role, Content: c}
+				chatMsgs[i] = models.ChatMessage{Role: m.Role, Content: c, ToolCalls: tcResps}
 			default:
-				chatMsgs[i] = models.ChatMessage{Role: m.Role, Content: fmt.Sprintf("%v", c)}
+				chatMsgs[i] = models.ChatMessage{Role: m.Role, Content: fmt.Sprintf("%v", c), ToolCalls: tcResps}
 			}
 		}
 
@@ -283,6 +290,16 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 			errMsg := fmt.Sprintf("❌ Error calling model: %v", err)
 			tools.EditMessageByID(chatID, msgID, errMsg, nil)
 			return
+		}
+
+		// Fallback: If model returned empty toolCalls but output text contains XML/bracket tool calls
+		if len(toolCalls) == 0 && strings.TrimSpace(reply) != "" {
+			var cleanText string
+			toolCalls, cleanText = models.ParseAllToolCalls(reply, nil)
+			if len(toolCalls) > 0 {
+				log.Printf("[agent] Recovered %d fallback tool call(s) from response text", len(toolCalls))
+				reply = cleanText
+			}
 		}
 
 		if iter == 0 && modelUsed != "" {
@@ -453,7 +470,16 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 			// If user asked a simple informational/conceptual question (e.g. "What is Docker?"), allow direct text answer.
 			if isPureInfo && toolCount == 0 && iter == 0 {
 				shouldRetry = false
-			} else if noToolRetries < 4 {
+			} else if toolCount > 0 && len(cleanReply) >= 40 && !strings.HasPrefix(cleanReply, "I will") && !strings.HasPrefix(cleanReply, "Saya akan") && !strings.HasPrefix(cleanReply, "Let me") {
+				// Fast-Path Auto-Completion: If action tools have already been executed (toolCount > 0)
+				// and the model produced a substantial textual summary without calling new tools,
+				// treat it as the final completed report instead of wasting turns!
+				shouldRetry = false
+			} else if toolCount > 0 && iter >= 1 && strings.TrimSpace(cleanReply) == "" {
+				// Fast-Path Auto-Completion on silent turn: Model executed tools successfully,
+				// but emitted an empty textual thought or concluded silently. Do not deadloop retry.
+				shouldRetry = false
+			} else if noToolRetries < 3 {
 				// Otherwise, this is an action task where model emitted thought text without calling an action tool or complete_task!
 				shouldRetry = true
 				if isContinuation {
@@ -564,9 +590,34 @@ func RunAgentSessionLoop(sessionID string, chatID int64, userMessage string, msg
 		// Reset retry counter on successful tool call
 		noToolRetries = 0
 
-		// Record assistant message with tool calls
-		history = append(history, AgentMessage{Role: "assistant", Content: reply})
-		appendSessionHistory(chatIDStr, AgentMessage{Role: "assistant", Content: reply})
+		// Record assistant message with tool calls & thought signatures
+		var recordedToolCalls []models.ToolCallResp
+		for _, tc := range actionToolCalls {
+			argsBytes, _ := json.Marshal(tc.Args)
+			recordedToolCalls = append(recordedToolCalls, models.ToolCallResp{
+				ID:               "call_" + tc.Name,
+				Type:             "function",
+				ThoughtSignature: tc.ThoughtSignature,
+				Function: struct {
+					Name      string `json:"name"`
+					Arguments string `json:"arguments"`
+				}{
+					Name:      tc.Name,
+					Arguments: string(argsBytes),
+				},
+			})
+		}
+
+		history = append(history, AgentMessage{
+			Role:      "assistant",
+			Content:   reply,
+			ToolCalls: recordedToolCalls,
+		})
+		appendSessionHistory(chatIDStr, AgentMessage{
+			Role:      "assistant",
+			Content:   reply,
+			ToolCalls: recordedToolCalls,
+		})
 
 		// Checkpoint (P1.6): pre-turn shadow commit of the working repo so
 		// /undo can walk back. Silent no-op outside git repositories.
