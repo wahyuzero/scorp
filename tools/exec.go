@@ -3,6 +3,7 @@ package tools
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -268,14 +269,45 @@ var (
 	sessionEnvMu  sync.RWMutex
 )
 
+func sessionEnvFilePath(chatID int64) string {
+	dir := config.ScorpPath("session_envs")
+	_ = os.MkdirAll(dir, 0755)
+	return filepath.Join(dir, fmt.Sprintf("env_%d.json", chatID))
+}
+
+func loadSessionEnvFromDisk(chatID int64) map[string]string {
+	p := sessionEnvFilePath(chatID)
+	data, err := os.ReadFile(p)
+	if err != nil {
+		return nil
+	}
+	var res map[string]string
+	if err := json.Unmarshal(data, &res); err == nil {
+		return res
+	}
+	return nil
+}
+
+func saveSessionEnvToDisk(chatID int64, envs map[string]string) {
+	p := sessionEnvFilePath(chatID)
+	data, err := json.Marshal(envs)
+	if err == nil {
+		_ = WriteFileAtomic(p, data, 0644)
+	}
+}
+
 // SetSessionEnv sets a persistent environment variable scoped to a session
 func SetSessionEnv(chatID int64, key, val string) {
 	sessionEnvMu.Lock()
 	defer sessionEnvMu.Unlock()
 	if sessionEnvMap[chatID] == nil {
-		sessionEnvMap[chatID] = make(map[string]string)
+		sessionEnvMap[chatID] = loadSessionEnvFromDisk(chatID)
+		if sessionEnvMap[chatID] == nil {
+			sessionEnvMap[chatID] = make(map[string]string)
+		}
 	}
 	sessionEnvMap[chatID][key] = val
+	saveSessionEnvToDisk(chatID, sessionEnvMap[chatID])
 }
 
 // GetSessionEnv returns the map of persistent environment variables for a session
@@ -283,6 +315,12 @@ func GetSessionEnv(chatID int64) map[string]string {
 	sessionEnvMu.RLock()
 	defer sessionEnvMu.RUnlock()
 	m := sessionEnvMap[chatID]
+	if m == nil {
+		m = loadSessionEnvFromDisk(chatID)
+		if m != nil {
+			sessionEnvMap[chatID] = m
+		}
+	}
 	if m == nil {
 		return nil
 	}
@@ -468,7 +506,7 @@ func ExecuteWriteFile(args map[string]interface{}) (string, bool) {
 	dir := filepath.Dir(path)
 	os.MkdirAll(dir, 0755)
 
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := WriteFileAtomic(path, []byte(content), 0644); err != nil {
 		return fmt.Sprintf("Error writing file: %v", err), false
 	}
 

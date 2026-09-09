@@ -247,7 +247,7 @@ func saveHistoryToDisk(chatID string, msgs []AgentMessage) {
 		log.Printf("[memory] Failed to save history for %s: %v", chatID, err)
 		return
 	}
-	os.WriteFile(historyFilePath(chatID), data, 0644)
+	_ = tools.WriteFileAtomic(historyFilePath(chatID), data, 0644)
 }
 
 // GetHistoryTokenEstimate returns estimated token count for a chat session

@@ -110,7 +110,7 @@ func RecordToolReceipt(toolName string, args map[string]interface{}, output stri
 	now := time.Now()
 	rawID := fmt.Sprintf("%s:%s:%s:%d", toolName, argsHash, outHash, now.UnixNano())
 	idH := sha256.Sum256([]byte(rawID))
-	receiptID := hex.EncodeToString(idH[:8]) // 16 hex chars
+	receiptID := hex.EncodeToString(idH[:16]) // 32 hex chars (128-bit cryptographic strength)
 
 	// Meta carries the few plaintext facts gates need (test-integrity gate,
 	// audit greps) without weakening the hash scheme: the hashes above still

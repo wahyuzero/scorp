@@ -79,7 +79,7 @@ func patchReplace(args map[string]interface{}) (string, bool) {
 	// If startLine/endLine specified, attempt scoped replacement first
 	if startLine > 0 {
 		if scopedResult, ok, msg := scopedLineReplace(content, oldStr, newStr, startLine, endLine); ok {
-			if err := os.WriteFile(path, []byte(scopedResult), 0644); err != nil {
+			if err := WriteFileAtomic(path, []byte(scopedResult), 0644); err != nil {
 				return fmt.Sprintf("Error writing file: %v", err), false
 			}
 			diff := buildDiffPreview(oldStr, newStr)
@@ -101,7 +101,7 @@ func patchReplace(args map[string]interface{}) (string, bool) {
 	}
 
 	// Write
-	if err := os.WriteFile(path, []byte(result), 0644); err != nil {
+	if err := WriteFileAtomic(path, []byte(result), 0644); err != nil {
 		return fmt.Sprintf("Error writing file: %v", err), false
 	}
 
@@ -149,23 +149,39 @@ func scopedLineReplace(content, oldStr, newStr string, startLine, endLine int) (
 // tryMatchStrategies tries 3 strategies, returns first that matches.
 // Returns: (modifiedContent, matchCount, strategyUsed)
 func tryMatchStrategies(content, oldStr, newStr string, replaceAll bool) (string, int, int) {
+	// Pre-normalization: auto-normalize CRLF (\r\n) to LF (\n) to ensure consistent matching
+	// across Windows checkouts or cross-platform files.
+	hasCRLF := strings.Contains(content, "\r\n")
+	if hasCRLF {
+		content = strings.ReplaceAll(content, "\r\n", "\n")
+		oldStr = strings.ReplaceAll(oldStr, "\r\n", "\n")
+		newStr = strings.ReplaceAll(newStr, "\r\n", "\n")
+	}
+
+	restoreCRLF := func(s string) string {
+		if hasCRLF {
+			return strings.ReplaceAll(s, "\n", "\r\n")
+		}
+		return s
+	}
+
 	// Strategy 0: Exact match
 	if strings.Contains(content, oldStr) {
 		count := strings.Count(content, oldStr)
 		if replaceAll {
-			return strings.ReplaceAll(content, oldStr, newStr), count, 0
+			return restoreCRLF(strings.ReplaceAll(content, oldStr, newStr)), count, 0
 		}
-		return strings.Replace(content, oldStr, newStr, 1), count, 0
+		return restoreCRLF(strings.Replace(content, oldStr, newStr, 1)), count, 0
 	}
 
 	// Strategy 1: Trim trailing whitespace per line
 	if result, count, ok := lineWindowMatch(content, oldStr, newStr, replaceAll, false); ok {
-		return result, count, 1
+		return restoreCRLF(result), count, 1
 	}
 
 	// Strategy 2: Normalize all internal whitespace
 	if result, count, ok := lineWindowMatch(content, oldStr, newStr, replaceAll, true); ok {
-		return result, count, 2
+		return restoreCRLF(result), count, 2
 	}
 
 	// Strategy 3: Substring line block search (ignoring leading/trailing blank lines in oldStr)

@@ -307,7 +307,7 @@ func writeBridgeResponse(path, result, errMsg string) {
 		Error:   errMsg,
 	}
 	data, _ := json.Marshal(resp)
-	os.WriteFile(path, data, 0644)
+	_ = WriteFileAtomic(path, data, 0644)
 }
 
 func init() {
