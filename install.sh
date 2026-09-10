@@ -10,7 +10,7 @@ set -e
 # ─────────────────────────────────────────────────────────────────────────────
 
 REPO="wahyuzero/scorp"
-FALLBACK_TAG="v0.7.1"
+FALLBACK_TAG="v0.8.1"
 
 # ANSI Colors
 BOLD="\033[1m"
@@ -180,19 +180,22 @@ fi
 # 6. Interactive Setup Hand-off
 RUN_SETUP=false
 if [ -e /dev/tty ]; then
-    # Redirect stdin from tty so we can read user prompt even in `curl | bash` pipe
-    exec < /dev/tty
     echo -n -e "${BOLD}Would you like to run the interactive setup wizard now? [Y/n]: ${RESET}"
-    read -r resp || resp="y"
-    resp=$(echo "$resp" | tr '[:upper:]' '[:lower:]')
-    if [ -z "$resp" ] || [ "$resp" = "y" ] || [ "$resp" = "yes" ]; then
-        RUN_SETUP=true
+    if read -r resp < /dev/tty; then
+        resp=$(echo "$resp" | tr '[:upper:]' '[:lower:]')
+        if [ -z "$resp" ] || [ "$resp" = "y" ] || [ "$resp" = "yes" ]; then
+            RUN_SETUP=true
+        fi
     fi
 fi
 
 if [ "$RUN_SETUP" = true ]; then
     echo ""
-    "$TARGET_BIN" setup
+    if [ -e /dev/tty ]; then
+        "$TARGET_BIN" setup < /dev/tty
+    else
+        "$TARGET_BIN" setup
+    fi
 else
     echo -e "To configure Scorp anytime, simply run:"
     echo -e "  ${CYAN}${BOLD}scorp setup${RESET}"

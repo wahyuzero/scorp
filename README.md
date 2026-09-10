@@ -23,7 +23,7 @@ Scorp is engineered around modern production agent principles:
 #### Option A: One-Line Universal Install (Recommended)
 Automatically detects your OS and architecture, downloads the matching prebuilt static binary, installs to system PATH, and launches setup:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/wahyuzero/scorp/master/install.sh | bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/wahyuzero/scorp/master/install.sh)"
 ```
 > Supported out-of-the-box: **Linux** (x86_64, aarch64/ARM64, ARMv7), **macOS** (Apple Silicon M-series & Intel x64), and **Android** (Termux).
 

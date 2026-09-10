@@ -13,6 +13,7 @@ import (
 	"scorp-agent/config"
 	"scorp-agent/eval"
 	"scorp-agent/gateway"
+	"scorp-agent/internal/netdns"
 	"scorp-agent/mcp"
 	"scorp-agent/mcp/marketplace"
 	"scorp-agent/mcp/transpiler"
@@ -24,6 +25,9 @@ import (
 )
 
 func main() {
+	// Initialize resilient DNS resolution early for Android / Termux and all HTTP clients
+	netdns.Init()
+
 	log.SetFlags(log.Ldate | log.Ltime)
 
 	// Marketplace Option 2 (local rebuild) delegates to the AI transpiler.

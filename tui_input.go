@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"unicode/utf8"
 
 	"golang.org/x/term"
 )
@@ -77,14 +78,21 @@ func readInteractiveInput(prompt string) (string, error) {
 	clearPopup := func() {
 		if popupRenderedLines > 0 {
 			for i := 0; i < popupRenderedLines; i++ {
-				fmt.Print("\033[1B\033[2K")
+				fmt.Print("\r\n\033[2K")
 			}
-			fmt.Printf("\033[%dA", popupRenderedLines)
+			fmt.Printf("\033[%dA\r", popupRenderedLines)
 			popupRenderedLines = 0
 		}
 	}
 
 	render := func() {
+		w, h, err := term.GetSize(fd)
+		if err != nil || w <= 0 || h <= 0 {
+			w = 80
+			h = 24
+		}
+		isCompact := w < 72 || h < 22
+
 		clearPopup()
 		fmt.Print("\r\033[K")
 		fmt.Print(prompt)
@@ -105,7 +113,8 @@ func readInteractiveInput(prompt string) (string, error) {
 
 		currentStr := string(buf)
 		var lines []string
-		if strings.HasPrefix(currentStr, "/") && !strings.Contains(currentStr, " ") {
+		isSlash := strings.HasPrefix(currentStr, "/") && !strings.Contains(currentStr, " ")
+		if isSlash {
 			matches := filterCommands(currentStr)
 			if len(matches) > 0 {
 				if selectedIndex >= len(matches) {
@@ -114,26 +123,61 @@ func readInteractiveInput(prompt string) (string, error) {
 				if selectedIndex < 0 {
 					selectedIndex = len(matches) - 1
 				}
-				lines = renderPopupBox(matches, selectedIndex)
+
+				if isCompact {
+					// Compact 1-2 line inline suggestion (mobile Termux / small screen)
+					lines = renderCompactSuggestions(matches, selectedIndex, w)
+				} else {
+					// Desktop dynamic popup box + status footer
+					lines = renderPopupBox(matches, selectedIndex, w, h)
+					statusline := renderStatusFooter(currentSessionID, w)
+					if statusline != "" {
+						lines = append(lines, statusline)
+					}
+				}
+			} else {
+				statusline := renderStatusFooter(currentSessionID, w)
+				if statusline != "" {
+					lines = append(lines, statusline)
+				}
+			}
+		} else {
+			statusline := renderStatusFooter(currentSessionID, w)
+			if statusline != "" {
+				lines = append(lines, statusline)
 			}
 		}
 
-		// Add persistent bottom statusline below prompt (or below popup if open)
-		statusline := renderStatusFooter(currentSessionID)
-		lines = append(lines, statusline)
+		// Clamp each line's visual width to w-2 to strictly avoid terminal line-wrapping
+		for i := range lines {
+			lines[i] = clampLineWidth(lines[i], w-2)
+		}
+
+		// Cap maximum lines rendered below prompt to prevent vertical scroll
+		maxLinesBelow := h - 4
+		if maxLinesBelow < 1 {
+			maxLinesBelow = 1
+		}
+		if len(lines) > maxLinesBelow {
+			lines = lines[:maxLinesBelow]
+		}
 		popupRenderedLines = len(lines)
 
-		// Render below cursor, then restore cursor
-		fmt.Print("\033[s") // Save cursor position
+		// Render below prompt, then restore cursor relatively (no ANSI \033[s / \033[u drift)
 		for _, line := range lines {
-			fmt.Print("\r\n\033[K" + line)
+			fmt.Print("\r\n\033[2K" + line)
 		}
-		fmt.Print("\033[u") // Restore cursor position
+		if len(lines) > 0 {
+			fmt.Printf("\033[%dA", len(lines))
+		}
 
-		// Move cursor to proper position in buffer
-		moveBack := len(buf) - cursorPos
-		if moveBack > 0 {
-			fmt.Printf("\033[%dD", moveBack)
+		// Return to column 0 on the prompt line, then advance cursor to cursorPos
+		fmt.Print("\r")
+		if strings.Contains(bufStr, "\n") {
+			parts := strings.Split(bufStr, "\n")
+			fmt.Print(prompt + parts[len(parts)-1])
+		} else {
+			fmt.Print(prompt + string(buf[:cursorPos]))
 		}
 	}
 
@@ -319,17 +363,229 @@ func filterCommands(prefix string) []SlashCommand {
 	return matches
 }
 
-// renderPopupBox generates styled ANSI lines for the slash commands popup box
-func renderPopupBox(commands []SlashCommand, selected int) []string {
+// visibleWidth calculates string visual display width in terminal columns (ignoring ANSI escape sequences)
+func visibleWidth(s string) int {
+	w := 0
+	inEscape := false
+	for i := 0; i < len(s); {
+		if s[i] == '\033' {
+			inEscape = true
+			i++
+			continue
+		}
+		if inEscape {
+			if (s[i] >= 'a' && s[i] <= 'z') || (s[i] >= 'A' && s[i] <= 'Z') || s[i] == '~' {
+				inEscape = false
+			}
+			i++
+			continue
+		}
+		r, size := utf8.DecodeRuneInString(s[i:])
+		i += size
+		if r == 0xfe0f || r == 0xfe0e {
+			continue
+		}
+		if isWideRune(r) {
+			w += 2
+		} else {
+			w += 1
+		}
+	}
+	return w
+}
+
+func isWideRune(r rune) bool {
+	return (r >= 0x1100 && r <= 0x115f) ||
+		(r >= 0x2e80 && r <= 0xa4cf) ||
+		(r >= 0xac00 && r <= 0xd7a3) ||
+		(r >= 0xf900 && r <= 0xfaff) ||
+		(r >= 0xfe10 && r <= 0xfe19) ||
+		(r >= 0xfe30 && r <= 0xfe6f) ||
+		(r >= 0xff00 && r <= 0xff60) ||
+		(r >= 0xffe0 && r <= 0xffe6) ||
+		(r >= 0x1f300 && r <= 0x1faff) ||
+		r == 0x26a1 || r == 0x2705 || r == 0x274c
+}
+
+// clampLineWidth truncates string s so its visible width does not exceed maxWidth, preserving ANSI reset
+func clampLineWidth(s string, maxWidth int) string {
+	if maxWidth <= 0 {
+		return s
+	}
+	if visibleWidth(s) <= maxWidth {
+		return s
+	}
+
+	var sb strings.Builder
+	curW := 0
+	inEscape := false
+	var escBuf strings.Builder
+
+	for i := 0; i < len(s); {
+		if s[i] == '\033' {
+			inEscape = true
+			escBuf.Reset()
+			escBuf.WriteByte(s[i])
+			i++
+			continue
+		}
+		if inEscape {
+			escBuf.WriteByte(s[i])
+			if (s[i] >= 'a' && s[i] <= 'z') || (s[i] >= 'A' && s[i] <= 'Z') || s[i] == '~' {
+				inEscape = false
+				sb.WriteString(escBuf.String())
+			}
+			i++
+			continue
+		}
+
+		r, size := utf8.DecodeRuneInString(s[i:])
+		i += size
+		if r == 0xfe0f || r == 0xfe0e {
+			sb.WriteRune(r)
+			continue
+		}
+
+		rw := 1
+		if isWideRune(r) {
+			rw = 2
+		}
+
+		if curW+rw > maxWidth {
+			break
+		}
+		sb.WriteRune(r)
+		curW += rw
+	}
+
+	sb.WriteString("\033[0m")
+	return sb.String()
+}
+
+// renderCompactSuggestions renders a clean, compact 1-2 line inline suggestion for mobile/narrow terminals
+func renderCompactSuggestions(commands []SlashCommand, selected int, termWidth int) []string {
+	if len(commands) == 0 {
+		return nil
+	}
+	if termWidth <= 0 {
+		termWidth = 80
+	}
+	maxW := termWidth - 2
+
+	// Line 1: 💡 [/models]  /model  /mode  (Tab)
+	prefix := "💡 "
+	var pillStrs []string
+	for i, cmd := range commands {
+		var p string
+		if i == selected {
+			p = fmt.Sprintf("\033[1;37;44m %s \033[0m", cmd.Command)
+		} else {
+			p = fmt.Sprintf("\033[1;36m%s\033[0m", cmd.Command)
+		}
+		pillStrs = append(pillStrs, p)
+	}
+
+	start := 0
+	if selected > 2 {
+		start = selected - 1
+	}
+
+	line1 := prefix
+	tip := " \033[2m(Tab)\033[0m"
+	tipW := visibleWidth(tip)
+
+	added := 0
+	for i := start; i < len(pillStrs); i++ {
+		sep := " "
+		if added == 0 {
+			sep = ""
+		}
+		candidate := line1 + sep + pillStrs[i]
+		if visibleWidth(candidate)+tipW > maxW {
+			if added == 0 {
+				line1 = candidate
+			} else {
+				line1 += " \033[2m…\033[0m"
+			}
+			break
+		}
+		line1 = candidate
+		added++
+	}
+	if visibleWidth(line1)+tipW <= maxW {
+		line1 += tip
+	}
+
+	var lines []string
+	lines = append(lines, line1)
+
+	// Line 2: Selected command description clamped to maxW
+	if selected >= 0 && selected < len(commands) {
+		cmd := commands[selected]
+		args := ""
+		if cmd.Args != "" {
+			args = " " + cmd.Args
+		}
+		line2 := fmt.Sprintf("   \033[2m→ %s%s: %s\033[0m", cmd.Command, args, cmd.Description)
+		lines = append(lines, clampLineWidth(line2, maxW))
+	}
+
+	return lines
+}
+
+// renderPopupBox generates styled ANSI lines for the slash commands popup box with dynamic width and height clamping
+func renderPopupBox(commands []SlashCommand, selected int, termWidth, termHeight int) []string {
 	var lines []string
 
-	header := "\033[1;34m┌─ Slash Commands ────────────────────────────────────────────────────────┐\033[0m"
-	footer := "\033[1;34m└─────────────────────────────────────────────────────────────────────────┘\033[0m"
+	if termWidth <= 0 {
+		termWidth = 80
+	}
+	if termHeight <= 0 {
+		termHeight = 24
+	}
+
+	boxWidth := termWidth - 4
+	if boxWidth > 74 {
+		boxWidth = 74
+	}
+	if boxWidth < 40 {
+		boxWidth = 40
+	}
+
+	maxVisible := 6
+	if maxVisible > termHeight-10 {
+		maxVisible = termHeight - 10
+	}
+	if maxVisible < 2 {
+		maxVisible = 2
+	}
+
+	leftColWidth := 25
+	if boxWidth < 74 {
+		leftColWidth = boxWidth/2 - 5
+		if leftColWidth < 12 {
+			leftColWidth = 12
+		}
+	}
+	rightColWidth := boxWidth - leftColWidth - 9
+	if rightColWidth < 10 {
+		rightColWidth = 10
+	}
+
+	dashCount := boxWidth - 19
+	if dashCount < 1 {
+		dashCount = 1
+	}
+	header := fmt.Sprintf("\033[1;34m┌─ Slash Commands %s┐\033[0m", strings.Repeat("─", dashCount))
+	footer := fmt.Sprintf("\033[1;34m└%s┘\033[0m", strings.Repeat("─", boxWidth-2))
 	tip := "\033[2m  (Use ↑/↓ to navigate, Tab to complete, Enter to select, Esc to cancel)\033[0m"
+	if visibleWidth(tip) > boxWidth {
+		tip = "\033[2m  (Tab: complete, ↑/↓: navigate, Enter: select)\033[0m"
+	}
+	tip = clampLineWidth(tip, boxWidth)
 
 	lines = append(lines, header)
 
-	maxVisible := 6
 	start := 0
 	if selected >= maxVisible {
 		start = selected - maxVisible + 1
@@ -346,24 +602,24 @@ func renderPopupBox(commands []SlashCommand, selected int) []string {
 			cmdStr += " " + cmd.Args
 		}
 
-		leftCol := fmt.Sprintf("%-30s", cmdStr)
-		if len(leftCol) > 30 {
-			leftCol = leftCol[:29] + " "
+		if len(cmdStr) > leftColWidth {
+			cmdStr = cmdStr[:leftColWidth-1] + " "
 		}
+		leftCol := fmt.Sprintf("%-*s", leftColWidth, cmdStr)
 
 		desc := cmd.Description
-		if len(desc) > 38 {
-			desc = desc[:35] + "..."
+		if len(desc) > rightColWidth {
+			desc = desc[:rightColWidth-3] + "..."
 		}
-		rightCol := fmt.Sprintf("%-38s", desc)
+		rightCol := fmt.Sprintf("%-*s", rightColWidth, desc)
 
+		var line string
 		if i == selected {
-			line := fmt.Sprintf("\033[1;34m│\033[0m \033[1;37;44m ▶ %-28s — %-38s \033[0m \033[1;34m│\033[0m", leftCol, rightCol)
-			lines = append(lines, line)
+			line = fmt.Sprintf("\033[1;34m│\033[0m \033[1;37;44m▶ %s — %s\033[0m \033[1;34m│\033[0m", leftCol, rightCol)
 		} else {
-			line := fmt.Sprintf("\033[1;34m│\033[0m   \033[1;36m%-28s\033[0m \033[2m—\033[0m %-38s \033[1;34m│\033[0m", leftCol, rightCol)
-			lines = append(lines, line)
+			line = fmt.Sprintf("\033[1;34m│\033[0m   \033[1;36m%s\033[0m \033[2m—\033[0m %s \033[1;34m│\033[0m", leftCol, rightCol)
 		}
+		lines = append(lines, line)
 	}
 
 	lines = append(lines, footer)

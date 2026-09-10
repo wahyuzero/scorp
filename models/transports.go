@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"scorp-agent/internal/netdns"
 )
 
 // TransportPool manages per-provider HTTP transports for optimal connection pooling
@@ -16,6 +18,8 @@ type TransportPool struct {
 var transportPool = &TransportPool{
 	transports: make(map[string]*http.Transport),
 	defaultPool: &http.Transport{
+		DialContext:         netdns.NewDialContext(),
+		ForceAttemptHTTP2:   true,
 		MaxIdleConns:        50,
 		MaxIdleConnsPerHost: 10,
 		IdleConnTimeout:     90 * time.Second,
@@ -53,6 +57,8 @@ func getTransport(baseURL string) *http.Transport {
 	case "127.0.0.1", "localhost":
 		// Local 9router - high concurrency, fast
 		t = &http.Transport{
+			DialContext:         netdns.NewDialContext(),
+			ForceAttemptHTTP2:   true,
 			MaxIdleConns:        20,
 			MaxIdleConnsPerHost: 10,
 			MaxConnsPerHost:     20,
@@ -61,6 +67,8 @@ func getTransport(baseURL string) *http.Transport {
 	case "api.openrouter.ai", "openrouter.ai":
 		// OpenRouter - external, moderate pool
 		t = &http.Transport{
+			DialContext:         netdns.NewDialContext(),
+			ForceAttemptHTTP2:   true,
 			MaxIdleConns:        20,
 			MaxIdleConnsPerHost: 5,
 			MaxConnsPerHost:     20,
@@ -69,6 +77,8 @@ func getTransport(baseURL string) *http.Transport {
 	case "api.moonshot.cn":
 		// Moonshot — standard OpenAI-compatible
 		t = &http.Transport{
+			DialContext:         netdns.NewDialContext(),
+			ForceAttemptHTTP2:   true,
 			MaxIdleConns:        20,
 			MaxIdleConnsPerHost: 5,
 			MaxConnsPerHost:     20,
@@ -77,6 +87,8 @@ func getTransport(baseURL string) *http.Transport {
 	default:
 		// Generic provider - balanced
 		t = &http.Transport{
+			DialContext:         netdns.NewDialContext(),
+			ForceAttemptHTTP2:   true,
 			MaxIdleConns:        20,
 			MaxIdleConnsPerHost: 5,
 			MaxConnsPerHost:     20,

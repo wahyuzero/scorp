@@ -410,7 +410,7 @@ func executeAutonomousAction(action AutonomousAction, cycle int) (string, bool) 
 		if ip == "" {
 			return "missing ip", false
 		}
-		out, err := exec.Command("sudo", "fail2ban-client", "set", jail, "banip", ip).CombinedOutput()
+		out, err := exec.Command("sudo", "-n", "fail2ban-client", "set", jail, "banip", ip).CombinedOutput()
 		result = helpers.TruncateStr(string(out), 300)
 		ok = (err == nil)
 

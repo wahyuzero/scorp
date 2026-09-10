@@ -96,12 +96,10 @@ func getContextPill(sessionID string) string {
 }
 
 // renderStatusFooter returns the styled single-line persistent bottom bar
-func renderStatusFooter(sessionID string) string {
-	folder := getShortCwd()
-	gitInfo := getGitStatus()
-	locStr := "📂 " + folder
-	if gitInfo != "" {
-		locStr += " \033[35m" + gitInfo + "\033[0m"
+func renderStatusFooter(sessionID string, maxWidthArgs ...int) string {
+	maxWidth := 80
+	if len(maxWidthArgs) > 0 && maxWidthArgs[0] > 0 {
+		maxWidth = maxWidthArgs[0]
 	}
 
 	// Active Model
@@ -114,13 +112,6 @@ func renderStatusFooter(sessionID string) string {
 	}
 	modelPill := "🤖 \033[1;36m" + modelName + "\033[0m"
 
-	// Context Window
-	ctxPill := getContextPill(sessionID)
-
-	// Daily cost
-	spend := models.GetDailyTotalUSD()
-	costPill := fmt.Sprintf("💰 \033[32m$%.4f\033[0m", spend)
-
 	// Autonomy Mode
 	mode := config.GetAutonomyLevel()
 	modeIcon := "🛡️"
@@ -131,7 +122,53 @@ func renderStatusFooter(sessionID string) string {
 	}
 	modePill := fmt.Sprintf("%s \033[33m%s\033[0m", modeIcon, mode)
 
-	// Combine into a sleek powerline capsule
-	return fmt.Sprintf("\033[2m╰─\033[0m %s \033[2m─\033[0m %s \033[2m─\033[0m %s \033[2m─\033[0m %s \033[2m─\033[0m %s \033[2m─╯\033[0m",
+	// Daily cost
+	spend := models.GetDailyTotalUSD()
+	costPill := fmt.Sprintf("💰 \033[32m$%.4f\033[0m", spend)
+
+	// If narrow terminal (< 72 cols, e.g. mobile Termux), format a compact capsule
+	if maxWidth < 72 {
+		shortCost := fmt.Sprintf("💰 \033[32m$%.2f\033[0m", spend)
+		compact := fmt.Sprintf("\033[2m╰─\033[0m %s \033[2m─\033[0m %s \033[2m─\033[0m %s \033[2m─╯\033[0m",
+			modelPill, modePill, shortCost)
+		if visibleWidth(compact) <= maxWidth-2 {
+			return compact
+		}
+
+		ultraCompact := fmt.Sprintf("\033[2m╰─\033[0m %s \033[2m─\033[0m %s \033[2m─╯\033[0m",
+			modelPill, modePill)
+		if visibleWidth(ultraCompact) <= maxWidth-2 {
+			return ultraCompact
+		}
+
+		return clampLineWidth(ultraCompact, maxWidth-2)
+	}
+
+	folder := getShortCwd()
+	gitInfo := getGitStatus()
+	locStr := "📂 " + folder
+	if gitInfo != "" {
+		locStr += " \033[35m" + gitInfo + "\033[0m"
+	}
+
+	// Context Window
+	ctxPill := getContextPill(sessionID)
+
+	// Desktop powerline capsule
+	full := fmt.Sprintf("\033[2m╰─\033[0m %s \033[2m─\033[0m %s \033[2m─\033[0m %s \033[2m─\033[0m %s \033[2m─\033[0m %s \033[2m─╯\033[0m",
 		locStr, modelPill, ctxPill, costPill, modePill)
+
+	if visibleWidth(full) <= maxWidth-2 {
+		return full
+	}
+
+	// Truncate location / git if needed
+	locStr = "📂 " + folder
+	reduced := fmt.Sprintf("\033[2m╰─\033[0m %s \033[2m─\033[0m %s \033[2m─\033[0m %s \033[2m─\033[0m %s \033[2m─╯\033[0m",
+		locStr, modelPill, costPill, modePill)
+	if visibleWidth(reduced) <= maxWidth-2 {
+		return reduced
+	}
+
+	return clampLineWidth(reduced, maxWidth-2)
 }

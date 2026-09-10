@@ -16,6 +16,9 @@ func init() {
 }
 
 func TestGemini_LiveModels(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping live Gemini test in short mode")
+	}
 	testModels := []struct {
 		modelID   string
 		expectErr bool
@@ -82,6 +85,9 @@ func TestGemini_LiveModels(t *testing.T) {
 }
 
 func TestGemini_LiveStreaming(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping live Gemini stream test in short mode")
+	}
 	cfg := &ModelConfig{
 		Provider: "gemini",
 		Model:    "gemini-3.7-flash",
@@ -126,6 +132,9 @@ func TestGemini_LiveStreaming(t *testing.T) {
 }
 
 func TestGemini_LiveToolCalling(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping live Gemini tool test in short mode")
+	}
 	registry.RegisterTool(registry.ToolDef{
 		Name:        "get_current_time",
 		Description: "Get the current time in a given timezone",

@@ -347,7 +347,7 @@ func CheckVNCConnections() []SecurityEvent {
 func getFail2banStatus() Fail2banInfo {
 	info := Fail2banInfo{Jails: make(map[string]JailInfo)}
 
-	out, err := exec.Command("sudo", "fail2ban-client", "status").Output()
+	out, err := exec.Command("sudo", "-n", "fail2ban-client", "status").Output()
 	if err != nil {
 		return info
 	}
@@ -365,7 +365,7 @@ func getFail2banStatus() Fail2banInfo {
 			continue
 		}
 
-		jailOut, err := exec.Command("sudo", "fail2ban-client", "status", jail).Output()
+		jailOut, err := exec.Command("sudo", "-n", "fail2ban-client", "status", jail).Output()
 		if err != nil {
 			continue
 		}
