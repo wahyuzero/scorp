@@ -85,6 +85,7 @@ var providerCatalog = map[string][]CatalogEntry{
 		{"claude-3-opus-20240229", 4096, true, ""},
 	},
 	"gemini": {
+		{"gemini-3.5-flash-lite", 65536, false, "gemini-3.5-flash-lite"},
 		{"gemini-2.5-flash", 8192, false, ""},
 		{"gemini-2.0-flash", 8192, false, ""},
 		{"gemini-2.0-flash-thinking-exp", 8192, true, ""},
@@ -151,9 +152,14 @@ func HasCatalog(provider string) bool {
 	return ok
 }
 
-// catalogModels returns the catalog entries for a provider
+// CatalogModels returns the catalog entries for a provider
 func CatalogModels(provider string) []CatalogEntry {
 	return providerCatalog[provider]
+}
+
+// GetCatalog returns the catalog entries for a provider (alias for CatalogModels)
+func GetCatalog(provider string) []CatalogEntry {
+	return CatalogModels(provider)
 }
 
 // providerHasAPIKey checks if a provider has any API key configured

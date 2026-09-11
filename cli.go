@@ -278,11 +278,19 @@ func startCLI(initialPrompts ...string) {
 				agent.RunPlanningLoop(currentSessionID, 0, goal, 0)
 				continue
 			case "/models":
-				printModelList()
+				if isTerminal(os.Stdin) {
+					selectInteractiveModel()
+				} else {
+					printModelList()
+				}
 				continue
 			case "/model":
 				if len(parts) < 2 {
-					printCurrentModel()
+					if isTerminal(os.Stdin) {
+						selectInteractiveModel()
+					} else {
+						printCurrentModel()
+					}
 				} else {
 					targetModel := parts[1]
 					if err := models.SwitchActiveModel(targetModel); err != nil {
@@ -338,7 +346,11 @@ func startCLI(initialPrompts ...string) {
 				printSteeringQueue(chatIDStr)
 				continue
 			case "/session", "/sessions":
-				handleCLISession(parts[1:])
+				if (len(parts) == 1 || (len(parts) == 2 && parts[1] == "list")) && isTerminal(os.Stdin) {
+					selectInteractiveSession()
+				} else {
+					handleCLISession(parts[1:])
+				}
 				continue
 			default:
 				fmt.Printf("Unknown command '%s'. Type /help for available commands.\n", cmd)

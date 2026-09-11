@@ -77,6 +77,8 @@ func defaultCostConfig() *CostConfig {
 			"deepseek-coder":                  {InputPer1M: 0.14, OutputPer1M: 0.28, CacheReadPer1M: 0.014},
 			"groq-llama-70b":                  {InputPer1M: 0.59, OutputPer1M: 0.79, CacheReadPer1M: 0.059},
 			"gemini-flash":                    {InputPer1M: 0.075, OutputPer1M: 0.30, CacheReadPer1M: 0.0},
+			"gemini-3.5-flash-lite":           {InputPer1M: 0.075, OutputPer1M: 0.30, CacheReadPer1M: 0.0},
+			"gemini/gemini-3.5-flash-lite":    {InputPer1M: 0.075, OutputPer1M: 0.30, CacheReadPer1M: 0.0},
 			"glm-4.6":                         {InputPer1M: 0.60, OutputPer1M: 2.20, CacheReadPer1M: 0.060},
 			"glm-5.2":                         {InputPer1M: 0.50, OutputPer1M: 2.00, CacheReadPer1M: 0.050},
 		},

@@ -187,6 +187,22 @@ func defaultModelConfig() *ModelRouterConfig {
 				MaxTokens: 16384,
 				API:       "command-code",
 			},
+			"gemini-3.5-flash-lite": {
+				Provider:  "gemini",
+				Model:     "gemini-3.5-flash-lite",
+				KeyEnv:    "GEMINI_API_KEY",
+				BaseURL:   "https://generativelanguage.googleapis.com/v1beta",
+				MaxTokens: 65536,
+				API:       "gemini",
+			},
+			"gemini/gemini-3.5-flash-lite": {
+				Provider:  "gemini",
+				Model:     "gemini-3.5-flash-lite",
+				KeyEnv:    "GEMINI_API_KEY",
+				BaseURL:   "https://generativelanguage.googleapis.com/v1beta",
+				MaxTokens: 65536,
+				API:       "gemini",
+			},
 		},
 	}
 }

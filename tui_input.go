@@ -268,7 +268,7 @@ func readInputEngine(in io.Reader, out io.Writer, prompt string, getTermSize fun
 		}
 
 		rawChunk := readBuf[:n]
-		isBurst := (n > 1 && bytes.ContainsAny(rawChunk, "\r\n"))
+		isBurst := (n > 1 && bytes.ContainsAny(rawChunk, "\r\n") && !bytes.HasPrefix(rawChunk, []byte("\033")))
 
 		slice := rawChunk
 		for len(slice) > 0 {
@@ -325,10 +325,75 @@ func readInputEngine(in io.Reader, out io.Writer, prompt string, getTermSize fun
 				continue
 			}
 
+			// Shift+Enter & Alt+Enter escape sequences:
+			// \033[13;2u (CSI u / Kitty keyboard protocol for Shift+Enter)
+			// \033[13;5u (CSI u Ctrl+Enter)
+			// \033[27;2;13~ (xterm format for Shift+Enter)
+			// \033[27;5;13~ (xterm Ctrl+Enter)
+			// \033\r (ESC then CR: Alt+Enter)
+			// \033\n (ESC then LF: Alt+Enter)
+			// \033OM (SS3 Enter)
+			if bytes.HasPrefix(slice, []byte("\033[13;2u")) {
+				buf = append(buf[:cursorPos], append([]rune{'\n'}, buf[cursorPos:]...)...)
+				cursorPos++
+				selectedIndex = 0
+				slice = slice[len("\033[13;2u"):]
+				render()
+				continue
+			}
+			if bytes.HasPrefix(slice, []byte("\033[13;5u")) {
+				buf = append(buf[:cursorPos], append([]rune{'\n'}, buf[cursorPos:]...)...)
+				cursorPos++
+				selectedIndex = 0
+				slice = slice[len("\033[13;5u"):]
+				render()
+				continue
+			}
+			if bytes.HasPrefix(slice, []byte("\033[27;2;13~")) {
+				buf = append(buf[:cursorPos], append([]rune{'\n'}, buf[cursorPos:]...)...)
+				cursorPos++
+				selectedIndex = 0
+				slice = slice[len("\033[27;2;13~"):]
+				render()
+				continue
+			}
+			if bytes.HasPrefix(slice, []byte("\033[27;5;13~")) {
+				buf = append(buf[:cursorPos], append([]rune{'\n'}, buf[cursorPos:]...)...)
+				cursorPos++
+				selectedIndex = 0
+				slice = slice[len("\033[27;5;13~"):]
+				render()
+				continue
+			}
+			if bytes.HasPrefix(slice, []byte("\033\r")) {
+				buf = append(buf[:cursorPos], append([]rune{'\n'}, buf[cursorPos:]...)...)
+				cursorPos++
+				selectedIndex = 0
+				slice = slice[2:]
+				render()
+				continue
+			}
+			if bytes.HasPrefix(slice, []byte("\033\n")) {
+				buf = append(buf[:cursorPos], append([]rune{'\n'}, buf[cursorPos:]...)...)
+				cursorPos++
+				selectedIndex = 0
+				slice = slice[2:]
+				render()
+				continue
+			}
+			if bytes.HasPrefix(slice, []byte("\033OM")) {
+				buf = append(buf[:cursorPos], append([]rune{'\n'}, buf[cursorPos:]...)...)
+				cursorPos++
+				selectedIndex = 0
+				slice = slice[3:]
+				render()
+				continue
+			}
+
 			b := slice[0]
 
-			// Enter key outside paste mode: submit complete multiline buffer
-			if b == 13 || b == 10 {
+			// Enter key (CR / 13) outside paste mode: submit complete multiline buffer
+			if b == 13 {
 				currentStr := string(buf)
 				if popupRenderedLines > 0 {
 					clearPopup()
@@ -359,6 +424,16 @@ func readInputEngine(in io.Reader, out io.Writer, prompt string, getTermSize fun
 					}
 				}
 				return string(buf), nil
+			}
+
+			// Ctrl+J (LF / 10): insert newline at cursorPos and re-render multiline buffer without submitting
+			if b == 10 {
+				buf = append(buf[:cursorPos], append([]rune{'\n'}, buf[cursorPos:]...)...)
+				cursorPos++
+				selectedIndex = 0
+				slice = slice[1:]
+				render()
+				continue
 			}
 
 			// Ctrl+C

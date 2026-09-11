@@ -231,6 +231,8 @@ func FormatUsageStats() string {
 		"qwen/qwen3-32b":                            {0, 0},
 		"meta-llama/llama-4-scout-17b-16e-instruct": {0, 0},
 		"gemini-2.5-flash":                          {0, 0},
+		"gemini-3.5-flash-lite":                     {0.075, 0.30},
+		"gemini/gemini-3.5-flash-lite":              {0.075, 0.30},
 		"glm-4.7":                                   {0, 0},
 		"MiniMax-M2":                                {0.25, 1.00},
 		"deepseek-chat":                             {0.05, 0.50},

@@ -260,3 +260,31 @@ func TestGemini_MultimodalParsing(t *testing.T) {
 	}
 }
 
+func TestGemini_CatalogHasFlashLite(t *testing.T) {
+	cat := GetCatalog("gemini")
+	if len(cat) == 0 {
+		t.Fatal("expected non-empty gemini catalog")
+	}
+
+	found := false
+	for _, entry := range cat {
+		if entry.ModelID == "gemini-3.5-flash-lite" {
+			found = true
+			if entry.MaxTokens != 65536 {
+				t.Errorf("expected MaxTokens=65536, got %d", entry.MaxTokens)
+			}
+			if entry.Premium {
+				t.Errorf("expected Premium=false for flash lite, got true")
+			}
+			if entry.Alias != "gemini-3.5-flash-lite" {
+				t.Errorf("expected Alias='gemini-3.5-flash-lite', got %q", entry.Alias)
+			}
+			break
+		}
+	}
+
+	if !found {
+		t.Errorf("gemini-3.5-flash-lite not found in Gemini catalog: %+v", cat)
+	}
+}
+

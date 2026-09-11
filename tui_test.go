@@ -222,7 +222,7 @@ func TestPasteBurstWithCRLF(t *testing.T) {
 	cr := &chunkReader{
 		chunks: [][]byte{
 			[]byte(crlfText),
-			{10}, // Enter as LF
+			{13}, // Enter
 		},
 	}
 	var out bytes.Buffer
@@ -415,6 +415,248 @@ func TestBackspaceSingleLineAndMultiline(t *testing.T) {
 	}
 	if strings.Count(out.String(), "\n") != 1 {
 		t.Fatalf("expected exactly 1 newline, got %d", strings.Count(out.String(), "\n"))
+	}
+}
+
+// TestCtrlJInsertsNewlineWithoutSubmit verifies that pressing Ctrl+J (byte 10 / LF)
+// inserts a newline at the cursor position without submitting the buffer.
+func TestCtrlJInsertsNewlineWithoutSubmit(t *testing.T) {
+	cr := &chunkReader{
+		chunks: [][]byte{
+			{'f'}, {'i'}, {'r'}, {'s'}, {'t'},
+			{10}, // Ctrl+J -> inserts \n
+			{'s'}, {'e'}, {'c'}, {'o'}, {'n'}, {'d'},
+			{13}, // Enter -> submits
+		},
+	}
+	var out bytes.Buffer
+	res, err := readInputEngine(cr, &out, "❯ ", func() (int, int) { return 80, 24 }, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := "first\nsecond"
+	if res != want {
+		t.Fatalf("expected multiline with newline via Ctrl+J.\ngot: %q\nwant: %q", res, want)
+	}
+}
+
+// TestShiftEnterKittyInsertsNewlineWithoutSubmit verifies Kitty CSI u Shift+Enter (\033[13;2u).
+func TestShiftEnterKittyInsertsNewlineWithoutSubmit(t *testing.T) {
+	cr := &chunkReader{
+		chunks: [][]byte{
+			{'l'}, {'i'}, {'n'}, {'e'}, {'1'},
+			[]byte("\033[13;2u"), // Kitty Shift+Enter
+			{'l'}, {'i'}, {'n'}, {'e'}, {'2'},
+			{13}, // Plain Enter
+		},
+	}
+	var out bytes.Buffer
+	res, err := readInputEngine(cr, &out, "❯ ", func() (int, int) { return 80, 24 }, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := "line1\nline2"
+	if res != want {
+		t.Fatalf("expected Kitty Shift+Enter to insert newline.\ngot: %q\nwant: %q", res, want)
+	}
+}
+
+// TestShiftEnterXtermInsertsNewlineWithoutSubmit verifies xterm Shift+Enter (\033[27;2;13~).
+func TestShiftEnterXtermInsertsNewlineWithoutSubmit(t *testing.T) {
+	cr := &chunkReader{
+		chunks: [][]byte{
+			{'a'}, {'a'},
+			[]byte("\033[27;2;13~"), // xterm Shift+Enter
+			{'b'}, {'b'},
+			{13}, // Enter
+		},
+	}
+	var out bytes.Buffer
+	res, err := readInputEngine(cr, &out, "❯ ", func() (int, int) { return 80, 24 }, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := "aa\nbb"
+	if res != want {
+		t.Fatalf("expected xterm Shift+Enter to insert newline.\ngot: %q\nwant: %q", res, want)
+	}
+}
+
+// TestAltEnterInsertsNewline verifies Alt+Enter escape sequences (\033\r and \033\n).
+func TestAltEnterInsertsNewline(t *testing.T) {
+	crCR := &chunkReader{
+		chunks: [][]byte{
+			{'x'},
+			[]byte("\033\r"), // Alt+Enter CR
+			{'y'},
+			{13},
+		},
+	}
+	var outCR bytes.Buffer
+	resCR, err := readInputEngine(crCR, &outCR, "❯ ", func() (int, int) { return 80, 24 }, nil)
+	if err != nil {
+		t.Fatalf("unexpected error on Alt+Enter CR: %v", err)
+	}
+	if resCR != "x\ny" {
+		t.Fatalf("expected Alt+Enter CR to insert newline, got %q", resCR)
+	}
+
+	crLF := &chunkReader{
+		chunks: [][]byte{
+			{'a'},
+			[]byte("\033\n"), // Alt+Enter LF
+			{'b'},
+			{13},
+		},
+	}
+	var outLF bytes.Buffer
+	resLF, err := readInputEngine(crLF, &outLF, "❯ ", func() (int, int) { return 80, 24 }, nil)
+	if err != nil {
+		t.Fatalf("unexpected error on Alt+Enter LF: %v", err)
+	}
+	if resLF != "a\nb" {
+		t.Fatalf("expected Alt+Enter LF to insert newline, got %q", resLF)
+	}
+}
+
+// TestSS3EnterInsertsNewline verifies SS3 Enter escape sequence (\033OM).
+func TestSS3EnterInsertsNewline(t *testing.T) {
+	cr := &chunkReader{
+		chunks: [][]byte{
+			{'p'},
+			[]byte("\033OM"), // SS3 Enter
+			{'q'},
+			{13},
+		},
+	}
+	var out bytes.Buffer
+	res, err := readInputEngine(cr, &out, "❯ ", func() (int, int) { return 80, 24 }, nil)
+	if err != nil {
+		t.Fatalf("unexpected error on SS3 Enter: %v", err)
+	}
+	if res != "p\nq" {
+		t.Fatalf("expected SS3 Enter to insert newline, got %q", res)
+	}
+}
+
+// TestPlainEnterSubmits verifies that plain byte 13 submits immediately.
+func TestPlainEnterSubmits(t *testing.T) {
+	cr := &chunkReader{
+		chunks: [][]byte{
+			{'h'}, {'e'}, {'l'}, {'l'}, {'o'},
+			{13}, // Plain Enter
+		},
+	}
+	var out bytes.Buffer
+	res, err := readInputEngine(cr, &out, "❯ ", func() (int, int) { return 80, 24 }, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res != "hello" {
+		t.Fatalf("expected 'hello', got %q", res)
+	}
+}
+
+// TestInteractiveSelectEngineNavigation verifies Up/Down navigation, j/k, Enter selection, Esc, and 'n'.
+func TestInteractiveSelectEngineNavigation(t *testing.T) {
+	items := []SelectChoice{
+		{ID: "model-a", Render: func(s bool) string {
+			if s {
+				return "▶ model-a"
+			}
+			return "  model-a"
+		}},
+		{ID: "model-b", Render: func(s bool) string {
+			if s {
+				return "▶ model-b"
+			}
+			return "  model-b"
+		}},
+		{ID: "model-c", Render: func(s bool) string {
+			if s {
+				return "▶ model-c"
+			}
+			return "  model-c"
+		}},
+	}
+
+	// 1. Initial selection at 0, Down arrow, Enter
+	crDown := &chunkReader{
+		chunks: [][]byte{
+			[]byte("\033[B"), // Down arrow
+			{13},             // Enter
+		},
+	}
+	var outDown bytes.Buffer
+	action, idx, err := runInteractiveSelectEngine(crDown, &outDown, "Select Active AI Model:", items, 0, false, func() (int, int) { return 80, 24 })
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if action != "select" || idx != 1 {
+		t.Fatalf("expected action=select idx=1, got action=%s idx=%d", action, idx)
+	}
+
+	// 2. j key (down), k key (up), Enter
+	crJK := &chunkReader{
+		chunks: [][]byte{
+			{'j'}, // down -> 1
+			{'j'}, // down -> 2
+			{'k'}, // up -> 1
+			{13},  // Enter
+		},
+	}
+	var outJK bytes.Buffer
+	actionJK, idxJK, err := runInteractiveSelectEngine(crJK, &outJK, "Select Active AI Model:", items, 0, false, func() (int, int) { return 80, 24 })
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if actionJK != "select" || idxJK != 1 {
+		t.Fatalf("expected action=select idx=1, got action=%s idx=%d", actionJK, idxJK)
+	}
+
+	// 3. Esc cancels
+	crEsc := &chunkReader{
+		chunks: [][]byte{
+			{27}, // Esc
+		},
+	}
+	var outEsc bytes.Buffer
+	actionEsc, _, err := runInteractiveSelectEngine(crEsc, &outEsc, "Select Active AI Model:", items, 0, false, func() (int, int) { return 80, 24 })
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if actionEsc != "cancel" {
+		t.Fatalf("expected action=cancel, got %s", actionEsc)
+	}
+
+	// 4. 'q' cancels
+	crQ := &chunkReader{
+		chunks: [][]byte{
+			{'q'},
+		},
+	}
+	var outQ bytes.Buffer
+	actionQ, _, err := runInteractiveSelectEngine(crQ, &outQ, "Select Active AI Model:", items, 0, false, func() (int, int) { return 80, 24 })
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if actionQ != "cancel" {
+		t.Fatalf("expected action=cancel, got %s", actionQ)
+	}
+
+	// 5. 'n' for new session when allowNew=true
+	crN := &chunkReader{
+		chunks: [][]byte{
+			{'n'},
+		},
+	}
+	var outN bytes.Buffer
+	actionN, _, err := runInteractiveSelectEngine(crN, &outN, "Select Active Session:", items, 0, true, func() (int, int) { return 80, 24 })
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if actionN != "new" {
+		t.Fatalf("expected action=new, got %s", actionN)
 	}
 }
 

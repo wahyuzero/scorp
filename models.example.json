@@ -91,6 +91,14 @@
       "base_url": "https://opencode.ai/zen/v1",
       "max_tokens": 32768,
       "api": "openai"
+    },
+    "gemini/gemini-3.5-flash-lite": {
+      "provider": "gemini",
+      "model": "gemini-3.5-flash-lite",
+      "key_env": "GEMINI_API_KEY",
+      "base_url": "https://generativelanguage.googleapis.com/v1beta",
+      "max_tokens": 65536,
+      "api": "gemini"
     }
   }
 }

@@ -42,6 +42,7 @@ func init() {
 	}, p)
 
 	RegisterCatalog("gemini", []CatalogEntry{
+		{"gemini-3.5-flash-lite", 65536, false, "gemini-3.5-flash-lite"},
 		{"gemini-3.8-flash", 65536, false, "gemini-3.8-flash"},
 		{"gemini-3.7-flash", 65536, false, "gemini-3.7-flash"},
 		{"gemini-3.1-pro-preview", 65536, true, "gemini-3.1-pro"},

@@ -10,7 +10,7 @@ set -e
 # ─────────────────────────────────────────────────────────────────────────────
 
 REPO="wahyuzero/scorp"
-FALLBACK_TAG="v0.8.2"
+FALLBACK_TAG="v0.8.2.1"
 
 # ANSI Colors
 BOLD="\033[1m"
