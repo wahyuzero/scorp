@@ -20,6 +20,8 @@ import (
 	"scorp-agent/skills"
 	"scorp-agent/sop"
 	"scorp-agent/tools"
+
+	"golang.org/x/term"
 )
 
 const cliChatID int64 = 0
@@ -124,9 +126,17 @@ func startCLI(initialPrompts ...string) {
 	for {
 		var input string
 		if isTerminal(os.Stdin) {
-			promptStr := "\n\033[1;36mscorp\033[0m \033[1;32m❯\033[0m "
+			w, _, err := term.GetSize(int(os.Stdin.Fd()))
+			if err != nil || w <= 0 {
+				w = 80
+			}
+			statusFooter := renderStatusFooter(currentSessionID, w)
+			if statusFooter != "" {
+				fmt.Println(statusFooter)
+			}
+			promptStr := "\033[1;36mscorp\033[0m \033[1;32m❯\033[0m "
 			if currentSessionID != "default" {
-				promptStr = fmt.Sprintf("\n\033[1;36mscorp\033[0m \033[2m[%s]\033[0m \033[1;32m❯\033[0m ", currentSessionID)
+				promptStr = fmt.Sprintf("\033[1;36mscorp\033[0m \033[2m[%s]\033[0m \033[1;32m❯\033[0m ", currentSessionID)
 			}
 			line, err := readInteractiveInput(promptStr)
 			if err != nil {

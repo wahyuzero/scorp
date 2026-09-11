@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"strings"
+	"sync"
 	"unicode/utf8"
 
 	"golang.org/x/term"
@@ -40,12 +42,15 @@ var availableSlashCommands = []SlashCommand{
 }
 
 // readInteractiveInput reads a line or multiline block from terminal with live autocomplete popup.
-// Supports bracketed paste mode (\033[200~ ... \033[201~) so pasting paragraphs with newlines
-// is preserved as a single user turn instead of prematurely submitting each line.
+// Supports bracketed paste mode (\033[200~ ... \033[201~) and unbracketed paste bursts
+// so pasting paragraphs with newlines is preserved as a single user turn instead of prematurely submitting each line.
 func readInteractiveInput(prompt string) (string, error) {
+	prompt = strings.TrimLeft(prompt, "\r\n")
 	fd := int(os.Stdin.Fd())
 	if !term.IsTerminal(fd) {
-		fmt.Print(prompt)
+		if prompt != "" {
+			fmt.Print(prompt)
+		}
 		scanner := bufio.NewScanner(os.Stdin)
 		if scanner.Scan() {
 			return scanner.Text(), nil
@@ -55,67 +60,158 @@ func readInteractiveInput(prompt string) (string, error) {
 
 	oldState, err := term.MakeRaw(fd)
 	if err != nil {
-		fmt.Print(prompt)
+		if prompt != "" {
+			fmt.Print(prompt)
+		}
 		scanner := bufio.NewScanner(os.Stdin)
 		if scanner.Scan() {
 			return scanner.Text(), nil
 		}
 		return "", scanner.Err()
 	}
-	defer func() {
-		disableBracketedPaste()
-		_ = term.Restore(fd, oldState)
-	}()
+
+	var restoreOnce sync.Once
+	cleanup := func() {
+		restoreOnce.Do(func() {
+			disableBracketedPaste()
+			_ = term.Restore(fd, oldState)
+		})
+	}
+	defer cleanup()
 
 	enableBracketedPaste()
+
+	getTermSize := func() (int, int) {
+		w, h, err := term.GetSize(fd)
+		if err != nil || w <= 0 || h <= 0 {
+			return 80, 24
+		}
+		return w, h
+	}
+
+	return readInputEngine(os.Stdin, os.Stdout, prompt, getTermSize, cleanup)
+}
+
+// readInputEngine is the core input loop separated for direct testability with mocked readers/writers.
+func readInputEngine(in io.Reader, out io.Writer, prompt string, getTermSize func() (int, int), onExit func()) (string, error) {
+	prompt = strings.TrimLeft(prompt, "\r\n")
 
 	var buf []rune
 	cursorPos := 0
 	selectedIndex := 0
 	popupRenderedLines := 0
+	renderedBufferLines := 1
+	renderedCursorLine := 0
 	isPasting := false
 
 	clearPopup := func() {
 		if popupRenderedLines > 0 {
 			for i := 0; i < popupRenderedLines; i++ {
-				fmt.Print("\r\n\033[2K")
+				fmt.Fprint(out, "\033[1B\033[2K")
 			}
-			fmt.Printf("\033[%dA\r", popupRenderedLines)
+			fmt.Fprintf(out, "\033[%dA\r", popupRenderedLines)
 			popupRenderedLines = 0
 		}
 	}
 
 	render := func() {
-		w, h, err := term.GetSize(fd)
-		if err != nil || w <= 0 || h <= 0 {
+		w, h := 80, 24
+		if getTermSize != nil {
+			w, h = getTermSize()
+		}
+		if w <= 0 {
 			w = 80
+		}
+		if h <= 0 {
 			h = 24
 		}
 		isCompact := w < 72 || h < 22
 
-		clearPopup()
-		fmt.Print("\r\033[K")
-		fmt.Print(prompt)
-
-		// If buffer contains newlines (e.g. from paste), print with visual continuation
 		bufStr := string(buf)
-		if strings.Contains(bufStr, "\n") {
-			parts := strings.Split(bufStr, "\n")
-			for idx, p := range parts {
-				if idx > 0 {
-					fmt.Print("\r\n\033[K\033[2m... ❯\033[0m ")
-				}
-				fmt.Print(p)
-			}
-		} else {
-			fmt.Print(bufStr)
+		isSlash := strings.HasPrefix(bufStr, "/") && !strings.Contains(bufStr, " ") && !strings.Contains(bufStr, "\n")
+
+		// If popup was active and we're no longer in slash command mode, clear it
+		if !isSlash && popupRenderedLines > 0 {
+			clearPopup()
 		}
 
-		currentStr := string(buf)
-		var lines []string
-		isSlash := strings.HasPrefix(currentStr, "/") && !strings.Contains(currentStr, " ")
+		bufLines := strings.Split(bufStr, "\n")
+		numBufferLines := len(bufLines)
+
+		// Calculate cursor line and column
+		cursorLine := 0
+		lineStart := 0
+		for i := 0; i < cursorPos && i < len(buf); i++ {
+			if buf[i] == '\n' {
+				cursorLine++
+				lineStart = i + 1
+			}
+		}
+		cursorCol := cursorPos - lineStart
+
+		// FAST PATH: Single line, not slash command, previous was single line with no popup
+		if numBufferLines == 1 && renderedBufferLines == 1 && !isSlash && popupRenderedLines == 0 {
+			fmt.Fprint(out, "\r\033[K"+prompt+bufStr)
+			if cursorPos < len(buf) {
+				colsBack := visibleWidth(string(buf[cursorPos:]))
+				if colsBack > 0 {
+					fmt.Fprintf(out, "\033[%dD", colsBack)
+				}
+			}
+			renderedBufferLines = 1
+			renderedCursorLine = 0
+			return
+		}
+
+		// If popup was active, clear it before redrawing buffer
+		if popupRenderedLines > 0 {
+			clearPopup()
+		}
+
+		// Move cursor back to line 0 if it was on a lower line
+		if renderedCursorLine > 0 {
+			fmt.Fprintf(out, "\033[%dA", renderedCursorLine)
+		}
+		fmt.Fprint(out, "\r")
+
+		// Redraw buffer lines
+		// Line 0:
+		fmt.Fprint(out, "\033[K"+prompt+bufLines[0])
+		// Lines 1..N-1:
+		for i := 1; i < numBufferLines; i++ {
+			fmt.Fprint(out, "\r\n\033[K\033[2m... ❯\033[0m "+bufLines[i])
+		}
+		// If buffer shrank, clear leftover lines below
+		if renderedBufferLines > numBufferLines {
+			for j := numBufferLines; j < renderedBufferLines; j++ {
+				fmt.Fprint(out, "\r\n\033[K")
+			}
+			fmt.Fprintf(out, "\033[%dA", renderedBufferLines-numBufferLines)
+		}
+
+		// Now cursor is at end of line numBufferLines - 1
+		// Move to cursorLine
+		if cursorLine < numBufferLines-1 {
+			fmt.Fprintf(out, "\033[%dA", (numBufferLines-1)-cursorLine)
+		}
+		fmt.Fprint(out, "\r")
+		linePrompt := prompt
+		if cursorLine > 0 {
+			linePrompt = "\033[2m... ❯\033[0m "
+		}
+		curLineRunes := []rune(bufLines[cursorLine])
+		if cursorCol > len(curLineRunes) {
+			cursorCol = len(curLineRunes)
+		}
+		fmt.Fprint(out, linePrompt+string(curLineRunes[:cursorCol]))
+
+		renderedBufferLines = numBufferLines
+		renderedCursorLine = cursorLine
+
+		// Autocomplete popup: ONLY when isSlash
 		if isSlash {
-			matches := filterCommands(currentStr)
+			matches := filterCommands(bufStr)
+			var popupLines []string
 			if len(matches) > 0 {
 				if selectedIndex >= len(matches) {
 					selectedIndex = 0
@@ -123,80 +219,60 @@ func readInteractiveInput(prompt string) (string, error) {
 				if selectedIndex < 0 {
 					selectedIndex = len(matches) - 1
 				}
-
 				if isCompact {
-					// Compact 1-2 line inline suggestion (mobile Termux / small screen)
-					lines = renderCompactSuggestions(matches, selectedIndex, w)
+					popupLines = renderCompactSuggestions(matches, selectedIndex, w)
 				} else {
-					// Desktop dynamic popup box + status footer
-					lines = renderPopupBox(matches, selectedIndex, w, h)
-					statusline := renderStatusFooter(currentSessionID, w)
-					if statusline != "" {
-						lines = append(lines, statusline)
-					}
-				}
-			} else {
-				statusline := renderStatusFooter(currentSessionID, w)
-				if statusline != "" {
-					lines = append(lines, statusline)
+					popupLines = renderPopupBox(matches, selectedIndex, w, h)
 				}
 			}
-		} else {
-			statusline := renderStatusFooter(currentSessionID, w)
-			if statusline != "" {
-				lines = append(lines, statusline)
+
+			// Clamp lines
+			for i := range popupLines {
+				popupLines[i] = clampLineWidth(popupLines[i], w-2)
 			}
-		}
+			maxLinesBelow := h - 4
+			if maxLinesBelow < 1 {
+				maxLinesBelow = 1
+			}
+			if len(popupLines) > maxLinesBelow {
+				popupLines = popupLines[:maxLinesBelow]
+			}
+			popupRenderedLines = len(popupLines)
 
-		// Clamp each line's visual width to w-2 to strictly avoid terminal line-wrapping
-		for i := range lines {
-			lines[i] = clampLineWidth(lines[i], w-2)
-		}
-
-		// Cap maximum lines rendered below prompt to prevent vertical scroll
-		maxLinesBelow := h - 4
-		if maxLinesBelow < 1 {
-			maxLinesBelow = 1
-		}
-		if len(lines) > maxLinesBelow {
-			lines = lines[:maxLinesBelow]
-		}
-		popupRenderedLines = len(lines)
-
-		// Render below prompt, then restore cursor relatively (no ANSI \033[s / \033[u drift)
-		for _, line := range lines {
-			fmt.Print("\r\n\033[2K" + line)
-		}
-		if len(lines) > 0 {
-			fmt.Printf("\033[%dA", len(lines))
-		}
-
-		// Return to column 0 on the prompt line, then advance cursor to cursorPos
-		fmt.Print("\r")
-		if strings.Contains(bufStr, "\n") {
-			parts := strings.Split(bufStr, "\n")
-			fmt.Print(prompt + parts[len(parts)-1])
+			// Render below prompt
+			for _, line := range popupLines {
+				fmt.Fprint(out, "\r\n\033[2K"+line)
+			}
+			if len(popupLines) > 0 {
+				fmt.Fprintf(out, "\033[%dA\r", len(popupLines))
+				fmt.Fprint(out, prompt+string(buf[:cursorPos]))
+			}
 		} else {
-			fmt.Print(prompt + string(buf[:cursorPos]))
+			popupRenderedLines = 0
 		}
 	}
 
 	render()
 
-	readBuf := make([]byte, 512)
+	readBuf := make([]byte, 64*1024)
 	for {
-		n, err := os.Stdin.Read(readBuf)
+		n, err := in.Read(readBuf)
 		if err != nil {
-			clearPopup()
+			if popupRenderedLines > 0 {
+				clearPopup()
+			}
 			return "", err
 		}
 		if n == 0 {
 			continue
 		}
 
-		// Check for Bracketed Paste Mode sequences: \033[200~ (start) and \033[201~ (end)
-		slice := readBuf[:n]
+		rawChunk := readBuf[:n]
+		isBurst := (n > 1 && bytes.ContainsAny(rawChunk, "\r\n"))
+
+		slice := rawChunk
 		for len(slice) > 0 {
+			// Check for Bracketed Paste Mode sequences: \033[200~ (start) and \033[201~ (end)
 			if bytes.HasPrefix(slice, []byte("\033[200~")) {
 				isPasting = true
 				slice = slice[6:]
@@ -205,38 +281,68 @@ func readInteractiveInput(prompt string) (string, error) {
 			if bytes.HasPrefix(slice, []byte("\033[201~")) {
 				isPasting = false
 				slice = slice[6:]
-				render()
 				continue
 			}
 
-			b := slice[0]
-			slice = slice[1:]
-
-			// While inside bracketed paste block, treat newlines as literal \n without submitting
-			if isPasting {
-				if b == 13 || b == 10 {
+			// While inside bracketed paste block or clipboard paste burst:
+			if isPasting || isBurst {
+				// Handle newlines: CRLF, LF, or CR
+				if slice[0] == '\r' {
+					if len(slice) > 1 && slice[1] == '\n' {
+						slice = slice[2:]
+					} else {
+						slice = slice[1:]
+					}
 					buf = append(buf[:cursorPos], append([]rune{'\n'}, buf[cursorPos:]...)...)
 					cursorPos++
 					continue
 				}
-				if b >= 32 || b == '\t' {
-					r := rune(b)
-					buf = append(buf[:cursorPos], append([]rune{r}, buf[cursorPos:]...)...)
+				if slice[0] == '\n' {
+					slice = slice[1:]
+					buf = append(buf[:cursorPos], append([]rune{'\n'}, buf[cursorPos:]...)...)
 					cursorPos++
 					continue
 				}
+				if slice[0] == '\t' {
+					slice = slice[1:]
+					buf = append(buf[:cursorPos], append([]rune{'\t'}, buf[cursorPos:]...)...)
+					cursorPos++
+					continue
+				}
+				if slice[0] >= 32 {
+					r, sz := utf8.DecodeRune(slice)
+					if r != utf8.RuneError && sz > 0 {
+						buf = append(buf[:cursorPos], append([]rune{r}, buf[cursorPos:]...)...)
+						cursorPos++
+						slice = slice[sz:]
+					} else {
+						slice = slice[1:]
+					}
+					continue
+				}
+				// Ignore other control characters in paste
+				slice = slice[1:]
+				continue
 			}
 
-			// Enter key outside paste mode: submit
+			b := slice[0]
+
+			// Enter key outside paste mode: submit complete multiline buffer
 			if b == 13 || b == 10 {
 				currentStr := string(buf)
-				clearPopup()
-				disableBracketedPaste()
-				_ = term.Restore(fd, oldState)
-				fmt.Print("\r\n")
+				if popupRenderedLines > 0 {
+					clearPopup()
+				}
+				if onExit != nil {
+					onExit()
+				}
+				if renderedCursorLine < renderedBufferLines-1 {
+					fmt.Fprintf(out, "\033[%dB", (renderedBufferLines-1)-renderedCursorLine)
+				}
+				fmt.Fprint(out, "\r\n")
 
-				// If popup is active and user typed a prefix that is not an exact match
-				if strings.HasPrefix(currentStr, "/") && !strings.Contains(currentStr, " ") {
+				// If popup is active and user typed a slash prefix that is not an exact match
+				if strings.HasPrefix(currentStr, "/") && !strings.Contains(currentStr, " ") && !strings.Contains(currentStr, "\n") {
 					matches := filterCommands(currentStr)
 					if len(matches) > 0 {
 						isExact := false
@@ -257,20 +363,77 @@ func readInteractiveInput(prompt string) (string, error) {
 
 			// Ctrl+C
 			if b == 3 {
-				clearPopup()
-				disableBracketedPaste()
-				_ = term.Restore(fd, oldState)
-				fmt.Print("\r\n")
+				if popupRenderedLines > 0 {
+					clearPopup()
+				}
+				if onExit != nil {
+					onExit()
+				}
+				fmt.Fprint(out, "\r\n")
 				return "", fmt.Errorf("interrupted")
 			}
 
 			// Ctrl+D
 			if b == 4 {
-				clearPopup()
-				disableBracketedPaste()
-				_ = term.Restore(fd, oldState)
-				fmt.Print("\r\n")
-				return "/exit", nil
+				if len(buf) == 0 {
+					if popupRenderedLines > 0 {
+						clearPopup()
+					}
+					if onExit != nil {
+						onExit()
+					}
+					fmt.Fprint(out, "\r\n")
+					return "/exit", nil
+				}
+				slice = slice[1:]
+				continue
+			}
+
+			// Ctrl+A (Home)
+			if b == 1 {
+				for cursorPos > 0 && buf[cursorPos-1] != '\n' {
+					cursorPos--
+				}
+				slice = slice[1:]
+				render()
+				continue
+			}
+
+			// Ctrl+E (End)
+			if b == 5 {
+				for cursorPos < len(buf) && buf[cursorPos] != '\n' {
+					cursorPos++
+				}
+				slice = slice[1:]
+				render()
+				continue
+			}
+
+			// Ctrl+U (kill line to start)
+			if b == 21 {
+				start := cursorPos
+				for start > 0 && buf[start-1] != '\n' {
+					start--
+				}
+				buf = append(buf[:start], buf[cursorPos:]...)
+				cursorPos = start
+				selectedIndex = 0
+				slice = slice[1:]
+				render()
+				continue
+			}
+
+			// Ctrl+K (kill line to end)
+			if b == 11 {
+				end := cursorPos
+				for end < len(buf) && buf[end] != '\n' {
+					end++
+				}
+				buf = append(buf[:cursorPos], buf[end:]...)
+				selectedIndex = 0
+				slice = slice[1:]
+				render()
+				continue
 			}
 
 			// Backspace: 127 or 8
@@ -281,13 +444,14 @@ func readInteractiveInput(prompt string) (string, error) {
 					selectedIndex = 0
 					render()
 				}
+				slice = slice[1:]
 				continue
 			}
 
 			// Tab: 9
 			if b == 9 {
 				currentStr := string(buf)
-				if strings.HasPrefix(currentStr, "/") && !strings.Contains(currentStr, " ") {
+				if strings.HasPrefix(currentStr, "/") && !strings.Contains(currentStr, " ") && !strings.Contains(currentStr, "\n") {
 					matches := filterCommands(currentStr)
 					if len(matches) > 0 {
 						cmd := matches[selectedIndex].Command
@@ -300,25 +464,32 @@ func readInteractiveInput(prompt string) (string, error) {
 						render()
 					}
 				}
+				slice = slice[1:]
 				continue
 			}
 
-			// ANSI escape sequences: 27, 91 (or 79)
+			// ANSI escape sequences: 27
 			if b == 27 {
-				if len(slice) >= 2 && (slice[0] == '[' || slice[0] == 'O') {
-					code := slice[1]
-					slice = slice[2:]
+				if len(slice) >= 3 && (slice[1] == '[' || slice[1] == 'O') {
+					code := slice[2]
+					slice = slice[3:]
 					switch code {
 					case 'A': // UP
 						currentStr := string(buf)
-						if strings.HasPrefix(currentStr, "/") && !strings.Contains(currentStr, " ") {
+						if strings.HasPrefix(currentStr, "/") && !strings.Contains(currentStr, " ") && !strings.Contains(currentStr, "\n") {
 							selectedIndex--
+							render()
+						} else if strings.Contains(currentStr, "\n") {
+							cursorPos = moveCursorVertical(buf, cursorPos, -1)
 							render()
 						}
 					case 'B': // DOWN
 						currentStr := string(buf)
-						if strings.HasPrefix(currentStr, "/") && !strings.Contains(currentStr, " ") {
+						if strings.HasPrefix(currentStr, "/") && !strings.Contains(currentStr, " ") && !strings.Contains(currentStr, "\n") {
 							selectedIndex++
+							render()
+						} else if strings.Contains(currentStr, "\n") {
+							cursorPos = moveCursorVertical(buf, cursorPos, 1)
 							render()
 						}
 					case 'C': // RIGHT
@@ -331,24 +502,88 @@ func readInteractiveInput(prompt string) (string, error) {
 							cursorPos--
 							render()
 						}
+					case 'H': // Home
+						for cursorPos > 0 && buf[cursorPos-1] != '\n' {
+							cursorPos--
+						}
+						render()
+					case 'F': // End
+						for cursorPos < len(buf) && buf[cursorPos] != '\n' {
+							cursorPos++
+						}
+						render()
 					}
 				} else {
 					clearPopup()
 					render()
+					slice = slice[1:]
 				}
 				continue
 			}
 
-			// Printable ASCII characters
-			if b >= 32 && b <= 126 {
-				r := rune(b)
+			// Printable UTF-8 runes
+			r, sz := utf8.DecodeRune(slice)
+			if sz > 0 && r != utf8.RuneError && (r >= 32 || r == '\t') {
 				buf = append(buf[:cursorPos], append([]rune{r}, buf[cursorPos:]...)...)
 				cursorPos++
 				selectedIndex = 0
+				slice = slice[sz:]
 				render()
+			} else {
+				slice = slice[1:]
 			}
 		}
+
+		if isPasting || isBurst {
+			render()
+		}
 	}
+}
+
+// moveCursorVertical moves the cursor up (dir=-1) or down (dir=1) within a multiline buffer
+func moveCursorVertical(buf []rune, cursorPos int, dir int) int {
+	if len(buf) == 0 {
+		return 0
+	}
+	if cursorPos < 0 {
+		cursorPos = 0
+	}
+	if cursorPos > len(buf) {
+		cursorPos = len(buf)
+	}
+
+	lines := strings.Split(string(buf), "\n")
+	if len(lines) <= 1 {
+		return cursorPos
+	}
+
+	curLine := 0
+	lineStart := 0
+	for i := 0; i < cursorPos && i < len(buf); i++ {
+		if buf[i] == '\n' {
+			curLine++
+			lineStart = i + 1
+		}
+	}
+	curCol := cursorPos - lineStart
+
+	targetLine := curLine + dir
+	if targetLine < 0 || targetLine >= len(lines) {
+		return cursorPos
+	}
+
+	targetStart := 0
+	for l := 0; l < targetLine; l++ {
+		targetStart += len([]rune(lines[l])) + 1
+	}
+
+	targetLineLen := len([]rune(lines[targetLine]))
+	targetCol := curCol
+	if targetCol > targetLineLen {
+		targetCol = targetLineLen
+	}
+
+	return targetStart + targetCol
 }
 
 // filterCommands filters available slash commands based on current prefix

@@ -2819,17 +2819,6 @@
   ],
   "surprises": [
     {
-      "source": "MCP Contract Watch (P3.14)",
-      "target": "CheckServerContracts()",
-      "source_files": [
-        "docs/IMPLEMENTATION_PLAN_SCORP.md",
-        "mcp/contract.go"
-      ],
-      "confidence": "EXTRACTED",
-      "relation": "implements",
-      "why": "crosses file types (code ↔ doc); connects across different repos/directories; bridges separate communities; peripheral node `MCP Contract Watch (P3.14)` unexpectedly reaches hub `CheckServerContracts()`"
-    },
-    {
       "source": "Durable Memory MEMORY.md (P1.7)",
       "target": "extractTaskMemory()",
       "source_files": [
@@ -2838,7 +2827,7 @@
       ],
       "confidence": "EXTRACTED",
       "relation": "implements",
-      "why": "crosses file types (code ↔ doc); connects across different repos/directories; bridges separate communities; peripheral node `Durable Memory MEMORY.md (P1.7)` unexpectedly reaches hub `extractTaskMemory()`"
+      "why": "crosses file types (code \u2194 doc); connects across different repos/directories; bridges separate communities; peripheral node `Durable Memory MEMORY.md (P1.7)` unexpectedly reaches hub `extractTaskMemory()`"
     },
     {
       "source": "Test-Integrity Gate (P0.3)",
@@ -2849,66 +2838,44 @@
       ],
       "confidence": "EXTRACTED",
       "relation": "implements",
-      "why": "crosses file types (code ↔ doc); connects across different repos/directories; bridges separate communities; peripheral node `Test-Integrity Gate (P0.3)` unexpectedly reaches hub `TestIntegrityStatus()`"
+      "why": "crosses file types (code \u2194 doc); connects across different repos/directories; bridges separate communities; peripheral node `Test-Integrity Gate (P0.3)` unexpectedly reaches hub `TestIntegrityStatus()`"
     },
     {
-      "source": "Compaction Preservation (P2.10)",
-      "target": "truncateToolResultsInHistory()",
+      "source": "MCP Contract Watch (P3.14)",
+      "target": "CheckServerContracts()",
       "source_files": [
         "docs/IMPLEMENTATION_PLAN_SCORP.md",
-        "agent/compaction.go"
+        "mcp/contract.go"
       ],
       "confidence": "EXTRACTED",
       "relation": "implements",
-      "why": "crosses file types (code ↔ doc); connects across different repos/directories; peripheral node `Compaction Preservation (P2.10)` unexpectedly reaches hub `truncateToolResultsInHistory()`"
+      "why": "crosses file types (code \u2194 doc); connects across different repos/directories; bridges separate communities; peripheral node `MCP Contract Watch (P3.14)` unexpectedly reaches hub `CheckServerContracts()`"
     },
     {
-      "source": "StartDaemon()",
-      "target": "StartCPUSampler()",
+      "source": "Sandbox Shell Bubblewrap (P0.1)",
+      "target": "ExecuteShell()",
       "source_files": [
-        "telegram/daemon.go",
-        "collectors/collector_system_other.go"
+        "docs/IMPLEMENTATION_PLAN_SCORP.md",
+        "tools/exec.go"
       ],
-      "confidence": "INFERRED",
-      "relation": "calls",
-      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities; peripheral node `StartCPUSampler()` unexpectedly reaches hub `StartDaemon()`"
+      "confidence": "EXTRACTED",
+      "relation": "implements",
+      "why": "crosses file types (code \u2194 doc); connects across different repos/directories; peripheral node `Sandbox Shell Bubblewrap (P0.1)` unexpectedly reaches hub `ExecuteShell()`"
+    },
+    {
+      "source": "Auto-Mode Classifier (P3.13)",
+      "target": "PermissionDecision()",
+      "source_files": [
+        "docs/IMPLEMENTATION_PLAN_SCORP.md",
+        "agent/auto.go"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "implements",
+      "why": "crosses file types (code \u2194 doc); connects across different repos/directories; bridges separate communities"
     }
   ],
-  "questions": [
-    {
-      "type": "bridge_node",
-      "question": "Why does `HandleTelegramAction()` connect `HandleTelegramAction` to `Manifest`, `collector_system.go`, `HandleModelCallback`, `TaskPlan`, `getAgentSystemPrompt`, `StartDaemon`, `GetAutonomyLevel`, `collector_security.go`, `setSession`, `CreateCheckpoint`, `scheduler.go`, `getSession`, `RunAgentSessionLoop`, `main`, `confirmation.go`, `SandboxActive`, `CheckServerContracts`, `session_ui.go`, `EscapeHTML`, `clarify.go`, `CollectSystem`, `RestartServer`?",
-      "why": "High betweenness centrality (0.110) - this node is a cross-community bridge."
-    },
-    {
-      "type": "bridge_node",
-      "question": "Why does `RunAgentSessionLoop()` connect `RunAgentSessionLoop` to `TaskPlan`, `getAgentSystemPrompt`, `compaction_test.go`, `testgate.go`, `GetAutonomyLevel`, `GetStringArg`, `setSession`, `HandleTelegramAction`, `PermissionDecision`, `CreateCheckpoint`, `chat.go`, `startCLI`, `CallModelWithFallback`, `getSession`, `TruncateStr`, `confirmation.go`, `ResetNativeToolCache`, `TestIntegrityStatus`, `ComputeSimhash`, `EscapeHTML`, `wireCLICallbacks`, `ExecuteTool`, `IsDangerousCommand`, `ExecuteTermuxAPI`, `IsContinuationDirective`, `GenerateContextualSessionTitle`?",
-      "why": "High betweenness centrality (0.089) - this node is a cross-community bridge."
-    },
-    {
-      "type": "bridge_node",
-      "question": "Why does `TruncateStr()` connect `TruncateStr` to `runSubagent`, `HandleModelCallback`, `TaskPlan`, `context.Context`, `getAgentSystemPrompt`, `ResolveAPIKey`, `setSession`, `ModelConfig`, `PermissionDecision`, `agent/autonomous.go`, `chat.go`, `ToolCall`, `scheduler.go`, `MCPServer`, `api_gemini.go`, `getSession`, `TruncOutput`, `RunAgentSessionLoop`, `GetIntArg`, `EscapeHTML`, `ExecuteAutonomous`, `registerMCPToolsAsNative`?",
-      "why": "High betweenness centrality (0.055) - this node is a cross-community bridge."
-    },
-    {
-      "type": "verify_inferred",
-      "question": "Are the 25 inferred relationships involving `HandleTelegramAction()` (e.g. with `CollectSystem()` and `DirKeyboard()`) actually correct?",
-      "why": "`HandleTelegramAction()` has 25 INFERRED edges - model-reasoned connections that need verification."
-    },
-    {
-      "type": "isolated_nodes",
-      "question": "What connects `containerStats`, `🔍 Analisis Temuan & Ketiadaan Isu`, `🎯 Ringkasan Eksekusi Suite` to the rest of the system?",
-      "why": "113 weakly-connected nodes found - possible documentation gaps or missing edges."
-    },
-    {
-      "type": "low_cohesion",
-      "question": "Should `Manifest` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.05714285714285714 - nodes in this community are weakly interconnected."
-    },
-    {
-      "type": "low_cohesion",
-      "question": "Should `collector_system.go` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.05328005328005328 - nodes in this community are weakly interconnected."
-    }
-  ]
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
 }

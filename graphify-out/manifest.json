@@ -144,10 +144,10 @@
     "semantic_hash": "08acac7901e0265f06c97b0554494354"
   },
   "cli.go": {
-    "mtime": 1788932097.7340007,
-    "seen": 1789063423.4879458,
-    "ast_hash": "7979248f9185259402f072a8eb4bc6a1",
-    "semantic_hash": "7979248f9185259402f072a8eb4bc6a1"
+    "mtime": 1789102133.976671,
+    "seen": 1789102270.4234622,
+    "ast_hash": "75baa7a7818a70a2aedb7f1d0946d5b0",
+    "semantic_hash": "75baa7a7818a70a2aedb7f1d0946d5b0"
   },
   "cli_test.go": {
     "mtime": 1788754577.1826065,
@@ -276,10 +276,10 @@
     "semantic_hash": "ce88ec3cc99fdb5d9e36dcf02f65be18"
   },
   "install.sh": {
-    "mtime": 1789063171.4909544,
-    "seen": 1789063423.4889646,
-    "ast_hash": "4fb3436d60dd2f9ef53c32cd44aae40b",
-    "semantic_hash": "4fb3436d60dd2f9ef53c32cd44aae40b"
+    "mtime": 1789077939.1566036,
+    "seen": 1789102270.4246914,
+    "ast_hash": "2454a0e647047de9ab598717e081ecba",
+    "semantic_hash": "2454a0e647047de9ab598717e081ecba"
   },
   "internal/helpers/helpers.go": {
     "mtime": 1788485109.878153,
@@ -1014,10 +1014,10 @@
     "semantic_hash": "96226564e4ed29d80a6ca44cc5d9e020"
   },
   "tui_input.go": {
-    "mtime": 1789063158.2939327,
-    "seen": 1789063423.4921784,
-    "ast_hash": "35de1e6d4c09d399d06c4cae0c5dce71",
-    "semantic_hash": "35de1e6d4c09d399d06c4cae0c5dce71"
+    "mtime": 1789102193.2797556,
+    "seen": 1789102270.4292817,
+    "ast_hash": "d40781f8267c7cd1dc99ca4fb3dbd3a0",
+    "semantic_hash": "d40781f8267c7cd1dc99ca4fb3dbd3a0"
   },
   "tui_status.go": {
     "mtime": 1789063088.5398185,
@@ -1752,9 +1752,9 @@
     "semantic_hash": "ec64011bd0d28bfa3cf5999cc7f05254"
   },
   "tui_test.go": {
-    "mtime": 1789063141.447905,
-    "seen": 1789063423.4922128,
-    "ast_hash": "c836441b2ef5f719bf34d7e38627180b",
-    "semantic_hash": "c836441b2ef5f719bf34d7e38627180b"
+    "mtime": 1789102228.6318054,
+    "seen": 1789102270.4293468,
+    "ast_hash": "7ad4a2b6ccdde055f25ed3846098306c",
+    "semantic_hash": "7ad4a2b6ccdde055f25ed3846098306c"
   }
 }
