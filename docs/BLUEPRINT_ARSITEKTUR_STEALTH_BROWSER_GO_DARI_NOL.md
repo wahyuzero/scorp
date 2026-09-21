@@ -390,7 +390,113 @@ Mesin rendering Chromium memang berat, tapi kita bisa menjinakkannya dengan atur
 
 ---
 
-## 9. 📁 LEVEL 7: Struktur Folder Proyek Go (`gocloak`)
+## 9. 🚦 LEVEL 7: Smart Concurrency Pool & Thermal Governor (Anti Ugal-Ugalan)
+
+Salah satu penyakit paling berbahaya dari AI Agent yang diberi akses browser adalah **"ugal-ugalan membuka tab"**. 
+
+Jika sebuah agent disuruh melakukan riset atau crawling paralel, tanpa kontrol yang ketat agent bisa membuka 30–50 tab secara simultan. Pada laptop dengan prosesor quad-core seperti Intel i7-4702MQ (8 threads):
+* CPU akan langsung melonjak ke **100% usage**.
+* Temperatur melonjak drastis hingga terjadi *thermal throttling* dan kipas berputar kencang.
+* Linux Kernel OOM (Out Of Memory) Killer akan bangun dan mematikan paksa proses browser atau aplikasi lain.
+
+Untuk mencegah malapetaka ini, engine Go kita wajib dilengkapi dengan **Smart Concurrency Pool & Resource Governor**.
+
+```mermaid
+flowchart TD
+    subgraph INCOMING["1. Incoming Agent Requests"]
+        Req["Agent Tasks (Navigate / Scrape / Action)"]
+    end
+
+    subgraph GOVERNOR["2. Hardware Governor (Sensor Berkala)"]
+        Sensors["Baca /proc/meminfo & /proc/loadavg"]
+        Threshold{"Available RAM < 1.5GB\natau CPU Load > 7.0?"}
+        Sensors --> Threshold
+        Threshold -- Ya --> Throttle["🛑 Aktifkan Backpressure (Tahan Antrean) & Paksa GC"]
+        Threshold -- Tidak --> Allow["✅ Izinkan Eksekusi"]
+    end
+
+    subgraph POOL["3. Concurrency Semaphore Pool"]
+        Sem["Bounded Semaphore\n(Maksimal N = runtime.NumCPU() = 8 Tab Aktif)"]
+    end
+
+    subgraph LIFECYCLE["4. Three-State Tab Lifecycle"]
+        Active["🔥 State 1: In-Flight / Active\n(Mengeksekusi JS / Navigasi / Klik)"]
+        Passive["💤 State 2: Passive / Idle\n(Selesai render, freeze timer via CDP)"]
+        Hibernate["🧊 State 3: Virtual Hibernation\n(Tab ditutup dari RAM, State disimpan di Go ~50KB)"]
+
+        Active -->|Selesai aksi| Passive
+        Passive -->|Menganggur > 3 Menit| Hibernate
+        Hibernate -->|Dipanggil AI lagi| Active
+    end
+
+    Req --> GOVERNOR
+    Allow --> Sem
+    Sem --> Active
+```
+
+### A. Tiga Pilar Mesin Anti Ugal-Ugalan
+
+#### 1. Bounded Worker Semaphore (Batas Keras CPU)
+Membatasi jumlah tab yang boleh **aktif berputar mengeksekusi JavaScript secara bersamaan** maksimum setara dengan jumlah thread hardware (`runtime.NumCPU()`, misal 8 slot di mesin ini).
+
+```go
+type TabPool struct {
+    sem       chan struct{}          // Token semaphore (kapasitas = 8)
+    tabsMu    sync.RWMutex
+    tabs      map[string]*ManagedTab
+    maxActive int
+}
+
+func NewTabPool(maxActive int) *TabPool {
+    if maxActive <= 0 {
+        maxActive = runtime.NumCPU() // Default: 8 di laptop ini
+    }
+    return &TabPool{
+        sem:       make(chan struct{}, maxActive),
+        tabs:      make(map[string]*ManagedTab),
+        maxActive: maxActive,
+    }
+}
+
+// Acquire mengunci slot eksekusi aktif
+func (p *TabPool) Acquire(ctx context.Context) error {
+    select {
+    case p.sem <- struct{}{}:
+        return nil
+    case <-ctx.Done():
+        return ctx.Err()
+    }
+}
+
+// Release melepas slot eksekusi
+func (p *TabPool) Release() {
+    <-p.sem
+}
+```
+
+#### 2. Three-State Tab Lifecycle (Active -> Passive -> Hibernation)
+Alih-alih membiarkan 50 tab memakan 200 MB RAM secara bersama-sama di background, engine Go membagi tab menjadi 3 status:
+
+1. **State 1 — Active / In-Flight:**
+   * Tab sedang membuka halaman, mengetik, atau mengevaluasi DOM. Memegang 1 token semaphore CPU.
+2. **State 2 — Passive / Idle:**
+   * Halaman sudah selesai dimuat. Token semaphore dilepas.
+   * Engine Go mengirimkan sinyal CDP `Emulation.setCPUThrottlingRate(rate=6)` atau menonaktifkan timer background agar JavaScript animasi halaman target tidak menguras CPU.
+3. **State 3 — Virtual Hibernation (Tab Freeze):**
+   * Jika tab tidak disentuh AI selama $> 3$ menit, tab fisik di Chromium di-*discard* atau ditutup untuk membebaskan memori RAM-nya hingga **0 MB**.
+   * Seluruh metadata penting (URL terakhir, judul halaman, cookies, session storage, dan posisi scroll) disimpan di struct Go yang hanya berukuran **~50 KB**.
+   * Jika AI sewaktu-waktu memanggil tab itu kembali, Go otomatis me-rehydrate tab tersebut secara instan tanpa AI menyadari bahwa tab tersebut sempat tidur.
+
+#### 3. Dynamic Hardware Sensing (Self-Throttling)
+Engine Go memiliki goroutine latar belakang yang membaca sensor kernel Linux secara *real-time* tanpa overhead:
+* **Membaca `/proc/meminfo`:** Memeriksa nilai `MemAvailable`. Jika sisa RAM di bawah **1.5 GB**, engine otomatis menolak membuka tab baru dan mengirim perintah CDP `HeapProfiler.collectGarbage` ke V8 Engine.
+* **Membaca `/proc/loadavg`:** Memeriksa beban sistem 1 menit. Jika load melebihi **7.0** (indikasi CPU mulai kewalahan), engine otomatis menambahkan jeda antrean (*backpressure*) agar laptop tetap adem dan tidak macet.
+
+Dengan kombinasi **Semaphore (maks 8 tab aktif) + Tab Hibernation + Hardware Sensor**, kamu bisa menjalankan ratusan tugas browser tanpa khawatir laptop kepanasan atau kehabisan RAM!
+
+---
+
+## 10. 📁 LEVEL 8: Struktur Folder Proyek Go (`gocloak`)
 
 ```text
 gocloak/
@@ -424,7 +530,7 @@ gocloak/
 
 ---
 
-## 10. 🚀 Roadmap Implementasi Tahap demi Tahap
+## 11. 🚀 Roadmap Implementasi Tahap demi Tahap
 
 * **Fase 1 (Inisiasi Driver):** Inisialisasi project Go + koneksi Rod ke binary Chromium CloakBrowser lokal (`~/.cloakbrowser/...`).
 * **Fase 2 (Stealth & Anti-Bot):** Implementasi injeksi `stealth_init.js` dan verifikasi skor bot di situs tes seperti `bot.sannysoft.com` dan `nowsecure.nl`.
