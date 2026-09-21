@@ -165,7 +165,142 @@ Jangan teleportasi kursor:
 
 ---
 
-## 5. 🎯 LEVEL 3: Actionability Engine di Go (Solusi Anti Ghost-Click)
+## 5. 🤖 LEVEL 3: Pipeline Porting Patch Anti-Bot via Pasukan AI Agent
+
+Pertanyaan paling krusial: *"Bagaimana engine Go ini bisa terus up-to-date melawan Cloudflare/DataDome jika riset anti-bot baru selalu rilis di ekosistem JavaScript (Node.js/NPM)?"*
+
+Jawabannya adalah **Automated AI-Agent Porting Pipeline**. Di arsitektur ini, kamu tidak perlu porting manual satu per satu. Pasukan AI Agent (Scorp Worker / Antigravity / GitHub Action CI) bertugas sebagai *jembatan otomatis* yang memantau, mem-porting, dan memverifikasi patch baru secara otonom.
+
+```mermaid
+flowchart TD
+    subgraph MONITOR["1. Upstream Surveillance (Watcher / Webhook)"]
+        GH1["rebrowser/rebrowser-patches\n(Fix CDP runtime leaks & console leaks)"]
+        GH2["berstend/puppeteer-extra\n(puppeteer-extra-plugin-stealth)"]
+        GH3["apify/fingerprint-suite\n(Modern Canvas & AudioContext fingerprints)"]
+    end
+
+    subgraph AGENT_WORKFLOW["2. AI Agent Porting & Transpiler Engine"]
+        DiffEngine["1. AST & Diff Analyzer\n(Deteksi fungsi evasion baru)"]
+        DeNode["2. Strip Node.js Runtime\n(Hapus require, module.exports, process)"]
+        IIFE_Builder["3. Bungkus ke Pure Browser IIFE\n(() => { ... })()"]
+        ParamTemplating["4. Ekstrak Variabel Dinamis\n(Bungkus jadi Go Template / JSON Config)"]
+    end
+
+    subgraph TESTING_GATE["3. Automated Evasion Testing Gate (CI/CD)"]
+        Sannysoft["Test 1: bot.sannysoft.com\n(0 Red Flags pada webdriver, plugins, userAgent)"]
+        NowSecure["Test 2: nowsecure.nl\n(Bypass Cloudflare Turnstile Challenge)"]
+        CreepJS["Test 3: CreepJS\n(Trust Score > 85%, No Lies detected)"]
+    end
+
+    subgraph DEPLOY["4. Go Embedding & Auto-Release"]
+        AssetUpdate["Tulis ke internal/stealth/assets/*.js"]
+        GoTest["Jalankan 'go test ./...'"]
+        AutoCommit["Auto-Commit / PR ke Repositori Go"]
+    end
+
+    MONITOR --> AGENT_WORKFLOW
+    AGENT_WORKFLOW --> TESTING_GATE
+    TESTING_GATE -- Semua Lolos --> DEPLOY
+    TESTING_GATE -- Ada Gagal --> Alert["Kirim Log Kegagalan ke Developer"]
+```
+
+### A. Anatomi Porting: Mengapa Porting Ini Sangat Mudah bagi AI Agent?
+Rahasia terbesarnya: **Script stealth pada akhirnya tetap dieksekusi di dalam JavaScript V8 engine browser**, bukan di runtime Go!
+
+Artinya, AI Agent **TIDAK PERLU** mengubah logika JavaScript menjadi sintaks Golang murni. Tugas AI Agent hanyalah:
+1. Menghapus wrapper Node.js/CommonJS (`require('puppeteer')`, `module.exports`).
+2. Membersihkan dependensi Node (`fs`, `path`, `process.env`).
+3. Mengemasnya menjadi fungsi murni **IIFE (Immediately Invoked Function Expression)** yang mandiri dan steril.
+4. Menyimpan file hasil porting ke folder `internal/stealth/assets/injections/*.js` yang otomatis dibaca Go via direktif `//go:embed`.
+
+#### Contoh Nyata Transformasi oleh AI Agent:
+* **Asli (Script Node.js Puppeteer):**
+  ```javascript
+  // upstream npm package: stealth/evasions/navigator.webdriver
+  module.exports = function(page) {
+    page.evaluateOnNewDocument(() => {
+      delete Object.getPrototypeOf(navigator).webdriver;
+    });
+  };
+  ```
+* **Hasil Porting AI Agent (Pure Browser IIFE untuk Go Embed):**
+  ```javascript
+  // internal/stealth/assets/injections/01_webdriver.js
+  (() => {
+    try {
+      if (navigator.webdriver === false) return;
+      delete Object.getPrototypeOf(navigator).webdriver;
+      Object.defineProperty(navigator, 'webdriver', {
+        get: () => undefined,
+        configurable: true
+      });
+    } catch (e) {}
+  })();
+  ```
+
+### B. Struktur Modular Modul Injeksi di Go
+AI Agent menyusun script hasil porting ke dalam hierarki bernomor agar urutan eksekusinya deterministik:
+```text
+internal/stealth/assets/injections/
+├── 01_webdriver_shield.js      # Menghilangkan penanda otomasi
+├── 02_chrome_runtime.js        # Mocking window.chrome.csi, app, runtime
+├── 03_permissions_query.js     # Menyelaraskan izin notifikasi & sensor
+├── 04_webgl_vendor_spoof.js    # Mengganti SwiftShader dengan GPU fisik asli
+├── 05_canvas_audio_jitter.js   # Menambahkan subtle noise ke hash canvas/audio
+└── 06_cdp_leak_protection.js   # Memblokir deteksi console debug port & cdc_ tokens
+```
+
+Di sisi Golang, seluruh modul ini digabungkan secara otomatis:
+```go
+// internal/stealth/stealth.go
+package stealth
+
+import (
+    "embed"
+    "sort"
+    "strings"
+)
+
+//go:embed assets/injections/*.js
+var injectionFS embed.FS
+
+// GetCombinedScript menggabungkan seluruh patch secara deterministik
+func GetCombinedScript() (string, error) {
+    entries, err := injectionFS.ReadDir("assets/injections")
+    if err != nil {
+        return "", err
+    }
+    
+    // Pastikan urutan 01, 02, 03...
+    sort.Slice(entries, func(i, j int) bool {
+        return entries[i].Name() < entries[j].Name()
+    })
+
+    var sb strings.Builder
+    for _, entry := range entries {
+        content, _ := injectionFS.ReadFile("assets/injections/" + entry.Name())
+        sb.WriteString("/* --- " + entry.Name() + " --- */\n")
+        sb.Write(content)
+        sb.WriteString("\n\n")
+    }
+    return sb.String(), nil
+}
+```
+
+### C. Automated Quality Gate: Uji Evasion Tanpa Manusia
+Setiap kali AI Agent merilis atau memperbarui script stealth, pipeline pengujian otomatis berjalan:
+1. **Sannysoft Test (`bot.sannysoft.com`):**
+   * Go mengeksekusi headless test dan memeriksa elemen tabel. Jika ada elemen dengan class `failed` (merah), build ditolak.
+2. **Cloudflare Turnstile Test (`nowsecure.nl`):**
+   * Go menavigasi ke halaman Cloudflare challenge, menunggu 5 detik, dan memverifikasi apakah pesan *"You are human"* muncul.
+3. **CreepJS Scoring:**
+   * Memastikan browser fingerprint tidak memicu status *"Lie"* atau *"Anomalous"*.
+
+Dengan sistem ini, ekosistem Go kamu **selalu setara dengan perkembangan komunitas anti-bot JavaScript global**, tanpa kamu harus membuang waktu coding ulang secara manual!
+
+---
+
+## 6. 🎯 LEVEL 4: Actionability Engine di Go (Solusi Anti Ghost-Click)
 
 Kelemahan terbesar *bot amatir* adalah klik yang meleset karena elemen belum siap atau tertutup dialog.
 
@@ -203,7 +338,7 @@ function isActionable(el) {
 
 ---
 
-## 6. 🔌 LEVEL 4: Antarmuka Model Context Protocol (MCP)
+## 7. 🔌 LEVEL 5: Antarmuka Model Context Protocol (MCP)
 
 Server Go ini akan berjalan sebagai proses latar belakang (*stdio binary*), berkomunikasi dengan Claude Code, Antigravity, Gemini CLI, atau Scorp melalui standar **JSON-RPC 2.0**.
 
@@ -226,7 +361,7 @@ Server Go ini akan berjalan sebagai proses latar belakang (*stdio binary*), berk
 
 ---
 
-## 7. 💾 LEVEL 5: Taktik Frugal Memangkas Konsumsi RAM
+## 8. 💾 LEVEL 6: Taktik Frugal Memangkas Konsumsi RAM
 
 Mesin rendering Chromium memang berat, tapi kita bisa menjinakkannya dengan aturan rekayasa ketat di sisi Go:
 
@@ -255,7 +390,7 @@ Mesin rendering Chromium memang berat, tapi kita bisa menjinakkannya dengan atur
 
 ---
 
-## 8. 📁 LEVEL 6: Struktur Folder Proyek Go (`gocloak`)
+## 9. 📁 LEVEL 7: Struktur Folder Proyek Go (`gocloak`)
 
 ```text
 gocloak/
@@ -289,13 +424,14 @@ gocloak/
 
 ---
 
-## 9. 🚀 Roadmap Implementasi Tahap demi Tahap
+## 10. 🚀 Roadmap Implementasi Tahap demi Tahap
 
 * **Fase 1 (Inisiasi Driver):** Inisialisasi project Go + koneksi Rod ke binary Chromium CloakBrowser lokal (`~/.cloakbrowser/...`).
 * **Fase 2 (Stealth & Anti-Bot):** Implementasi injeksi `stealth_init.js` dan verifikasi skor bot di situs tes seperti `bot.sannysoft.com` dan `nowsecure.nl`.
 * **Fase 3 (Actionability & Kinetics):** Bangun engine pengecekan elemen stabil dan pergerakan kursor Bezier.
-* **Fase 4 (Frugal Network Pruning):** Pasang request hijacker untuk memblokir aset berat (font, media, ads) guna mengunci RAM di batas terendah.
-* **Fase 5 (MCP Server Integration):** Pasang `mark3labs/mcp-go`, bungkus fungsi ke dalam Stdio JSON-RPC tools, dan daftarkan ke konfigurasi MCP AI harness.
+* **Fase 4 (AI Porting Pipeline):** Bangun script pengawas upstream (watcher) dan template transpiler IIFE otomatis.
+* **Fase 5 (Frugal Network Pruning):** Pasang request hijacker untuk memblokir aset berat (font, media, ads) guna mengunci RAM di batas terendah.
+* **Fase 6 (MCP Server Integration):** Pasang `mark3labs/mcp-go`, bungkus fungsi ke dalam Stdio JSON-RPC tools, dan daftarkan ke konfigurasi MCP AI harness.
 
 ---
 *Dokumen ini merupakan spesifikasi resmi arsitektur Stealth Browser Engine murni Go untuk ekosistem FrugalDev / Scorp.*
